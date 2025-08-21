@@ -1,14 +1,11 @@
 <script lang="ts">
     import type { PageProps } from './$types';
-    import { ScrollArea } from '$lib/components/ui/scroll-area';
 
     let { data }: PageProps = $props();
 </script>
 
 <svelte:head>
-    <title>Ordo - Timer</title>
+    <title>Ordo - Settings</title>
 </svelte:head>
 
-<ScrollArea>
-    <h1>Home</h1>
-</ScrollArea>
+<h1>Settings</h1>
