@@ -4,5 +4,5 @@ This is a web application for tracking activities organized by categories. It tr
 ## Libraries and Technologies:
 - pnpm for package management
 - Svelte 5 and SvelteKit with TypeScript
-- SQLite with Drizzle ORM and Zod for schema validation
+- SQLite with Drizzle ORM and Valibot for schema validation
 - Tailwind CSS v4 and Svelte-shadcn for components and charts

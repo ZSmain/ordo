@@ -17,9 +17,12 @@ importers:
       drizzle-orm:
         specifier: ^0.40.0
         version: 0.40.1(@cloudflare/workers-types@4.20250821.0)(@libsql/client@0.14.0)(gel@2.1.1)(kysely@0.28.5)
-      zod:
-        specifier: ^4.0.17
-        version: 4.0.17
+      drizzle-valibot:
+        specifier: ^0.4.2
+        version: 0.4.2(drizzle-orm@0.40.1(@cloudflare/workers-types@4.20250821.0)(@libsql/client@0.14.0)(gel@2.1.1)(kysely@0.28.5))(valibot@1.1.0(typescript@5.9.2))
+      valibot:
+        specifier: ^1.1.0
+        version: 1.1.0(typescript@5.9.2)
     devDependencies:
       '@eslint/compat':
         specifier: ^1.2.5
@@ -1664,6 +1667,12 @@ packages:
       sqlite3:
         optional: true
 
+  drizzle-valibot@0.4.2:
+    resolution: {integrity: sha512-tzjT7g0Di/HX7426marIy8IDtWODjPgrwvgscdevLQRUe5rzYzRhx6bDsYLdDFF9VI/eaYgnjNeF/fznWJoUjg==}
+    peerDependencies:
+      drizzle-orm: '>=0.36.0'
+      valibot: '>=1.0.0-beta.7'
+
   enhanced-resolve@5.18.3:
     resolution: {integrity: sha512-d4lC8xfavMeBjzGr2vECC3fsGXziXZQyJxD868h2M/mBI3PwAuODxAkLkq5HYuvrPYcUtiLzsTo8U3PgX3Ocww==}
     engines: {node: '>=10.13.0'}
@@ -2504,6 +2513,14 @@ packages:
 
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
+
+  valibot@1.1.0:
+    resolution: {integrity: sha512-Nk8lX30Qhu+9txPYTwM0cFlWLdPFsFr6LblzqIySfbZph9+BFsAHsNvHOymEviUepeIW6KFHzpX8TKhbptBXXw==}
+    peerDependencies:
+      typescript: '>=5'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   vaul-svelte@1.0.0-next.7:
     resolution: {integrity: sha512-7zN7Bi3dFQixvvbUJY9uGDe7Ws/dGZeBQR2pXdXmzQiakjrxBvWo0QrmsX3HK+VH+SZOltz378cmgmCS9f9rSg==}
@@ -3778,6 +3795,11 @@ snapshots:
       gel: 2.1.1
       kysely: 0.28.5
 
+  drizzle-valibot@0.4.2(drizzle-orm@0.40.1(@cloudflare/workers-types@4.20250821.0)(@libsql/client@0.14.0)(gel@2.1.1)(kysely@0.28.5))(valibot@1.1.0(typescript@5.9.2)):
+    dependencies:
+      drizzle-orm: 0.40.1(@cloudflare/workers-types@4.20250821.0)(@libsql/client@0.14.0)(gel@2.1.1)(kysely@0.28.5)
+      valibot: 1.1.0(typescript@5.9.2)
+
   enhanced-resolve@5.18.3:
     dependencies:
       graceful-fs: 4.2.11
@@ -4643,6 +4665,10 @@ snapshots:
       punycode: 2.3.1
 
   util-deprecate@1.0.2: {}
+
+  valibot@1.1.0(typescript@5.9.2):
+    optionalDependencies:
+      typescript: 5.9.2
 
   vaul-svelte@1.0.0-next.7(svelte@5.38.2):
     dependencies:
