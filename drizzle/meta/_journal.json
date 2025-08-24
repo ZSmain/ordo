@@ -8,6 +8,13 @@
       "when": 1755980456026,
       "tag": "0000_fuzzy_thunderball",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1756027678976,
+      "tag": "0001_equal_colossus",
+      "breakpoints": true
     }
   ]
 }
