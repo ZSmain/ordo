@@ -1,18 +1,22 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
+	import { Label } from '$lib/components/ui/label';
+	import * as RadioGroup from '$lib/components/ui/radio-group';
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
+	import { Separator } from '$lib/components/ui/separator';
 	import { formatTime } from '$lib/time';
 	import { Square } from '@lucide/svelte';
-	import type { PageProps } from './$types';
-
-	let { data }: PageProps = $props();
+	import { getCategories } from './data.remote';
 
 	// Timer state
-	let isTimerActive = $state(true);
-	let currentCategory = $state('Spanish');
-	let currentActivity = $state('Duolingo');
+	let isTimerActive = $state(false);
+	let currentCategory = $state('');
+	let currentActivity = $state('');
 	let timerSeconds = $state(0);
 	let stopTimer = $state(() => {});
+
+	// Get categories query (returns a query object with loading/error/current)
+	const categoriesQuery = getCategories();
 </script>
 
 <svelte:head>
@@ -43,6 +47,40 @@
 				Click on activity to start tracking
 			</div>
 			<div class="text-sm text-gray-500">Long click to edit</div>
+		</div>
+	{/if}
+
+	<Separator />
+
+	<!-- Categories -->
+	{#if categoriesQuery.error}
+		<div class="mt-4 text-center text-xs text-red-500">Failed to load categories</div>
+	{:else if categoriesQuery.loading}
+		<div class="mt-4 text-center text-xs text-slate-400">Loading categories...</div>
+	{:else if !categoriesQuery.current || categoriesQuery.current.length === 0}
+		<div class="mt-4 text-center text-xs text-slate-400">No categories yet</div>
+	{:else}
+		<div class="mt-4 space-y-2">
+			<RadioGroup.Root value="starter" class="flex flex-wrap justify-center gap-3">
+				{#each categoriesQuery.current as cat (cat.id)}
+					<Label
+						class="flex items-start gap-3 rounded-lg border p-3 has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:bg-input/20"
+						style="background-color: {cat.color}"
+					>
+						<RadioGroup.Item
+							value={String(cat.id)}
+							id={String(cat.id)}
+							class="sr-only data-[state=checked]:border-primary"
+						/>
+						<div class="grid gap-1 font-normal">
+							<div class="font-medium">{cat.name}</div>
+							<div class="text-xs leading-snug text-balance text-muted-foreground">
+								{cat.icon}
+							</div>
+						</div>
+					</Label>
+				{/each}
+			</RadioGroup.Root>
 		</div>
 	{/if}
 </ScrollArea>
