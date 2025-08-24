@@ -15,6 +15,13 @@
       "when": 1756027678976,
       "tag": "0001_equal_colossus",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1756029190845,
+      "tag": "0002_sticky_red_ghost",
+      "breakpoints": true
     }
   ]
 }

@@ -26,6 +26,25 @@ export const activity = sqliteTable("activity", {
 		.notNull(),
 });
 
+export const timeSession = sqliteTable("time_session", {
+	id: integer("id").primaryKey(),
+	activityId: integer("activity_id")
+		.notNull()
+		.references(() => activity.id, { onDelete: "cascade" }),
+	startedAt: integer("started_at", { mode: "timestamp" })
+		.notNull()
+		.$defaultFn(() => new Date()),
+	stoppedAt: integer("stopped_at", { mode: "timestamp" }),
+	duration: integer("duration"), // in minutes, calculated when session ends
+	notes: text("notes"), // optional notes for the time session
+	createdAt: integer("created_at", { mode: "timestamp" })
+		.$defaultFn(() => new Date())
+		.notNull(),
+	updatedAt: integer("updated_at", { mode: "timestamp" })
+		.$defaultFn(() => new Date())
+		.notNull(),
+});
+
 // Category validation schemas
 export const insertCategorySchema = createInsertSchema(category, {
 	name: v.pipe(
@@ -79,11 +98,35 @@ export const insertActivitySchema = createInsertSchema(activity, {
 
 export const selectActivitySchema = createSelectSchema(activity);
 
+// Time Session validation schemas
+export const insertTimeSessionSchema = createInsertSchema(timeSession, {
+	activityId: v.pipe(
+		v.number("Activity ID must be a number"),
+		v.minValue(1, "Activity ID must be a valid activity")
+	),
+	duration: v.optional(
+		v.pipe(
+			v.number("Duration must be a number"),
+			v.minValue(1, "Duration must be at least 1 minute")
+		)
+	),
+	notes: v.optional(
+		v.pipe(
+			v.string("Notes must be a string"),
+			v.maxLength(500, "Notes must be 500 characters or less")
+		)
+	),
+});
+
+export const selectTimeSessionSchema = createSelectSchema(timeSession);
+
 // Type exports
 export type InsertCategory = v.InferInput<typeof insertCategorySchema>;
 export type SelectCategory = v.InferOutput<typeof selectCategorySchema>;
 export type InsertActivity = v.InferInput<typeof insertActivitySchema>;
 export type SelectActivity = v.InferOutput<typeof selectActivitySchema>;
+export type InsertTimeSession = v.InferInput<typeof insertTimeSessionSchema>;
+export type SelectTimeSession = v.InferOutput<typeof selectTimeSessionSchema>;
 
 export const user = sqliteTable("user", {
 	id: text("id").primaryKey(),
