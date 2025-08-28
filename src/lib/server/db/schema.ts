@@ -12,6 +12,7 @@ export const category = sqliteTable("category", {
 export const activity = sqliteTable("activity", {
 	id: integer("id").primaryKey(),
 	name: text("name").notNull(),
+	icon: text("icon").notNull(),
 	dailyGoal: integer("daily_goal"), // in minutes
 	weeklyGoal: integer("weekly_goal"), // in minutes
 	monthlyGoal: integer("monthly_goal"), // in minutes
@@ -71,6 +72,11 @@ export const insertActivitySchema = createInsertSchema(activity, {
 		v.string("Activity name must be a string"),
 		v.minLength(1, "Activity name is required"),
 		v.maxLength(100, "Activity name must be 100 characters or less")
+	),
+	icon: v.pipe(
+		v.string("Icon must be a string"),
+		v.minLength(1, "Icon is required"),
+		v.maxLength(10, "Icon must be 10 characters or less")
 	),
 	dailyGoal: v.optional(
 		v.pipe(

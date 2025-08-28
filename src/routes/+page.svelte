@@ -118,26 +118,29 @@
 			{#if !selectedCategory.activities || selectedCategory.activities.length === 0}
 				<div class="text-center text-xs text-slate-400">No activities in this category yet</div>
 			{:else}
-				<div class="grid gap-2">
+				<div class="grid grid-cols-2 gap-3">
 					{#each selectedCategory.activities as activity (activity.id)}
-						<Button
-							variant="outline"
-							class="h-auto justify-between p-4 text-left"
+						<Label
+							class="flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors hover:bg-input/10"
+							style="background-color: {selectedCategory.color}10"
 							onclick={() => {
 								currentCategory = selectedCategory.name;
 								currentActivity = activity.name;
 							}}
 						>
-							<div class="flex-1">
-								<div class="font-medium">{activity.name}</div>
+							<div class="grid gap-1 font-normal">
+								<div class="font-medium text-sm">{activity.name}</div>
+								<div class="text-lg leading-snug">
+									{activity.icon}
+								</div>
 								{#if activity.dailyGoal}
 									<div class="text-xs text-muted-foreground">
-										Daily goal: {activity.dailyGoal} minutes
+										Goal: {activity.dailyGoal}min
 									</div>
 								{/if}
 							</div>
-							<Play class="ml-2 h-4 w-4" />
-						</Button>
+							<Play class="ml-auto h-4 w-4 text-muted-foreground" />
+						</Label>
 					{/each}
 				</div>
 			{/if}

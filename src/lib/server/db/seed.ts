@@ -61,6 +61,7 @@ async function seed() {
 		// Work activities
 		{
 			name: 'Deep Work Session',
+			icon: '💻',
 			dailyGoal: 240, // 4 hours
 			weeklyGoal: 1200, // 20 hours
 			monthlyGoal: 4800, // 80 hours
@@ -68,6 +69,7 @@ async function seed() {
 		},
 		{
 			name: 'Email & Communication',
+			icon: '📧',
 			dailyGoal: 60, // 1 hour
 			weeklyGoal: 300, // 5 hours
 			monthlyGoal: 1200, // 20 hours
@@ -75,6 +77,7 @@ async function seed() {
 		},
 		{
 			name: 'Meetings',
+			icon: '🤝',
 			dailyGoal: 120, // 2 hours
 			weeklyGoal: 600, // 10 hours
 			monthlyGoal: 2400, // 40 hours
@@ -84,6 +87,7 @@ async function seed() {
 		// Health & Fitness activities
 		{
 			name: 'Morning Exercise',
+			icon: '🏃‍♂️',
 			dailyGoal: 60, // 1 hour
 			weeklyGoal: 300, // 5 hours
 			monthlyGoal: 1200, // 20 hours
@@ -91,6 +95,7 @@ async function seed() {
 		},
 		{
 			name: 'Meditation',
+			icon: '🧘‍♀️',
 			dailyGoal: 20, // 20 minutes
 			weeklyGoal: 140, // 2 hours 20 minutes
 			monthlyGoal: 600, // 10 hours
@@ -98,6 +103,7 @@ async function seed() {
 		},
 		{
 			name: 'Healthy Meal Prep',
+			icon: '🥗',
 			dailyGoal: 45, // 45 minutes
 			weeklyGoal: 210, // 3.5 hours
 			monthlyGoal: 900, // 15 hours
@@ -107,6 +113,7 @@ async function seed() {
 		// Learning activities
 		{
 			name: 'Reading Technical Books',
+			icon: '📚',
 			dailyGoal: 30, // 30 minutes
 			weeklyGoal: 210, // 3.5 hours
 			monthlyGoal: 900, // 15 hours
@@ -114,6 +121,7 @@ async function seed() {
 		},
 		{
 			name: 'Online Courses',
+			icon: '🎓',
 			dailyGoal: 60, // 1 hour
 			weeklyGoal: 300, // 5 hours
 			monthlyGoal: 1200, // 20 hours
@@ -121,6 +129,7 @@ async function seed() {
 		},
 		{
 			name: 'Practice Coding',
+			icon: '⌨️',
 			dailyGoal: 90, // 1.5 hours
 			weeklyGoal: 450, // 7.5 hours
 			monthlyGoal: 1800, // 30 hours
@@ -130,6 +139,7 @@ async function seed() {
 		// Personal activities
 		{
 			name: 'Household Chores',
+			icon: '🧹',
 			dailyGoal: 60, // 1 hour
 			weeklyGoal: 300, // 5 hours
 			monthlyGoal: 1200, // 20 hours
@@ -137,6 +147,7 @@ async function seed() {
 		},
 		{
 			name: 'Personal Finance',
+			icon: '💰',
 			dailyGoal: 15, // 15 minutes
 			weeklyGoal: 60, // 1 hour
 			monthlyGoal: 240, // 4 hours
@@ -144,6 +155,7 @@ async function seed() {
 		},
 		{
 			name: 'Journaling',
+			icon: '📔',
 			dailyGoal: 10, // 10 minutes
 			weeklyGoal: 70, // ~1 hour 10 minutes
 			monthlyGoal: 300, // 5 hours
@@ -153,6 +165,7 @@ async function seed() {
 		// Creative activities
 		{
 			name: 'Writing',
+			icon: '✍️',
 			dailyGoal: 60, // 1 hour
 			weeklyGoal: 300, // 5 hours
 			monthlyGoal: 1200, // 20 hours
@@ -160,6 +173,7 @@ async function seed() {
 		},
 		{
 			name: 'Digital Art',
+			icon: '🎨',
 			dailyGoal: 90, // 1.5 hours
 			weeklyGoal: 360, // 6 hours
 			monthlyGoal: 1440, // 24 hours
@@ -167,6 +181,7 @@ async function seed() {
 		},
 		{
 			name: 'Music Practice',
+			icon: '🎵',
 			dailyGoal: 45, // 45 minutes
 			weeklyGoal: 225, // 3.75 hours
 			monthlyGoal: 900, // 15 hours
@@ -176,6 +191,7 @@ async function seed() {
 		// Social activities
 		{
 			name: 'Family Time',
+			icon: '👨‍👩‍👧‍👦',
 			dailyGoal: 120, // 2 hours
 			weeklyGoal: 600, // 10 hours
 			monthlyGoal: 2400, // 40 hours
@@ -183,6 +199,7 @@ async function seed() {
 		},
 		{
 			name: 'Friend Calls',
+			icon: '📞',
 			dailyGoal: 30, // 30 minutes
 			weeklyGoal: 150, // 2.5 hours
 			monthlyGoal: 600, // 10 hours
@@ -190,6 +207,7 @@ async function seed() {
 		},
 		{
 			name: 'Networking',
+			icon: '🌐',
 			dailyGoal: 45, // 45 minutes
 			weeklyGoal: 180, // 3 hours
 			monthlyGoal: 720, // 12 hours
