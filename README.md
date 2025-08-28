@@ -1,38 +1,75 @@
-# sv
+# Ordo - Time Tracking App
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A simple time tracking application inspired by "Simple Time Tracker" mobile application.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- 📊 Track time spent on various activities
+- 📁 Organize activities into categories
+- 🎯 Set daily, weekly, and monthly goals
+- 📈 View detailed statistics and progress
 
-```sh
-# create a new project in the current directory
-npx sv create
+## Tech Stack
 
-# create a new project in my-app
-npx sv create my-app
-```
+- **Frontend**: Svelte/SvelteKit, Tailwind CSS & Shadcn-svelte
+- **Backend**: SvelteKit remote functions
+- **Database**:  Cloudflare D1 (LibSQL) with Drizzle ORM
+- **Authentication**: Better Auth
+- **Validation**: Valibot
 
-## Developing
+## Getting Started
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+1. **Install dependencies:**
 
-```sh
-npm run dev
+   ```sh
+   pnpm install
+   ```
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+2. **Set up environment variables:**
+
+   Create a `.env` file with:
+
+   ```bash
+   DATABASE_URL=your_database_url
+   # Add other required environment variables for authentication
+   ```
+
+3. **Push database schema:**
+
+   ```sh
+   pnpm run db:push
+   ```
+
+4. **Seed the database with example data:**
+
+   ```sh
+   pnpm run db:seed
+   ```
+
+5. **Start the development server:**
+
+   ```sh
+   pnpm run dev
+   ```
+
+## Database Commands
+
+- `pnpm run db:push` - Push schema changes to database
+- `pnpm run db:generate` - Generate migration files
+- `pnpm run db:migrate` - Run pending migrations
+- `pnpm run db:studio` - Open Drizzle Studio
+- `pnpm run db:seed` - Seed database with example data
 
 ## Building
 
 To create a production version of your app:
 
 ```sh
-npm run build
+pnpm run build
 ```
 
-You can preview the production build with `npm run preview`.
+You can preview the production build with:
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+```sh
+pnpm run preview
+```
