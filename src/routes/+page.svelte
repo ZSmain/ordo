@@ -5,8 +5,8 @@
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
 	import { Separator } from '$lib/components/ui/separator';
 	import { formatTime } from '$lib/time';
-	import { Square } from '@lucide/svelte';
-	import { getCategories } from './data.remote';
+	import { Square, Play } from '@lucide/svelte';
+	import { getCategoriesWithActivities } from './data.remote';
 
 	// Timer state
 	let isTimerActive = $state(false);
@@ -15,8 +15,30 @@
 	let timerSeconds = $state(0);
 	let stopTimer = $state(() => {});
 
-	// Get categories query (returns a query object with loading/error/current)
-	const categoriesQuery = getCategories();
+	// Selected category state
+	let selectedCategoryId = $state<string>('');
+
+	// Get categories with activities query
+	const categoriesQuery = getCategoriesWithActivities();
+
+	// Computed: selected category with activities
+	const selectedCategory = $derived.by(() => {
+		// Don't process if no category is selected or data isn't loaded
+		if (!selectedCategoryId || !categoriesQuery.current) {
+			return null;
+		}
+
+		const categoryId = parseInt(selectedCategoryId);
+		const category = categoriesQuery.current.find((cat) => cat.id === categoryId);
+
+		// Return the category with activities (or empty array if no activities property)
+		return category
+			? {
+					...category,
+					activities: category.activities || []
+				}
+			: null;
+	});
 </script>
 
 <svelte:head>
@@ -61,11 +83,12 @@
 		<div class="mt-4 text-center text-xs text-slate-400">No categories yet</div>
 	{:else}
 		<div class="mt-4 space-y-2">
-			<RadioGroup.Root value="starter" class="flex flex-wrap justify-center gap-3">
+			<h2 class="text-lg font-semibold text-gray-800">Categories</h2>
+			<RadioGroup.Root bind:value={selectedCategoryId} class="flex flex-wrap justify-center gap-3">
 				{#each categoriesQuery.current as cat (cat.id)}
 					<Label
-						class="flex items-start gap-3 rounded-lg border p-3 has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:bg-input/20"
-						style="background-color: {cat.color}"
+						class="flex cursor-pointer items-start gap-3 rounded-lg border p-3 has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:bg-input/20"
+						style="background-color: {cat.color}20"
 					>
 						<RadioGroup.Item
 							value={String(cat.id)}
@@ -81,6 +104,43 @@
 					</Label>
 				{/each}
 			</RadioGroup.Root>
+		</div>
+	{/if}
+
+	<!-- Activities for Selected Category -->
+	{#if selectedCategory}
+		<Separator class="my-4" />
+		<div class="mt-4 space-y-2">
+			<h2 class="text-lg font-semibold text-gray-800">
+				Activities - {selectedCategory.name}
+			</h2>
+
+			{#if !selectedCategory.activities || selectedCategory.activities.length === 0}
+				<div class="text-center text-xs text-slate-400">No activities in this category yet</div>
+			{:else}
+				<div class="grid gap-2">
+					{#each selectedCategory.activities as activity (activity.id)}
+						<Button
+							variant="outline"
+							class="h-auto justify-between p-4 text-left"
+							onclick={() => {
+								currentCategory = selectedCategory.name;
+								currentActivity = activity.name;
+							}}
+						>
+							<div class="flex-1">
+								<div class="font-medium">{activity.name}</div>
+								{#if activity.dailyGoal}
+									<div class="text-xs text-muted-foreground">
+										Daily goal: {activity.dailyGoal} minutes
+									</div>
+								{/if}
+							</div>
+							<Play class="ml-2 h-4 w-4" />
+						</Button>
+					{/each}
+				</div>
+			{/if}
 		</div>
 	{/if}
 </ScrollArea>
