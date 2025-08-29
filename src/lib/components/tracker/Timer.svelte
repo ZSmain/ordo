@@ -13,7 +13,7 @@
 	let { categoryName, activityName, seconds, onStop }: Props = $props();
 </script>
 
-<div class="rounded-2xl bg-slate-800 p-3 text-white">
+<div class="rounded-2xl bg-slate-800 px-3 py-2 text-white">
 	<div class="flex items-center justify-between">
 		<div>
 			<div class="mb-1 text-sm text-gray-300">{categoryName} / {activityName}</div>

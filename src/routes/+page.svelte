@@ -9,7 +9,8 @@
 	let currentCategory = $state('');
 	let currentActivity = $state('');
 	let timerSeconds = $state(0);
-	let stopTimer = $state(() => {});
+	let timerInterval: ReturnType<typeof setInterval> | null = null;
+
 
 	// Selected category state
 	let selectedCategoryId = $state<string>('');
@@ -36,11 +37,37 @@
 			: null;
 	});
 
+	// Start timer function
+	function startTimer() {
+		isTimerActive = true;
+		timerSeconds = 0;
+		timerInterval = setInterval(() => {
+			timerSeconds++;
+		}, 1000);
+	}
+
+	// Stop timer function
+	function stopTimer() {
+		isTimerActive = false;
+		if (timerInterval) {
+			clearInterval(timerInterval);
+			timerInterval = null;
+		}
+		timerSeconds = 0;
+		currentCategory = '';
+		currentActivity = '';
+	}
+
 	// Handle activity selection
 	function handleActivitySelect(categoryName: string, activityName: string) {
+		// Stop any existing timer first
+		if (isTimerActive) {
+			stopTimer();
+		}
+
 		currentCategory = categoryName;
 		currentActivity = activityName;
-		// Here you would typically start the timer
+		startTimer();
 	}
 </script>
 
