@@ -2,7 +2,7 @@
 	import { ActivityList, CategorySelector, Timer } from '$lib/components/tracker';
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
 	import { Separator } from '$lib/components/ui/separator';
-	import { getCategoriesWithActivities } from './data.remote';
+	import { getCategoriesWithActivities, startTimerSession, stopTimerSession } from './data.remote';
 
 	// Timer state
 	let isTimerActive = $state(false);
@@ -10,7 +10,7 @@
 	let currentActivity = $state('');
 	let timerSeconds = $state(0);
 	let timerInterval: ReturnType<typeof setInterval> | null = null;
-
+	let currentSessionId = $state<number | null>(null);
 
 	// Selected category state
 	let selectedCategoryId = $state<string>('');
@@ -38,36 +38,87 @@
 	});
 
 	// Start timer function
-	function startTimer() {
-		isTimerActive = true;
-		timerSeconds = 0;
-		timerInterval = setInterval(() => {
-			timerSeconds++;
-		}, 1000);
+	async function startTimer(activityId: number) {
+		try {
+			// Start session in database using remote function with activity ID parameter
+			const session = await startTimerSession(activityId);
+			currentSessionId = session.id;
+
+			// Start UI timer
+			isTimerActive = true;
+			timerSeconds = 0;
+			timerInterval = setInterval(() => {
+				timerSeconds++;
+			}, 1000);
+		} catch (error) {
+			console.error('Failed to start timer session:', error);
+			// Still show timer even if DB save fails
+			isTimerActive = true;
+			timerSeconds = 0;
+			timerInterval = setInterval(() => {
+				timerSeconds++;
+			}, 1000);
+		}
 	}
 
 	// Stop timer function
-	function stopTimer() {
-		isTimerActive = false;
-		if (timerInterval) {
-			clearInterval(timerInterval);
-			timerInterval = null;
+	async function stopTimer() {
+		try {
+			// Stop session in database if we have a session ID
+			if (currentSessionId) {
+				await stopTimerSession(currentSessionId);
+				currentSessionId = null;
+			}
+		} catch (error) {
+			console.error('Failed to stop timer session:', error);
+		} finally {
+			// Always stop the UI timer
+			isTimerActive = false;
+			if (timerInterval) {
+				clearInterval(timerInterval);
+				timerInterval = null;
+			}
+			timerSeconds = 0;
+			currentCategory = '';
+			currentActivity = '';
 		}
-		timerSeconds = 0;
-		currentCategory = '';
-		currentActivity = '';
 	}
 
 	// Handle activity selection
-	function handleActivitySelect(categoryName: string, activityName: string) {
+	async function handleActivitySelect(categoryName: string, activityName: string) {
 		// Stop any existing timer first
 		if (isTimerActive) {
-			stopTimer();
+			await stopTimer();
 		}
 
-		currentCategory = categoryName;
-		currentActivity = activityName;
-		startTimer();
+		try {
+			// Get categories data to find the activity ID
+			const categoriesData = await getCategoriesWithActivities();
+
+			const foundCategory = categoriesData.find((cat) => cat.name === categoryName);
+			if (!foundCategory) {
+				console.error('Category not found:', categoryName);
+				return;
+			}
+
+			const foundActivity = foundCategory.activities.find((act) => act.name === activityName);
+			if (!foundActivity) {
+				console.error('Activity not found:', activityName);
+				return;
+			}
+
+			// Set the activity ID in the module state by calling a temporary command
+			// For now, we'll set it directly in client side and pass it differently
+
+			// Set current activity info
+			currentCategory = categoryName;
+			currentActivity = activityName;
+
+			// Start timer with the found activity ID
+			await startTimer(foundActivity.id);
+		} catch (error) {
+			console.error('Failed to start activity:', error);
+		}
 	}
 </script>
 
