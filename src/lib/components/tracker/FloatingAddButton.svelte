@@ -1,15 +1,17 @@
 <script lang="ts">
-	import { CreateCategory } from '$lib/components/tracker';
+	import { CreateActivity, CreateCategory } from '$lib/components/tracker';
 	import { Button } from '$lib/components/ui/button';
 
 	interface Props {
 		onCategoryCreated?: () => void;
+		onActivityCreated?: () => void;
 	}
 
-	let { onCategoryCreated }: Props = $props();
+	let { onCategoryCreated, onActivityCreated }: Props = $props();
 
 	let isExpanded = $state(false);
 	let showCategoryForm = $state(false);
+	let showActivityForm = $state(false);
 
 	function toggleExpanded() {
 		isExpanded = !isExpanded;
@@ -19,11 +21,22 @@
 		showCategoryForm = true;
 	}
 
+	function openActivityForm() {
+		showActivityForm = true;
+	}
+
 	function handleCategoryCreated() {
 		// Collapse the floating button after successful creation
 		isExpanded = false;
 		// Notify parent component
 		onCategoryCreated?.();
+	}
+
+	function handleActivityCreated() {
+		// Collapse the floating button after successful creation
+		isExpanded = false;
+		// Notify parent component
+		onActivityCreated?.();
 	}
 </script>
 
@@ -45,7 +58,7 @@
 				variant="secondary"
 				size="sm"
 				class="whitespace-nowrap shadow-lg transition-shadow hover:shadow-xl"
-				disabled
+				onclick={openActivityForm}
 			>
 				<span class="mr-2">⚡</span>
 				Create Activity
@@ -80,3 +93,6 @@
 
 <!-- Create Category Form -->
 <CreateCategory bind:open={showCategoryForm} onCategoryCreated={handleCategoryCreated} />
+
+<!-- Create Activity Form -->
+<CreateActivity bind:open={showActivityForm} onActivityCreated={handleActivityCreated} />

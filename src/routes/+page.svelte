@@ -131,6 +131,12 @@
 		// Refresh the categories query
 		categoriesQuery.refresh();
 	}
+
+	// Handle activity creation
+	function handleActivityCreated() {
+		// Refresh the categories query to get updated activities
+		categoriesQuery.refresh();
+	}
 </script>
 
 <svelte:head>
@@ -170,4 +176,7 @@
 </ScrollArea>
 
 <!-- Floating Add Button -->
-<FloatingAddButton onCategoryCreated={handleCategoryCreated} />
+<FloatingAddButton
+	onCategoryCreated={handleCategoryCreated}
+	onActivityCreated={handleActivityCreated}
+/>

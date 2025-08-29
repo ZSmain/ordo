@@ -1,6 +1,6 @@
 import { command, query } from '$app/server';
 import { db } from '$lib/server/db';
-import { activity, category, insertCategorySchema, timeSession } from '$lib/server/db/schema';
+import { activity, category, insertActivitySchema, insertCategorySchema, timeSession } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import * as v from 'valibot';
 
@@ -76,5 +76,18 @@ export const createCategory = command(
             .get();
 
         return newCategory;
+    }
+);
+
+// Create a new activity
+export const createActivity = command(
+    insertActivitySchema,
+    async (activityData) => {
+        const newActivity = await db.insert(activity)
+            .values(activityData)
+            .returning()
+            .get();
+
+        return newActivity;
     }
 );
