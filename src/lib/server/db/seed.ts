@@ -1,8 +1,8 @@
-import { drizzle } from 'drizzle-orm/libsql';
 import { createClient } from '@libsql/client';
 import { config } from 'dotenv';
+import { drizzle } from 'drizzle-orm/libsql';
 import * as schema from './schema';
-import { category, activity } from './schema';
+import { activity, category } from './schema';
 
 // Load .env file
 config();
