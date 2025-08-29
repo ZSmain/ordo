@@ -36,7 +36,7 @@ export const timeSession = sqliteTable("time_session", {
 		.notNull()
 		.$defaultFn(() => new Date()),
 	stoppedAt: integer("stopped_at", { mode: "timestamp" }),
-	duration: integer("duration"), // in minutes, calculated when session ends
+	duration: integer("duration"), // in seconds, calculated when session ends
 	notes: text("notes"), // optional notes for the time session
 	createdAt: integer("created_at", { mode: "timestamp" })
 		.$defaultFn(() => new Date())
@@ -113,7 +113,7 @@ export const insertTimeSessionSchema = createInsertSchema(timeSession, {
 	duration: v.optional(
 		v.pipe(
 			v.number("Duration must be a number"),
-			v.minValue(1, "Duration must be at least 1 minute")
+			v.minValue(1, "Duration must be at least 1 second")
 		)
 	),
 	notes: v.optional(

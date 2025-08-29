@@ -50,12 +50,12 @@ export const stopTimerSession = command(
         }
         
         const stoppedAt = new Date();
-        const durationMinutes = Math.round((stoppedAt.getTime() - session.startedAt.getTime()) / (1000 * 60));
+        const durationSeconds = Math.round((stoppedAt.getTime() - session.startedAt.getTime()) / 1000);
         
         const updatedSession = await db.update(timeSession)
             .set({
                 stoppedAt,
-                duration: durationMinutes,
+                duration: durationSeconds,
                 updatedAt: new Date(),
             })
             .where(eq(timeSession.id, sessionId))
