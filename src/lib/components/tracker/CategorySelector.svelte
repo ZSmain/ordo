@@ -43,7 +43,7 @@
 		>
 			{#each categories as category (category.id)}
 				<Label
-					class="flex cursor-pointer items-start gap-3 rounded-lg border p-3 has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:bg-input/20"
+					class="flex cursor-pointer flex-col items-center gap-2 rounded-lg border p-3 has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:bg-input/20"
 					style="background-color: {category.color}20"
 				>
 					<RadioGroup.Item
@@ -51,11 +51,11 @@
 						id={String(category.id)}
 						class="sr-only data-[state=checked]:border-primary"
 					/>
-					<div class="grid gap-1 font-normal">
-						<div class="font-medium">{category.name}</div>
-						<div class="text-xs leading-snug text-balance text-muted-foreground">
+					<div class="flex flex-col items-center gap-1 font-normal">
+						<div class="text-lg leading-snug">
 							{category.icon}
 						</div>
+						<div class="text-center font-medium">{category.name}</div>
 					</div>
 				</Label>
 			{/each}
