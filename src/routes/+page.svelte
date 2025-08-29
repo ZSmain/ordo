@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { ActivityList, CategorySelector, Timer } from '$lib/components/tracker';
+	import {
+		ActivityList,
+		CategorySelector,
+		FloatingAddButton,
+		Timer
+	} from '$lib/components/tracker';
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
 	import { Separator } from '$lib/components/ui/separator';
 	import { getCategoriesWithActivities, startTimerSession, stopTimerSession } from './data.remote';
@@ -120,6 +125,12 @@
 			console.error('Failed to start activity:', error);
 		}
 	}
+
+	// Handle category creation
+	function handleCategoryCreated() {
+		// Refresh the categories query
+		categoriesQuery.refresh();
+	}
 </script>
 
 <svelte:head>
@@ -157,3 +168,6 @@
 	<!-- Activities for Selected Category -->
 	<ActivityList category={selectedCategory} onActivitySelect={handleActivitySelect} />
 </ScrollArea>
+
+<!-- Floating Add Button -->
+<FloatingAddButton onCategoryCreated={handleCategoryCreated} />

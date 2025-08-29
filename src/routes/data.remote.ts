@@ -1,6 +1,6 @@
 import { command, query } from '$app/server';
 import { db } from '$lib/server/db';
-import { activity, category, timeSession } from '$lib/server/db/schema';
+import { activity, category, insertCategorySchema, timeSession } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import * as v from 'valibot';
 
@@ -8,7 +8,7 @@ import * as v from 'valibot';
 export const getCategoriesWithActivities = query(async () => {
     const categories = await db.select().from(category).all();
     const activities = await db.select().from(activity).all();
-    
+
     const categoriesWithActivities = categories.map(cat => {
         const categoryActivities = activities.filter(act => act.categoryId === cat.id);
         return {
@@ -16,11 +16,11 @@ export const getCategoriesWithActivities = query(async () => {
             activities: categoryActivities
         };
     });
-    
+
     return categoriesWithActivities;
 });
 
-// Command to start timer session with activity ID
+// Start timer session with activity ID
 export const startTimerSession = command(
     v.pipe(v.number(), v.minValue(1, 'Activity ID must be a positive number')),
     async (activityId) => {
@@ -31,12 +31,12 @@ export const startTimerSession = command(
             })
             .returning()
             .get();
-        
+
         return newSession;
     }
 );
 
-// Command to stop timer session with session ID
+// Stop session timer with session ID
 export const stopTimerSession = command(
     v.pipe(v.number(), v.minValue(1, 'Session ID must be a positive number')),
     async (sessionId) => {
@@ -44,14 +44,14 @@ export const stopTimerSession = command(
             .from(timeSession)
             .where(eq(timeSession.id, sessionId))
             .get();
-        
+
         if (!session || session.stoppedAt) {
             throw new Error('Session not found or already stopped');
         }
-        
+
         const stoppedAt = new Date();
         const durationSeconds = Math.round((stoppedAt.getTime() - session.startedAt.getTime()) / 1000);
-        
+
         const updatedSession = await db.update(timeSession)
             .set({
                 stoppedAt,
@@ -61,7 +61,20 @@ export const stopTimerSession = command(
             .where(eq(timeSession.id, sessionId))
             .returning()
             .get();
-        
+
         return updatedSession;
+    }
+);
+
+// Create a new category
+export const createCategory = command(
+    insertCategorySchema,
+    async (categoryData) => {
+        const newCategory = await db.insert(category)
+            .values(categoryData)
+            .returning()
+            .get();
+
+        return newCategory;
     }
 );
