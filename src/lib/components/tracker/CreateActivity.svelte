@@ -12,15 +12,16 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import type { InsertActivity } from '$lib/server/db/schema';
-	import { createActivity, getCategoriesWithActivities } from '../../../routes/data.remote';
+	import { createActivity, getCategoriesWithActivities } from '../../../routes/(app)/data.remote';
 
 	interface Props {
 		open: boolean;
 		onOpenChange?: (open: boolean) => void;
 		onActivityCreated?: () => void;
+		userId: string;
 	}
 
-	let { open = $bindable(), onOpenChange, onActivityCreated }: Props = $props();
+	let { open = $bindable(), onOpenChange, onActivityCreated, userId }: Props = $props();
 
 	let activityForm = $state({
 		name: '',
@@ -32,7 +33,7 @@
 	});
 
 	// Get categories for selection
-	const categoriesQuery = getCategoriesWithActivities();
+	const categoriesQuery = getCategoriesWithActivities(userId);
 
 	// Available icons for activity
 	const icons = ['⚡', '🏃‍♂️', '📚', '💻', '🎨', '🍽️', '🛠️', '🎵', '🧘‍♀️', '💼'];
@@ -45,6 +46,7 @@
 				name: activityForm.name.trim(),
 				icon: activityForm.icon,
 				categoryId: activityForm.categoryId,
+				userId,
 				...(activityForm.dailyGoal && { dailyGoal: activityForm.dailyGoal }),
 				...(activityForm.weeklyGoal && { weeklyGoal: activityForm.weeklyGoal }),
 				...(activityForm.monthlyGoal && { monthlyGoal: activityForm.monthlyGoal })

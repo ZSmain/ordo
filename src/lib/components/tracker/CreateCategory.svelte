@@ -12,15 +12,16 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import type { InsertCategory } from '$lib/server/db/schema';
-	import { createCategory } from '../../../routes/data.remote';
+	import { createCategory } from '../../../routes/(app)/data.remote';
 
 	interface Props {
 		open: boolean;
 		onOpenChange?: (open: boolean) => void;
 		onCategoryCreated?: () => void;
+		userId: string;
 	}
 
-	let { open = $bindable(), onOpenChange, onCategoryCreated }: Props = $props();
+	let { open = $bindable(), onOpenChange, onCategoryCreated, userId }: Props = $props();
 
 	let categoryForm = $state({
 		name: '',
@@ -52,7 +53,8 @@
 			const categoryData: InsertCategory = {
 				name: categoryForm.name.trim(),
 				color: categoryForm.color,
-				icon: categoryForm.icon
+				icon: categoryForm.icon,
+				userId
 			};
 
 			await createCategory(categoryData);

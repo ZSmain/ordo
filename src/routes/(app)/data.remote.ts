@@ -4,29 +4,36 @@ import { activity, category, insertActivitySchema, insertCategorySchema, timeSes
 import { eq } from 'drizzle-orm';
 import * as v from 'valibot';
 
-// Return all categories with their activities
-export const getCategoriesWithActivities = query(async () => {
-    const categories = await db.select().from(category).all();
-    const activities = await db.select().from(activity).all();
+// Return all categories with their activities for the current user
+export const getCategoriesWithActivities = query(
+    v.string(), // userId
+    async (userId) => {
+        const categories = await db.select().from(category).where(eq(category.userId, userId)).all();
+        const activities = await db.select().from(activity).where(eq(activity.userId, userId)).all();
 
-    const categoriesWithActivities = categories.map(cat => {
-        const categoryActivities = activities.filter(act => act.categoryId === cat.id);
-        return {
-            ...cat,
-            activities: categoryActivities
-        };
-    });
+        const categoriesWithActivities = categories.map(cat => {
+            const categoryActivities = activities.filter(act => act.categoryId === cat.id);
+            return {
+                ...cat,
+                activities: categoryActivities
+            };
+        });
 
-    return categoriesWithActivities;
-});
+        return categoriesWithActivities;
+    }
+);
 
 // Start timer session with activity ID
 export const startTimerSession = command(
-    v.pipe(v.number(), v.minValue(1, 'Activity ID must be a positive number')),
-    async (activityId) => {
+    v.object({
+        activityId: v.pipe(v.number(), v.minValue(1, 'Activity ID must be a positive number')),
+        userId: v.string()
+    }),
+    async ({ activityId, userId }) => {
         const newSession = await db.insert(timeSession)
             .values({
                 activityId,
+                userId,
                 startedAt: new Date(),
             })
             .returning()
@@ -38,15 +45,18 @@ export const startTimerSession = command(
 
 // Stop session timer with session ID
 export const stopTimerSession = command(
-    v.pipe(v.number(), v.minValue(1, 'Session ID must be a positive number')),
-    async (sessionId) => {
+    v.object({
+        sessionId: v.pipe(v.number(), v.minValue(1, 'Session ID must be a positive number')),
+        userId: v.string()
+    }),
+    async ({ sessionId, userId }) => {
         const session = await db.select()
             .from(timeSession)
             .where(eq(timeSession.id, sessionId))
             .get();
 
-        if (!session || session.stoppedAt) {
-            throw new Error('Session not found or already stopped');
+        if (!session || session.stoppedAt || session.userId !== userId) {
+            throw new Error('Session not found, already stopped, or unauthorized');
         }
 
         const stoppedAt = new Date();
@@ -68,7 +78,10 @@ export const stopTimerSession = command(
 
 // Create a new category
 export const createCategory = command(
-    insertCategorySchema,
+    v.object({
+        ...insertCategorySchema.entries,
+        userId: v.string()
+    }),
     async (categoryData) => {
         const newCategory = await db.insert(category)
             .values(categoryData)
@@ -81,7 +94,10 @@ export const createCategory = command(
 
 // Create a new activity
 export const createActivity = command(
-    insertActivitySchema,
+    v.object({
+        ...insertActivitySchema.entries,
+        userId: v.string()
+    }),
     async (activityData) => {
         const newActivity = await db.insert(activity)
             .values(activityData)

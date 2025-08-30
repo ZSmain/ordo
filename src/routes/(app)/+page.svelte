@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import {
 		ActivityList,
 		CategorySelector,
@@ -8,6 +9,9 @@
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
 	import { Separator } from '$lib/components/ui/separator';
 	import { getCategoriesWithActivities, startTimerSession, stopTimerSession } from './data.remote';
+
+	// Get user from page data
+	const user = $derived(page.data?.user);
 
 	// Timer state
 	let isTimerActive = $state(false);
@@ -20,13 +24,16 @@
 	// Selected category state
 	let selectedCategoryId = $state<string>('');
 
-	// Get categories with activities query
-	const categoriesQuery = getCategoriesWithActivities();
+	// Get categories with activities query - only if user is available
+	const categoriesQuery = $derived.by(() => {
+		if (!user?.id) return null;
+		return getCategoriesWithActivities(user.id);
+	});
 
 	// Computed: selected category with activities
 	const selectedCategory = $derived.by(() => {
 		// Don't process if no category is selected or data isn't loaded
-		if (!selectedCategoryId || !categoriesQuery.current) {
+		if (!selectedCategoryId || !categoriesQuery?.current) {
 			return null;
 		}
 
@@ -44,9 +51,11 @@
 
 	// Start timer function
 	async function startTimer(activityId: number) {
+		if (!user?.id) return;
+
 		try {
 			// Start session in database using remote function with activity ID parameter
-			const session = await startTimerSession(activityId);
+			const session = await startTimerSession({ activityId, userId: user.id });
 			currentSessionId = session.id;
 
 			// Start UI timer
@@ -70,8 +79,8 @@
 	async function stopTimer() {
 		try {
 			// Stop session in database if we have a session ID
-			if (currentSessionId) {
-				await stopTimerSession(currentSessionId);
+			if (currentSessionId && user?.id) {
+				await stopTimerSession({ sessionId: currentSessionId, userId: user.id });
 				currentSessionId = null;
 			}
 		} catch (error) {
@@ -91,6 +100,8 @@
 
 	// Handle activity selection
 	async function handleActivitySelect(categoryName: string, activityName: string) {
+		if (!user?.id) return;
+
 		// Stop any existing timer first
 		if (isTimerActive) {
 			await stopTimer();
@@ -98,7 +109,7 @@
 
 		try {
 			// Get categories data to find the activity ID
-			const categoriesData = await getCategoriesWithActivities();
+			const categoriesData = await getCategoriesWithActivities(user.id);
 
 			const foundCategory = categoriesData.find((cat) => cat.name === categoryName);
 			if (!foundCategory) {
@@ -111,9 +122,6 @@
 				console.error('Activity not found:', activityName);
 				return;
 			}
-
-			// Set the activity ID in the module state by calling a temporary command
-			// For now, we'll set it directly in client side and pass it differently
 
 			// Set current activity info
 			currentCategory = categoryName;
@@ -129,13 +137,17 @@
 	// Handle category creation
 	function handleCategoryCreated() {
 		// Refresh the categories query
-		categoriesQuery.refresh();
+		if (user?.id) {
+			categoriesQuery?.refresh();
+		}
 	}
 
 	// Handle activity creation
 	function handleActivityCreated() {
 		// Refresh the categories query to get updated activities
-		categoriesQuery.refresh();
+		if (user?.id) {
+			categoriesQuery?.refresh();
+		}
 	}
 </script>
 
@@ -165,10 +177,10 @@
 
 	<!-- Categories -->
 	<CategorySelector
-		categories={categoriesQuery.current || []}
+		categories={categoriesQuery?.current || []}
 		bind:selectedCategoryId
-		loading={categoriesQuery.loading}
-		error={categoriesQuery.error}
+		loading={categoriesQuery?.loading || false}
+		error={categoriesQuery?.error}
 	/>
 
 	<!-- Activities for Selected Category -->
@@ -179,4 +191,5 @@
 <FloatingAddButton
 	onCategoryCreated={handleCategoryCreated}
 	onActivityCreated={handleActivityCreated}
+	userId={user?.id || ''}
 />

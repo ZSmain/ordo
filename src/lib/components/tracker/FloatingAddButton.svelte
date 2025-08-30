@@ -5,9 +5,10 @@
 	interface Props {
 		onCategoryCreated?: () => void;
 		onActivityCreated?: () => void;
+		userId: string;
 	}
 
-	let { onCategoryCreated, onActivityCreated }: Props = $props();
+	let { onCategoryCreated, onActivityCreated, userId }: Props = $props();
 
 	let isExpanded = $state(false);
 	let showCategoryForm = $state(false);
@@ -92,7 +93,7 @@
 </div>
 
 <!-- Create Category Form -->
-<CreateCategory bind:open={showCategoryForm} onCategoryCreated={handleCategoryCreated} />
+<CreateCategory bind:open={showCategoryForm} onCategoryCreated={handleCategoryCreated} {userId} />
 
 <!-- Create Activity Form -->
-<CreateActivity bind:open={showActivityForm} onActivityCreated={handleActivityCreated} />
+<CreateActivity bind:open={showActivityForm} onActivityCreated={handleActivityCreated} {userId} />
