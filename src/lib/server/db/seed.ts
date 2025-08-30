@@ -2,7 +2,7 @@ import { createClient } from '@libsql/client';
 import { config } from 'dotenv';
 import { drizzle } from 'drizzle-orm/libsql';
 import * as schema from './schema';
-import { activity, category } from './schema';
+import { activity, category, user } from './schema';
 
 // Load .env file
 config();
@@ -19,37 +19,56 @@ async function seed() {
 	const client = createClient({ url: databaseUrl });
 	const db = drizzle(client, { schema });
 
+	// Create a default user for seeded data
+	console.log('Creating default user...');
+	const defaultUser = {
+		id: 'default-user',
+		name: 'Demo User',
+		email: 'demo@example.com',
+		emailVerified: true,
+		image: null
+	};
+
+	const insertedUsers = await db.insert(user).values(defaultUser).returning();
+	const defaultUserId = insertedUsers[0].id;
+
 	// Create example categories
 	const categories = [
 		{
 			name: 'Work',
 			color: '#3B82F6', // Blue
-			icon: '💼'
+			icon: '💼',
+			userId: defaultUserId
 		},
 		{
 			name: 'Health & Fitness',
 			color: '#10B981', // Green
-			icon: '💪'
+			icon: '💪',
+			userId: defaultUserId
 		},
 		{
 			name: 'Learning',
 			color: '#8B5CF6', // Purple
-			icon: '📚'
+			icon: '📚',
+			userId: defaultUserId
 		},
 		{
 			name: 'Personal',
 			color: '#F59E0B', // Amber
-			icon: '🏠'
+			icon: '🏠',
+			userId: defaultUserId
 		},
 		{
 			name: 'Creative',
 			color: '#EF4444', // Red
-			icon: '🎨'
+			icon: '🎨',
+			userId: defaultUserId
 		},
 		{
 			name: 'Social',
 			color: '#EC4899', // Pink
-			icon: '👥'
+			icon: '👥',
+			userId: defaultUserId
 		}
 	];
 
@@ -65,7 +84,8 @@ async function seed() {
 			dailyGoal: 240, // 4 hours
 			weeklyGoal: 1200, // 20 hours
 			monthlyGoal: 4800, // 80 hours
-			categoryId: insertedCategories[0].id
+			categoryId: insertedCategories[0].id,
+			userId: defaultUserId
 		},
 		{
 			name: 'Email & Communication',
@@ -73,7 +93,8 @@ async function seed() {
 			dailyGoal: 60, // 1 hour
 			weeklyGoal: 300, // 5 hours
 			monthlyGoal: 1200, // 20 hours
-			categoryId: insertedCategories[0].id
+			categoryId: insertedCategories[0].id,
+			userId: defaultUserId
 		},
 		{
 			name: 'Meetings',
@@ -81,7 +102,8 @@ async function seed() {
 			dailyGoal: 120, // 2 hours
 			weeklyGoal: 600, // 10 hours
 			monthlyGoal: 2400, // 40 hours
-			categoryId: insertedCategories[0].id
+			categoryId: insertedCategories[0].id,
+			userId: defaultUserId
 		},
 
 		// Health & Fitness activities
@@ -91,7 +113,8 @@ async function seed() {
 			dailyGoal: 60, // 1 hour
 			weeklyGoal: 300, // 5 hours
 			monthlyGoal: 1200, // 20 hours
-			categoryId: insertedCategories[1].id
+			categoryId: insertedCategories[1].id,
+			userId: defaultUserId
 		},
 		{
 			name: 'Meditation',
@@ -99,7 +122,8 @@ async function seed() {
 			dailyGoal: 20, // 20 minutes
 			weeklyGoal: 140, // 2 hours 20 minutes
 			monthlyGoal: 600, // 10 hours
-			categoryId: insertedCategories[1].id
+			categoryId: insertedCategories[1].id,
+			userId: defaultUserId
 		},
 		{
 			name: 'Healthy Meal Prep',
@@ -107,7 +131,8 @@ async function seed() {
 			dailyGoal: 45, // 45 minutes
 			weeklyGoal: 210, // 3.5 hours
 			monthlyGoal: 900, // 15 hours
-			categoryId: insertedCategories[1].id
+			categoryId: insertedCategories[1].id,
+			userId: defaultUserId
 		},
 
 		// Learning activities
@@ -117,7 +142,8 @@ async function seed() {
 			dailyGoal: 30, // 30 minutes
 			weeklyGoal: 210, // 3.5 hours
 			monthlyGoal: 900, // 15 hours
-			categoryId: insertedCategories[2].id
+			categoryId: insertedCategories[2].id,
+			userId: defaultUserId
 		},
 		{
 			name: 'Online Courses',
@@ -125,7 +151,8 @@ async function seed() {
 			dailyGoal: 60, // 1 hour
 			weeklyGoal: 300, // 5 hours
 			monthlyGoal: 1200, // 20 hours
-			categoryId: insertedCategories[2].id
+			categoryId: insertedCategories[2].id,
+			userId: defaultUserId
 		},
 		{
 			name: 'Practice Coding',
@@ -133,7 +160,8 @@ async function seed() {
 			dailyGoal: 90, // 1.5 hours
 			weeklyGoal: 450, // 7.5 hours
 			monthlyGoal: 1800, // 30 hours
-			categoryId: insertedCategories[2].id
+			categoryId: insertedCategories[2].id,
+			userId: defaultUserId
 		},
 
 		// Personal activities
@@ -143,7 +171,8 @@ async function seed() {
 			dailyGoal: 60, // 1 hour
 			weeklyGoal: 300, // 5 hours
 			monthlyGoal: 1200, // 20 hours
-			categoryId: insertedCategories[3].id
+			categoryId: insertedCategories[3].id,
+			userId: defaultUserId
 		},
 		{
 			name: 'Personal Finance',
@@ -151,7 +180,8 @@ async function seed() {
 			dailyGoal: 15, // 15 minutes
 			weeklyGoal: 60, // 1 hour
 			monthlyGoal: 240, // 4 hours
-			categoryId: insertedCategories[3].id
+			categoryId: insertedCategories[3].id,
+			userId: defaultUserId
 		},
 		{
 			name: 'Journaling',
@@ -159,7 +189,8 @@ async function seed() {
 			dailyGoal: 10, // 10 minutes
 			weeklyGoal: 70, // ~1 hour 10 minutes
 			monthlyGoal: 300, // 5 hours
-			categoryId: insertedCategories[3].id
+			categoryId: insertedCategories[3].id,
+			userId: defaultUserId
 		},
 
 		// Creative activities
@@ -169,7 +200,8 @@ async function seed() {
 			dailyGoal: 60, // 1 hour
 			weeklyGoal: 300, // 5 hours
 			monthlyGoal: 1200, // 20 hours
-			categoryId: insertedCategories[4].id
+			categoryId: insertedCategories[4].id,
+			userId: defaultUserId
 		},
 		{
 			name: 'Digital Art',
@@ -177,7 +209,8 @@ async function seed() {
 			dailyGoal: 90, // 1.5 hours
 			weeklyGoal: 360, // 6 hours
 			monthlyGoal: 1440, // 24 hours
-			categoryId: insertedCategories[4].id
+			categoryId: insertedCategories[4].id,
+			userId: defaultUserId
 		},
 		{
 			name: 'Music Practice',
@@ -185,7 +218,8 @@ async function seed() {
 			dailyGoal: 45, // 45 minutes
 			weeklyGoal: 225, // 3.75 hours
 			monthlyGoal: 900, // 15 hours
-			categoryId: insertedCategories[4].id
+			categoryId: insertedCategories[4].id,
+			userId: defaultUserId
 		},
 
 		// Social activities
@@ -195,7 +229,8 @@ async function seed() {
 			dailyGoal: 120, // 2 hours
 			weeklyGoal: 600, // 10 hours
 			monthlyGoal: 2400, // 40 hours
-			categoryId: insertedCategories[5].id
+			categoryId: insertedCategories[5].id,
+			userId: defaultUserId
 		},
 		{
 			name: 'Friend Calls',
@@ -203,7 +238,8 @@ async function seed() {
 			dailyGoal: 30, // 30 minutes
 			weeklyGoal: 150, // 2.5 hours
 			monthlyGoal: 600, // 10 hours
-			categoryId: insertedCategories[5].id
+			categoryId: insertedCategories[5].id,
+			userId: defaultUserId
 		},
 		{
 			name: 'Networking',
@@ -211,7 +247,8 @@ async function seed() {
 			dailyGoal: 45, // 45 minutes
 			weeklyGoal: 180, // 3 hours
 			monthlyGoal: 720, // 12 hours
-			categoryId: insertedCategories[5].id
+			categoryId: insertedCategories[5].id,
+			userId: defaultUserId
 		}
 	];
 
@@ -219,6 +256,7 @@ async function seed() {
 	await db.insert(activity).values(activities);
 
 	console.log('✅ Database seeded successfully!');
+	console.log(`Created default user: ${defaultUser.name} (${defaultUser.email})`);
 	console.log(`Created ${insertedCategories.length} categories and ${activities.length} activities`);
 }
 

@@ -7,6 +7,15 @@ export const category = sqliteTable("category", {
 	name: text("name").notNull(),
 	color: text("color").notNull(),
 	icon: text("icon").notNull(),
+	userId: text("user_id")
+		.notNull()
+		.references(() => user.id, { onDelete: "cascade" }),
+	createdAt: integer("created_at", { mode: "timestamp" })
+		.$defaultFn(() => new Date())
+		.notNull(),
+	updatedAt: integer("updated_at", { mode: "timestamp" })
+		.$defaultFn(() => new Date())
+		.notNull(),
 });
 
 export const activity = sqliteTable("activity", {
@@ -19,6 +28,9 @@ export const activity = sqliteTable("activity", {
 	categoryId: integer("category_id")
 		.notNull()
 		.references(() => category.id, { onDelete: "cascade" }),
+	userId: text("user_id")
+		.notNull()
+		.references(() => user.id, { onDelete: "cascade" }),
 	createdAt: integer("created_at", { mode: "timestamp" })
 		.$defaultFn(() => new Date())
 		.notNull(),
@@ -32,6 +44,9 @@ export const timeSession = sqliteTable("time_session", {
 	activityId: integer("activity_id")
 		.notNull()
 		.references(() => activity.id, { onDelete: "cascade" }),
+	userId: text("user_id")
+		.notNull()
+		.references(() => user.id, { onDelete: "cascade" }),
 	startedAt: integer("started_at", { mode: "timestamp" })
 		.notNull()
 		.$defaultFn(() => new Date()),
@@ -61,6 +76,10 @@ export const insertCategorySchema = createInsertSchema(category, {
 		v.string("Icon must be a string"),
 		v.minLength(1, "Icon is required"),
 		v.maxLength(10, "Icon must be 10 characters or less")
+	),
+	userId: v.pipe(
+		v.string("User ID must be a string"),
+		v.minLength(1, "User ID is required")
 	),
 });
 
@@ -100,6 +119,10 @@ export const insertActivitySchema = createInsertSchema(activity, {
 		v.number("Category ID must be a number"),
 		v.minValue(1, "Category ID must be a valid category")
 	),
+	userId: v.pipe(
+		v.string("User ID must be a string"),
+		v.minLength(1, "User ID is required")
+	),
 });
 
 export const selectActivitySchema = createSelectSchema(activity);
@@ -109,6 +132,10 @@ export const insertTimeSessionSchema = createInsertSchema(timeSession, {
 	activityId: v.pipe(
 		v.number("Activity ID must be a number"),
 		v.minValue(1, "Activity ID must be a valid activity")
+	),
+	userId: v.pipe(
+		v.string("User ID must be a string"),
+		v.minLength(1, "User ID is required")
 	),
 	duration: v.optional(
 		v.pipe(
@@ -197,3 +224,27 @@ export const verification = sqliteTable("verification", {
 		() => new Date(),
 	),
 });
+
+// User validation schemas
+export const insertUserSchema = createInsertSchema(user, {
+	id: v.pipe(
+		v.string("User ID must be a string"),
+		v.minLength(1, "User ID is required")
+	),
+	name: v.pipe(
+		v.string("Name must be a string"),
+		v.minLength(1, "Name is required"),
+		v.maxLength(100, "Name must be 100 characters or less")
+	),
+	email: v.pipe(
+		v.string("Email must be a string"),
+		v.email("Email must be a valid email address")
+	),
+	emailVerified: v.optional(v.boolean("Email verified must be a boolean")),
+	image: v.optional(v.string("Image must be a string")),
+});
+
+export const selectUserSchema = createSelectSchema(user);
+
+export type InsertUser = v.InferInput<typeof insertUserSchema>;
+export type SelectUser = v.InferOutput<typeof selectUserSchema>;
