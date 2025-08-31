@@ -25,6 +25,7 @@ export const activity = sqliteTable("activity", {
 	dailyGoal: integer("daily_goal"), // in minutes
 	weeklyGoal: integer("weekly_goal"), // in minutes
 	monthlyGoal: integer("monthly_goal"), // in minutes
+	archived: integer("archived", { mode: "boolean" }).default(false).notNull(),
 	categoryId: integer("category_id")
 		.notNull()
 		.references(() => category.id, { onDelete: "cascade" }),
@@ -119,6 +120,7 @@ export const insertActivitySchema = createInsertSchema(activity, {
 		v.number("Category ID must be a number"),
 		v.minValue(1, "Category ID must be a valid category")
 	),
+	archived: v.optional(v.boolean("Archived must be a boolean")),
 	userId: v.pipe(
 		v.string("User ID must be a string"),
 		v.minLength(1, "User ID is required")

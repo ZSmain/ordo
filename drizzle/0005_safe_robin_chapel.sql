@@ -1,0 +1,1 @@
+ALTER TABLE `activity` ADD `archived` integer DEFAULT false NOT NULL;
