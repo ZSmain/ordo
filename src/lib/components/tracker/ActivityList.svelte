@@ -6,9 +6,16 @@
 	interface Props {
 		category: CategoryWithActivities | null;
 		onActivitySelect?: (categoryName: string, activityName: string) => void;
+		onActivityUpdated?: () => void;
+		userId?: string;
 	}
 
-	let { category, onActivitySelect }: Props = $props();
+	let { category, onActivitySelect, onActivityUpdated, userId }: Props = $props();
+
+	// Filter out archived activities by default
+	let visibleActivities = $derived(
+		category?.activities?.filter((activity) => !activity.archived) || []
+	);
 </script>
 
 {#if category}
@@ -18,16 +25,18 @@
 			Activities - {category.name}
 		</h2>
 
-		{#if !category.activities || category.activities.length === 0}
+		{#if !visibleActivities || visibleActivities.length === 0}
 			<div class="text-center text-xs text-slate-400">No activities in this category yet</div>
 		{:else}
 			<div class="grid grid-cols-2 gap-3">
-				{#each category.activities as activity (activity.id)}
+				{#each visibleActivities as activity (activity.id)}
 					<ActivityCard
 						{activity}
 						categoryColor={category.color}
 						categoryName={category.name}
 						{onActivitySelect}
+						{onActivityUpdated}
+						{userId}
 					/>
 				{/each}
 			</div>

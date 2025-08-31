@@ -186,7 +186,12 @@
 	/>
 
 	<!-- Activities for Selected Category -->
-	<ActivityList category={selectedCategory} onActivitySelect={handleActivitySelect} />
+	<ActivityList
+		category={selectedCategory}
+		onActivitySelect={handleActivitySelect}
+		onActivityUpdated={handleCategoryCreated}
+		userId={user?.id || ''}
+	/>
 </ScrollArea>
 
 <!-- Floating Add Button -->

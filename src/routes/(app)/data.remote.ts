@@ -181,3 +181,111 @@ export const createActivity = command(
         return newActivity;
     }
 );
+
+// Update an existing activity
+export const updateActivity = command(
+    v.object({
+        id: v.pipe(v.number(), v.minValue(1, 'Activity ID must be a positive number')),
+        name: v.optional(v.pipe(
+            v.string("Activity name must be a string"),
+            v.minLength(1, "Activity name is required"),
+            v.maxLength(100, "Activity name must be 100 characters or less")
+        )),
+        icon: v.optional(v.pipe(
+            v.string("Icon must be a string"),
+            v.minLength(1, "Icon is required"),
+            v.maxLength(10, "Icon must be 10 characters or less")
+        )),
+        dailyGoal: v.optional(v.pipe(
+            v.number("Daily goal must be a number"),
+            v.minValue(1, "Daily goal must be at least 1 minute")
+        )),
+        weeklyGoal: v.optional(v.pipe(
+            v.number("Weekly goal must be a number"),
+            v.minValue(1, "Weekly goal must be at least 1 minute")
+        )),
+        monthlyGoal: v.optional(v.pipe(
+            v.number("Monthly goal must be a number"),
+            v.minValue(1, "Monthly goal must be at least 1 minute")
+        )),
+        archived: v.optional(v.boolean("Archived must be a boolean")),
+        userId: v.string()
+    }),
+    async ({ id, userId, ...updateData }) => {
+        // Only include defined fields in the update
+        const fieldsToUpdate = Object.fromEntries(
+            Object.entries(updateData).filter(([, value]) => value !== undefined)
+        );
+
+        if (Object.keys(fieldsToUpdate).length === 0) {
+            throw new Error('No fields to update');
+        }
+
+        const updatedActivity = await db.update(activity)
+            .set({
+                ...fieldsToUpdate,
+                updatedAt: new Date(),
+            })
+            .where(eq(activity.id, id))
+            .returning()
+            .get();
+
+        if (!updatedActivity || updatedActivity.userId !== userId) {
+            throw new Error('Activity not found or unauthorized');
+        }
+
+        return updatedActivity;
+    }
+);
+
+// Archive/unarchive an activity
+export const archiveActivity = command(
+    v.object({
+        id: v.pipe(v.number(), v.minValue(1, 'Activity ID must be a positive number')),
+        archived: v.boolean("Archived must be a boolean"),
+        userId: v.string()
+    }),
+    async ({ id, archived, userId }) => {
+        const updatedActivity = await db.update(activity)
+            .set({
+                archived,
+                updatedAt: new Date(),
+            })
+            .where(eq(activity.id, id))
+            .returning()
+            .get();
+
+        if (!updatedActivity || updatedActivity.userId !== userId) {
+            throw new Error('Activity not found or unauthorized');
+        }
+
+        return updatedActivity;
+    }
+);
+
+// Delete an activity
+export const deleteActivity = command(
+    v.object({
+        id: v.pipe(v.number(), v.minValue(1, 'Activity ID must be a positive number')),
+        userId: v.string()
+    }),
+    async ({ id, userId }) => {
+        // First check if the activity exists and belongs to the user
+        const existingActivity = await db.select()
+            .from(activity)
+            .where(eq(activity.id, id))
+            .get();
+
+        if (!existingActivity || existingActivity.userId !== userId) {
+            throw new Error('Activity not found or unauthorized');
+        }
+
+        // Delete the activity (time sessions will be cascaded due to foreign key constraint)
+        const deletedActivity = await db.delete(activity)
+            .where(eq(activity.id, id))
+            .returning()
+            .get();
+
+        return deletedActivity;
+    }
+);
