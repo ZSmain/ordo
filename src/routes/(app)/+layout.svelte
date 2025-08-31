@@ -14,9 +14,7 @@
 <div class="flex h-screen flex-col overflow-hidden bg-gray-100">
 	<!-- Main content area with proper scrolling -->
 	<main class="flex-1 overflow-y-auto">
-		<div class="pb-4">
-			{@render children?.()}
-		</div>
+		{@render children?.()}
 	</main>
 
 	<!-- Bottom Navigation - Fixed -->
