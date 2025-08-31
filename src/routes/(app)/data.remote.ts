@@ -92,6 +92,80 @@ export const createCategory = command(
     }
 );
 
+// Update an existing category
+export const updateCategory = command(
+    v.object({
+        id: v.pipe(v.number(), v.minValue(1, 'Category ID must be a positive number')),
+        name: v.optional(v.pipe(
+            v.string("Category name must be a string"),
+            v.minLength(1, "Category name is required"),
+            v.maxLength(50, "Category name must be 50 characters or less")
+        )),
+        color: v.optional(v.pipe(
+            v.string("Color must be a string"),
+            v.regex(/^#[0-9A-Fa-f]{6}$/, "Color must be a valid hex color (e.g., #FF5733)")
+        )),
+        icon: v.optional(v.pipe(
+            v.string("Icon must be a string"),
+            v.minLength(1, "Icon is required"),
+            v.maxLength(10, "Icon must be 10 characters or less")
+        )),
+        userId: v.string()
+    }),
+    async ({ id, userId, ...updateData }) => {
+        // Only include defined fields in the update
+        const fieldsToUpdate = Object.fromEntries(
+            Object.entries(updateData).filter(([, value]) => value !== undefined)
+        );
+
+        if (Object.keys(fieldsToUpdate).length === 0) {
+            throw new Error('No fields to update');
+        }
+
+        const updatedCategory = await db.update(category)
+            .set({
+                ...fieldsToUpdate,
+                updatedAt: new Date(),
+            })
+            .where(eq(category.id, id))
+            .returning()
+            .get();
+
+        if (!updatedCategory || updatedCategory.userId !== userId) {
+            throw new Error('Category not found or unauthorized');
+        }
+
+        return updatedCategory;
+    }
+);
+
+// Delete a category
+export const deleteCategory = command(
+    v.object({
+        id: v.pipe(v.number(), v.minValue(1, 'Category ID must be a positive number')),
+        userId: v.string()
+    }),
+    async ({ id, userId }) => {
+        // First check if the category exists and belongs to the user
+        const existingCategory = await db.select()
+            .from(category)
+            .where(eq(category.id, id))
+            .get();
+
+        if (!existingCategory || existingCategory.userId !== userId) {
+            throw new Error('Category not found or unauthorized');
+        }
+
+        // Delete the category (activities will be cascaded due to foreign key constraint)
+        const deletedCategory = await db.delete(category)
+            .where(eq(category.id, id))
+            .returning()
+            .get();
+
+        return deletedCategory;
+    }
+);
+
 // Create a new activity
 export const createActivity = command(
     v.object({

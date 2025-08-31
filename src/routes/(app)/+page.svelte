@@ -181,6 +181,8 @@
 		bind:selectedCategoryId
 		loading={categoriesQuery?.loading || false}
 		error={categoriesQuery?.error}
+		onCategoryUpdated={handleCategoryCreated}
+		userId={user?.id || ''}
 	/>
 
 	<!-- Activities for Selected Category -->
