@@ -60,25 +60,21 @@
 	}
 </script>
 
-<div class="rounded-lg border p-4 transition-colors hover:bg-muted/50">
-	<div class="flex items-start justify-between gap-4">
+<div
+	class="rounded-lg border p-1 transition-colors hover:opacity-90"
+	style="background-color: {session.category.color}10"
+>
+	<div class="flex items-start justify-between gap-2">
 		<div class="flex flex-1 items-center gap-3">
-			<!-- Category indicator -->
-			<div
-				class="h-3 w-3 flex-shrink-0 rounded-full"
-				style="background-color: {session.category.color}"
-			></div>
+			<!-- Activity icon -->
+			<span class="flex-shrink-0 text-lg">{session.activity.icon}</span>
 
 			<!-- Activity info -->
 			<div class="min-w-0 flex-1">
-				<div class="mb-1 flex items-center gap-2">
-					<span class="text-lg">{session.activity.icon}</span>
-					<h3 class="truncate text-sm font-medium">{session.activity.name}</h3>
-				</div>
-
-				<div class="flex items-center gap-2 text-xs text-muted-foreground">
-					<span>{session.category.icon}</span>
-					<span>{session.category.name}</span>
+				<div class="mb-1">
+					<h3 class="truncate text-sm font-medium">
+						{session.category.name} / {session.activity.name}
+					</h3>
 				</div>
 
 				<div class="mt-1 text-xs text-muted-foreground">
