@@ -6,38 +6,22 @@ import { redirect } from '@sveltejs/kit';
 export const login = form(async (data) => {
     const email = data.get('email');
     const password = data.get('password');
-
-    if (typeof email !== 'string' || typeof password !== 'string') {
-        throw new Error('Email and password are required');
-    }
-
-    if (!email || !password) {
-        throw new Error('Please fill in all fields');
-    }
+    const redirectTo = (data.get('redirectTo') as string) || '/';
 
     try {
-        const event = getRequestEvent();
-
-        const result = await auth.api.signInEmail({
+        await auth.api.signInEmail({
             body: {
-                email,
-                password
+                email: email as string,
+                password: password as string
             },
-            headers: event.request.headers
+            headers: getRequestEvent().request.headers
         });
-
-        if (!result || !result.user) {
-            throw new Error('Invalid credentials');
-        }
-
-        // Redirect to the main app on successful login
-        redirect(303, '/');
-    } catch (error) {
-        if (error instanceof Error && error.message.includes('redirect')) {
-            throw error; // Re-throw redirect errors
-        }
-        throw new Error('Login failed. Please check your credentials.');
+    } catch (error: any) {
+        return { success: false, message: error?.message };
     }
+
+    // Redirect to the intended page upon successful login
+    redirect(303, redirectTo);
 });
 
 export const signup = form(async (data) => {
@@ -81,9 +65,29 @@ export const signup = form(async (data) => {
         // Redirect to the main app on successful signup
         redirect(303, '/');
     } catch (error) {
-        if (error instanceof Error && error.message.includes('redirect')) {
+        // Check if this is a redirect (successful signup)
+        // SvelteKit redirects have status and location properties
+        if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
+            throw error; // Re-throw redirect objects
+        }
+
+        // Check for Error objects with redirect-related messages
+        if (error instanceof Error && (error.message.includes('redirect') || error.name === 'Redirect')) {
             throw error; // Re-throw redirect errors
         }
+
+        // Extract more specific error message from Better Auth
+        if (error instanceof Error && error.message.includes('Email already exists')) {
+            throw new Error('An account with this email already exists');
+        }
+
+        if (error instanceof Error && error.message.includes('Invalid email')) {
+            throw new Error('Please enter a valid email address');
+        }
+
+        // Log the actual error for debugging
+        console.error('Signup error:', error);
+
         throw new Error('Failed to create account. Please try again.');
     }
 });

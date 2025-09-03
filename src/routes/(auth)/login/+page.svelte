@@ -1,11 +1,11 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { login } from '../auth.remote';
 
-	let errorMessage = $state('');
-	let isSubmitting = $state(false);
+	let redirectTo = $derived(page.url.searchParams.get('redirectTo') || '/');
 </script>
 
 <svelte:head>
@@ -19,30 +19,11 @@
 			<p class="text-muted-foreground">Sign in to your account</p>
 		</div>
 
-		<form
-			{...login.enhance(async ({ submit }) => {
-				try {
-					errorMessage = '';
-					isSubmitting = true;
-					await submit();
-				} catch (error) {
-					errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-				} finally {
-					isSubmitting = false;
-				}
-			})}
-			class="space-y-4"
-		>
+		<form {...login} class="space-y-4">
+			<input type="hidden" name="redirectTo" value={redirectTo} />
 			<div class="space-y-2">
 				<Label for="email">Email</Label>
-				<Input
-					id="email"
-					name="email"
-					type="email"
-					placeholder="Enter your email"
-					required
-					disabled={isSubmitting}
-				/>
+				<Input id="email" name="email" type="email" placeholder="Enter your email" required />
 			</div>
 
 			<div class="space-y-2">
@@ -53,18 +34,17 @@
 					type="password"
 					placeholder="Enter your password"
 					required
-					disabled={isSubmitting}
 				/>
 			</div>
 
-			{#if errorMessage}
+			{#if login.result?.message}
 				<div class="rounded-md bg-red-50 p-3 text-sm text-red-600">
-					{errorMessage}
+					{login.result.message}
 				</div>
 			{/if}
 
-			<Button type="submit" class="w-full" disabled={isSubmitting}>
-				{isSubmitting ? 'Signing in...' : 'Sign in'}
+			<Button type="submit" class="w-full">
+				{login.pending ? 'Signing in...' : 'Sign In'}
 			</Button>
 		</form>
 
