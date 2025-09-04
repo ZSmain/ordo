@@ -187,7 +187,7 @@
 	</div>
 
 	<!-- Date navigation -->
-	<div class="border-t bg-background/80 p-3 backdrop-blur-sm">
+	<div class="border-t bg-background/80 p-1.5 backdrop-blur-sm">
 		<div class="container mx-auto flex max-w-2xl items-center justify-between">
 			<Button variant="ghost" size="icon" onclick={goToPreviousDay}>
 				<ChevronLeft class="size-4" />

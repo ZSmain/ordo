@@ -61,7 +61,7 @@
 </script>
 
 <div
-	class="rounded-lg border p-1 transition-colors hover:opacity-90"
+	class="mb-1.5 rounded-lg border p-1 transition-colors hover:opacity-90"
 	style="background-color: {session.category.color}10"
 >
 	<div class="flex items-start justify-between gap-2">
