@@ -19,42 +19,21 @@
 			<p class="text-muted-foreground">Enter your details to get started</p>
 		</div>
 
-		<form
-			{...signup.enhance(async ({ submit }) => {
-				try {
-					errorMessage = '';
-					isSubmitting = true;
-					await submit();
-				} catch (error) {
-					errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-				} finally {
-					isSubmitting = false;
-				}
-			})}
-			class="space-y-4"
-		>
+		<form {...signup} class="space-y-4">
 			<div class="space-y-2">
 				<Label for="name">Full Name</Label>
-				<Input
-					id="name"
-					name="name"
-					type="text"
-					placeholder="Enter your full name"
-					required
-					disabled={isSubmitting}
-				/>
+				<Input id="name" name="name" type="text" placeholder="Enter your full name" required />
+				{#if signup.result?.errors?.name}
+					<p class="text-sm text-red-600">{signup.result.errors.name}</p>
+				{/if}
 			</div>
 
 			<div class="space-y-2">
 				<Label for="email">Email</Label>
-				<Input
-					id="email"
-					name="email"
-					type="email"
-					placeholder="Enter your email"
-					required
-					disabled={isSubmitting}
-				/>
+				<Input id="email" name="email" type="email" placeholder="Enter your email" required />
+				{#if signup.result?.errors?.email}
+					<p class="text-sm text-red-600">{signup.result.errors.email}</p>
+				{/if}
 			</div>
 
 			<div class="space-y-2">
@@ -65,8 +44,10 @@
 					type="password"
 					placeholder="Create a password"
 					required
-					disabled={isSubmitting}
 				/>
+				{#if signup.result?.errors?.password}
+					<p class="text-sm text-red-600">{signup.result.errors.password}</p>
+				{/if}
 			</div>
 
 			<div class="space-y-2">
@@ -77,18 +58,20 @@
 					type="password"
 					placeholder="Confirm your password"
 					required
-					disabled={isSubmitting}
 				/>
+				{#if signup.result?.errors?.confirmPassword}
+					<p class="text-sm text-red-600">{signup.result.errors.confirmPassword}</p>
+				{/if}
 			</div>
 
-			{#if errorMessage}
+			{#each signup.result?.message as error}
 				<div class="rounded-md bg-red-50 p-3 text-sm text-red-600">
-					{errorMessage}
+					{error}
 				</div>
-			{/if}
+			{/each}
 
-			<Button type="submit" class="w-full" disabled={isSubmitting}>
-				{isSubmitting ? 'Creating account...' : 'Create account'}
+			<Button type="submit" class="w-full" disabled={signup.pending}>
+				{signup.pending ? 'Creating account...' : 'Create account'}
 			</Button>
 		</form>
 

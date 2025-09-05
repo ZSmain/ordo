@@ -1,12 +1,35 @@
 import { form, getRequestEvent } from '$app/server';
 import { auth } from '$lib/auth';
 import { redirect } from '@sveltejs/kit';
+import * as v from 'valibot';
 
+const loginSchema = v.object({
+    email: v.pipe(v.string(), v.email('Please provide a valid email address')),
+    password: v.pipe(v.string(), v.minLength(6, 'Password must be at least 6 characters long')),
+    redirectTo: v.optional(v.string())
+});
+
+const signupSchema = v.object({
+    name: v.pipe(v.string(), v.minLength(2, 'Name must be at least 2 characters long')),
+    email: v.pipe(v.string(), v.email('Please provide a valid email address')),
+    password: v.pipe(v.string(), v.minLength(6, 'Password must be at least 6 characters long')),
+    confirmPassword: v.pipe(v.string(), v.minLength(6, 'Confirm Password must be at least 6 characters long')),
+});
 
 export const login = form(async (data) => {
-    const email = data.get('email');
-    const password = data.get('password');
-    const redirectTo = (data.get('redirectTo') as string) || '/';
+    const formData = {
+        email: data.get('email'),
+        password: data.get('password'),
+        redirectTo: data.get('redirectTo') as string
+    };
+
+    const result = v.safeParse(loginSchema, { email: formData.email, password: formData.password });
+
+    if (!result.success) {
+        return { success: false, message: v.flatten(result.issues) };
+    }
+
+    const { email, password } = result.output;
 
     try {
         await auth.api.signInEmail({
@@ -17,77 +40,48 @@ export const login = form(async (data) => {
             headers: getRequestEvent().request.headers
         });
     } catch (error: any) {
-        return { success: false, message: error?.message };
+        return { success: false, message: error?.message ?? 'Login failed' };
     }
 
     // Redirect to the intended page upon successful login
-    redirect(303, redirectTo);
+    redirect(303, formData.redirectTo);
 });
 
 export const signup = form(async (data) => {
-    const name = data.get('name');
-    const email = data.get('email');
-    const password = data.get('password');
-    const confirmPassword = data.get('confirmPassword');
+    const formData = {
+        name: data.get('name'),
+        email: data.get('email'),
+        password: data.get('password'),
+        confirmPassword: data.get('confirmPassword')
+    };
 
-    if (typeof name !== 'string' || typeof email !== 'string' || typeof password !== 'string' || typeof confirmPassword !== 'string') {
-        throw new Error('All fields are required');
+    const result = v.safeParse(signupSchema, formData);
+
+    if (!result.success) {
+        const errors = v.flatten(result.issues).nested;
+
+        const fieldErrors = Object.fromEntries(
+            Object.entries(errors).map(([key, value]) => [key, value.join(', ')])
+        );
+
+        return { success: false, errors: fieldErrors };
     }
 
-    if (!name || !email || !password || !confirmPassword) {
-        throw new Error('Please fill in all fields');
-    }
-
-    if (password !== confirmPassword) {
-        throw new Error('Passwords do not match');
-    }
-
-    if (password.length < 6) {
-        throw new Error('Password must be at least 6 characters');
-    }
+    const { name, email, password } = result.output;
 
     try {
-        const event = getRequestEvent();
-
-        const result = await auth.api.signUpEmail({
+        await auth.api.signUpEmail({
             body: {
                 name,
                 email,
                 password
             },
-            headers: event.request.headers
+            headers: getRequestEvent().request.headers
         });
-
-        if (!result || !result.user) {
-            throw new Error('Failed to create account');
-        }
-
-        // Redirect to the main app on successful signup
-        redirect(303, '/');
-    } catch (error) {
-        // Check if this is a redirect (successful signup)
-        // SvelteKit redirects have status and location properties
-        if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
-            throw error; // Re-throw redirect objects
-        }
-
-        // Check for Error objects with redirect-related messages
-        if (error instanceof Error && (error.message.includes('redirect') || error.name === 'Redirect')) {
-            throw error; // Re-throw redirect errors
-        }
-
-        // Extract more specific error message from Better Auth
-        if (error instanceof Error && error.message.includes('Email already exists')) {
-            throw new Error('An account with this email already exists');
-        }
-
-        if (error instanceof Error && error.message.includes('Invalid email')) {
-            throw new Error('Please enter a valid email address');
-        }
-
-        // Log the actual error for debugging
-        console.error('Signup error:', error);
-
-        throw new Error('Failed to create account. Please try again.');
+    } catch (error: any) {
+        return { success: false, message: error?.message ?? 'Failed to create account' };
     }
+
+    // Redirect to the main app on successful signup
+    redirect(303, '/');
 });
