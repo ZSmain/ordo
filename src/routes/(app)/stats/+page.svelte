@@ -25,6 +25,7 @@
 	let selectedPeriod = $state<PeriodType>('day');
 	let selectedDate = $state(today(getLocalTimeZone()));
 	let loading = $state(false);
+	let error = $state<string | null>(null);
 	let categoryStats = $state<any[]>([]);
 	let activityStats = $state<any[]>([]);
 	let overviewStats = $state<OverviewStats>({
@@ -92,6 +93,7 @@
 		if (!data.user) return;
 
 		loading = true;
+		error = null;
 		try {
 			const startDate = getPeriodStart(selectedDate, selectedPeriod);
 			const endDate = getPeriodEnd(selectedDate, selectedPeriod);
@@ -107,8 +109,8 @@
 			categoryStats = categoryData;
 			activityStats = activityData;
 			overviewStats = overviewData;
-		} catch (error) {
-			console.error('Failed to load statistics:', error);
+		} catch (err) {
+			error = 'Failed to load statistics. Please try again.';
 			categoryStats = [];
 			activityStats = [];
 			overviewStats = {
@@ -124,12 +126,10 @@
 
 	function handlePeriodChange(period: PeriodType): void {
 		selectedPeriod = period;
-		loadStats();
 	}
 
 	function handleDateChange(date: CalendarDate): void {
 		selectedDate = date;
-		loadStats();
 	}
 
 	$effect(() => {
@@ -149,6 +149,10 @@
 				{#if loading}
 					<div class="py-8 text-center">
 						<p class="text-muted-foreground">Loading statistics...</p>
+					</div>
+				{:else if error}
+					<div class="py-8 text-center">
+						<p class="text-red-500">{error}</p>
 					</div>
 				{:else if overviewStats.totalSessions === 0}
 					<div class="py-8 text-center">

@@ -21,6 +21,7 @@
 	let selectedDateValue = $state(today(getLocalTimeZone()));
 	let sessions = $state<any[]>([]);
 	let loading = $state(false);
+	let error = $state<string | null>(null);
 	let calendarOpen = $state(false);
 
 	// Convert DateValue to JS Date for display formatting
@@ -69,7 +70,6 @@
 	// Navigate to previous day
 	function goToPreviousDay() {
 		selectedDateValue = selectedDateValue.subtract({ days: 1 });
-		loadSessions();
 	}
 
 	// Navigate to next day
@@ -80,7 +80,6 @@
 		// Don't allow navigation to future dates
 		if (tomorrow.compare(todayDate) <= 0) {
 			selectedDateValue = tomorrow;
-			loadSessions();
 		}
 	}
 
@@ -96,11 +95,12 @@
 		if (!data.user) return;
 
 		loading = true;
+		error = null;
 		try {
 			const dateStr = formatDateForAPI(selectedDateValue);
 			sessions = await getSessionsForDate({ userId: data.user.id, date: dateStr });
-		} catch (error) {
-			console.error('Failed to load sessions:', error);
+		} catch (err) {
+			error = 'Failed to load sessions. Please try again.';
 			sessions = [];
 		} finally {
 			loading = false;
@@ -110,7 +110,6 @@
 	// Handle calendar date selection
 	function handleDateSelect() {
 		calendarOpen = false;
-		loadSessions();
 	}
 
 	// Calculate total duration for the day
@@ -168,6 +167,10 @@
 					{#if loading}
 						<div class="py-8 text-center">
 							<p class="text-muted-foreground">Loading sessions...</p>
+						</div>
+					{:else if error}
+						<div class="py-8 text-center">
+							<p class="text-red-500">{error}</p>
 						</div>
 					{:else if sessions.length === 0}
 						<div class="py-8 text-center">
