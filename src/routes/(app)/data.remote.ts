@@ -56,40 +56,45 @@ export const startTimerSession = command(
         userId: v.string()
     }),
     async ({ activityId, userId }) => {
-        // First, stop any currently active sessions for this user
-        const activeSessions = await db.select()
-            .from(timeSession)
-            .where(and(
-                eq(timeSession.userId, userId),
-                eq(timeSession.isActive, true)
-            ))
-            .all();
+        // Use a transaction to ensure both stopping old sessions and creating new one succeed or fail together
+        const newSession = await db.transaction(async (tx) => {
+            // First, stop any currently active sessions for this user
+            const activeSessions = await tx.select()
+                .from(timeSession)
+                .where(and(
+                    eq(timeSession.userId, userId),
+                    eq(timeSession.isActive, true)
+                ))
+                .all();
 
-        // Stop all active sessions
-        for (const session of activeSessions) {
-            const stoppedAt = new Date();
-            const durationSeconds = Math.round((stoppedAt.getTime() - session.startedAt.getTime()) / 1000);
+            // Stop all active sessions
+            for (const session of activeSessions) {
+                const stoppedAt = new Date();
+                const durationSeconds = Math.round((stoppedAt.getTime() - session.startedAt.getTime()) / 1000);
 
-            await db.update(timeSession)
-                .set({
-                    stoppedAt,
-                    duration: durationSeconds,
-                    isActive: false,
-                    updatedAt: new Date(),
+                await tx.update(timeSession)
+                    .set({
+                        stoppedAt,
+                        duration: durationSeconds,
+                        isActive: false,
+                        updatedAt: new Date(),
+                    })
+                    .where(eq(timeSession.id, session.id));
+            }
+
+            // Create new active session
+            const newSession = await tx.insert(timeSession)
+                .values({
+                    activityId,
+                    userId,
+                    startedAt: new Date(),
+                    isActive: true,
                 })
-                .where(eq(timeSession.id, session.id));
-        }
+                .returning()
+                .get();
 
-        // Create new active session
-        const newSession = await db.insert(timeSession)
-            .values({
-                activityId,
-                userId,
-                startedAt: new Date(),
-                isActive: true,
-            })
-            .returning()
-            .get();
+            return newSession;
+        });
 
         return newSession;
     }
