@@ -1,7 +1,7 @@
 import { command, query } from '$app/server';
 import { db } from '$lib/server/db';
 import { activity, category, insertActivitySchema, insertCategorySchema, timeSession } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import * as v from 'valibot';
 
 // Return all categories with their activities for the current user
@@ -23,6 +23,32 @@ export const getCategoriesWithActivities = query(
     }
 );
 
+// Get currently active timer session for a user
+export const getActiveSession = query(
+    v.string(), // userId
+    async (userId) => {
+        const activeSession = await db.select()
+            .from(timeSession)
+            .innerJoin(activity, eq(timeSession.activityId, activity.id))
+            .innerJoin(category, eq(activity.categoryId, category.id))
+            .where(and(
+                eq(timeSession.userId, userId),
+                eq(timeSession.isActive, true)
+            ))
+            .get();
+
+        if (!activeSession) {
+            return null;
+        }
+
+        return {
+            session: activeSession.time_session,
+            activity: activeSession.activity,
+            category: activeSession.category
+        };
+    }
+);
+
 // Start timer session with activity ID
 export const startTimerSession = command(
     v.object({
@@ -30,11 +56,37 @@ export const startTimerSession = command(
         userId: v.string()
     }),
     async ({ activityId, userId }) => {
+        // First, stop any currently active sessions for this user
+        const activeSessions = await db.select()
+            .from(timeSession)
+            .where(and(
+                eq(timeSession.userId, userId),
+                eq(timeSession.isActive, true)
+            ))
+            .all();
+
+        // Stop all active sessions
+        for (const session of activeSessions) {
+            const stoppedAt = new Date();
+            const durationSeconds = Math.round((stoppedAt.getTime() - session.startedAt.getTime()) / 1000);
+
+            await db.update(timeSession)
+                .set({
+                    stoppedAt,
+                    duration: durationSeconds,
+                    isActive: false,
+                    updatedAt: new Date(),
+                })
+                .where(eq(timeSession.id, session.id));
+        }
+
+        // Create new active session
         const newSession = await db.insert(timeSession)
             .values({
                 activityId,
                 userId,
                 startedAt: new Date(),
+                isActive: true,
             })
             .returning()
             .get();
@@ -55,8 +107,8 @@ export const stopTimerSession = command(
             .where(eq(timeSession.id, sessionId))
             .get();
 
-        if (!session || session.stoppedAt || session.userId !== userId) {
-            throw new Error('Session not found, already stopped, or unauthorized');
+        if (!session || session.stoppedAt || session.userId !== userId || !session.isActive) {
+            throw new Error('Session not found, already stopped, not active, or unauthorized');
         }
 
         const stoppedAt = new Date();
@@ -66,6 +118,7 @@ export const stopTimerSession = command(
             .set({
                 stoppedAt,
                 duration: durationSeconds,
+                isActive: false,
                 updatedAt: new Date(),
             })
             .where(eq(timeSession.id, sessionId))

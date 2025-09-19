@@ -8,20 +8,17 @@
 	} from '$lib/components/tracker';
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
 	import { Separator } from '$lib/components/ui/separator';
-	import { getCategoriesWithActivities, startTimerSession, stopTimerSession } from './data.remote';
+	import { restoreTimerFromDatabase, selectionStore, timerStore } from '$lib/stores';
+	import { onMount } from 'svelte';
+	import {
+		getActiveSession,
+		getCategoriesWithActivities,
+		startTimerSession,
+		stopTimerSession
+	} from './data.remote';
 
 	// Get user from page data
 	const user = $derived(page.data?.user);
-
-	// Timer state
-	let isTimerActive = $state(false);
-	let currentCategory = $state('');
-	let currentActivity = $state('');
-	let timerSeconds = $state(0);
-	let currentSessionId = $state<number | null>(null);
-
-	// Selected category state
-	let selectedCategoryId = $state<string>('');
 
 	// Get categories with activities query - only if user is available
 	const categoriesQuery = $derived.by(() => {
@@ -32,11 +29,11 @@
 	// Computed: selected category with activities
 	const selectedCategory = $derived.by(() => {
 		// Don't process if no category is selected or data isn't loaded
-		if (!selectedCategoryId || !categoriesQuery?.current) {
+		if (!$selectionStore.selectedCategoryId || !categoriesQuery?.current) {
 			return null;
 		}
 
-		const categoryId = parseInt(selectedCategoryId);
+		const categoryId = parseInt($selectionStore.selectedCategoryId);
 		const category = categoriesQuery.current.find((cat) => cat.id === categoryId);
 
 		// Return the category with activities (or empty array if no activities property)
@@ -48,23 +45,25 @@
 			: null;
 	});
 
+	// Handle category selection changes
+	function handleCategorySelection(categoryId: string) {
+		selectionStore.setSelectedCategory(categoryId);
+	}
+
 	// Start timer function
-	async function startTimer(activityId: number) {
+	async function startTimer(activityId: number, categoryName: string, activityName: string) {
 		if (!user?.id) return;
 
 		try {
 			// Start session in database using remote function with activity ID parameter
 			const session = await startTimerSession({ activityId, userId: user.id });
-			currentSessionId = session.id;
 
-			// Start UI timer
-			isTimerActive = true;
-			timerSeconds = 0;
+			// Start timer in store
+			timerStore.startTimer(categoryName, activityName, activityId, session.id);
 		} catch (error) {
 			console.error('Failed to start timer session:', error);
 			// Still show timer even if DB save fails
-			isTimerActive = true;
-			timerSeconds = 0;
+			timerStore.startTimer(categoryName, activityName, activityId, 0);
 		}
 	}
 
@@ -72,18 +71,14 @@
 	async function stopTimer() {
 		try {
 			// Stop session in database if we have a session ID
-			if (currentSessionId && user?.id) {
-				await stopTimerSession({ sessionId: currentSessionId, userId: user.id });
-				currentSessionId = null;
+			if ($timerStore.sessionId && user?.id) {
+				await stopTimerSession({ sessionId: $timerStore.sessionId, userId: user.id });
 			}
 		} catch (error) {
 			console.error('Failed to stop timer session:', error);
 		} finally {
-			// Always stop the UI timer
-			isTimerActive = false;
-			timerSeconds = 0;
-			currentCategory = '';
-			currentActivity = '';
+			// Always stop the timer in the store
+			timerStore.stopTimer();
 		}
 	}
 
@@ -92,14 +87,18 @@
 		if (!user?.id) return;
 
 		// Check if this is the currently running activity (toggle behavior)
-		if (isTimerActive && currentCategory === categoryName && currentActivity === activityName) {
+		if (
+			$timerStore.isActive &&
+			$timerStore.categoryName === categoryName &&
+			$timerStore.activityName === activityName
+		) {
 			// Stop the timer if clicking the same activity
 			await stopTimer();
 			return;
 		}
 
 		// Stop any existing timer first
-		if (isTimerActive) {
+		if ($timerStore.isActive) {
 			await stopTimer();
 		}
 
@@ -119,12 +118,8 @@
 				return;
 			}
 
-			// Set current activity info
-			currentCategory = categoryName;
-			currentActivity = activityName;
-
-			// Start timer with the found activity ID
-			await startTimer(foundActivity.id);
+			// Start timer with the found activity
+			await startTimer(foundActivity.id, categoryName, activityName);
 		} catch (error) {
 			console.error('Failed to start activity:', error);
 		}
@@ -146,13 +141,22 @@
 		}
 	}
 
-	// Timer effect
-	$effect(() => {
-		if (isTimerActive) {
-			const interval = setInterval(() => {
-				timerSeconds++;
-			}, 1000);
-			return () => clearInterval(interval);
+	// Restore timer session on mount
+	onMount(async () => {
+		if (!user?.id) return;
+
+		try {
+			// Check the database for any active session
+			const activeSession = await getActiveSession(user.id);
+
+			if (activeSession) {
+				// Restore timer state from database
+				const dbTimerState = restoreTimerFromDatabase(activeSession);
+				timerStore.set(dbTimerState);
+				console.log('Restored timer from database:', dbTimerState);
+			}
+		} catch (error) {
+			console.error('Failed to restore timer session:', error);
 		}
 	});
 </script>
@@ -162,13 +166,8 @@
 </svelte:head>
 
 <ScrollArea class="p-4">
-	{#if isTimerActive}
-		<Timer
-			categoryName={currentCategory}
-			activityName={currentActivity}
-			seconds={timerSeconds}
-			onStop={stopTimer}
-		/>
+	{#if $timerStore.isActive}
+		<Timer onStop={stopTimer} />
 	{:else}
 		<!-- Instructions when no timer is active -->
 		<div class="px-4 py-8 text-center">
@@ -184,7 +183,8 @@
 	<!-- Categories -->
 	<CategorySelector
 		categories={categoriesQuery?.current || []}
-		bind:selectedCategoryId
+		selectedCategoryId={$selectionStore.selectedCategoryId}
+		onCategoryChange={handleCategorySelection}
 		loading={categoriesQuery?.loading || false}
 		error={categoriesQuery?.error}
 		onCategoryUpdated={handleCategoryCreated}
@@ -197,8 +197,8 @@
 		onActivitySelect={handleActivitySelect}
 		onActivityUpdated={handleCategoryCreated}
 		userId={user?.id || ''}
-		{currentCategory}
-		{currentActivity}
+		currentCategory={$timerStore.categoryName}
+		currentActivity={$timerStore.activityName}
 	/>
 </ScrollArea>
 
