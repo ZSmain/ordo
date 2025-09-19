@@ -1,0 +1,1 @@
+ALTER TABLE `time_session` ADD `is_active` integer DEFAULT true NOT NULL;
