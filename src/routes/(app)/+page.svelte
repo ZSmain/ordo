@@ -18,7 +18,6 @@
 	let currentCategory = $state('');
 	let currentActivity = $state('');
 	let timerSeconds = $state(0);
-	let timerInterval: ReturnType<typeof setInterval> | null = null;
 	let currentSessionId = $state<number | null>(null);
 
 	// Selected category state
@@ -61,17 +60,11 @@
 			// Start UI timer
 			isTimerActive = true;
 			timerSeconds = 0;
-			timerInterval = setInterval(() => {
-				timerSeconds++;
-			}, 1000);
 		} catch (error) {
 			console.error('Failed to start timer session:', error);
 			// Still show timer even if DB save fails
 			isTimerActive = true;
 			timerSeconds = 0;
-			timerInterval = setInterval(() => {
-				timerSeconds++;
-			}, 1000);
 		}
 	}
 
@@ -88,10 +81,6 @@
 		} finally {
 			// Always stop the UI timer
 			isTimerActive = false;
-			if (timerInterval) {
-				clearInterval(timerInterval);
-				timerInterval = null;
-			}
 			timerSeconds = 0;
 			currentCategory = '';
 			currentActivity = '';
@@ -101,6 +90,13 @@
 	// Handle activity selection
 	async function handleActivitySelect(categoryName: string, activityName: string) {
 		if (!user?.id) return;
+
+		// Check if this is the currently running activity (toggle behavior)
+		if (isTimerActive && currentCategory === categoryName && currentActivity === activityName) {
+			// Stop the timer if clicking the same activity
+			await stopTimer();
+			return;
+		}
 
 		// Stop any existing timer first
 		if (isTimerActive) {
@@ -149,6 +145,16 @@
 			categoriesQuery?.refresh();
 		}
 	}
+
+	// Timer effect
+	$effect(() => {
+		if (isTimerActive) {
+			const interval = setInterval(() => {
+				timerSeconds++;
+			}, 1000);
+			return () => clearInterval(interval);
+		}
+	});
 </script>
 
 <svelte:head>
@@ -191,6 +197,8 @@
 		onActivitySelect={handleActivitySelect}
 		onActivityUpdated={handleCategoryCreated}
 		userId={user?.id || ''}
+		{currentCategory}
+		{currentActivity}
 	/>
 </ScrollArea>
 
