@@ -18,6 +18,9 @@ const config = {
 			remoteFunctions: true
 		}
 	},
+	vitePlugin: {
+		inspector: true
+	}
 };
 
 export default config;
