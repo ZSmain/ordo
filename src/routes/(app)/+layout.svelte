@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import favicon from '$lib/assets/favicon.svg';
+	import { Toaster } from '$lib/components/ui/sonner';
 	import { Calendar, ChartColumn, Settings, Timer } from '@lucide/svelte';
 	import '../../app.css';
 
@@ -10,6 +11,8 @@
 <svelte:head>
 	<link rel="icon" href={favicon} />
 </svelte:head>
+
+<Toaster />
 
 <div class="flex h-screen flex-col overflow-hidden bg-gray-100">
 	<!-- Main content area with proper scrolling -->

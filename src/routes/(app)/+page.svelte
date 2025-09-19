@@ -10,6 +10,7 @@
 	import { Separator } from '$lib/components/ui/separator';
 	import { restoreTimerFromDatabase, selectionStore, timerStore } from '$lib/stores';
 	import { onMount } from 'svelte';
+	import { toast } from 'svelte-sonner';
 	import {
 		getActiveSession,
 		getCategoriesWithActivities,
@@ -61,23 +62,35 @@
 			// Start timer in store
 			timerStore.startTimer(categoryName, activityName, activityId, session.id);
 		} catch (error) {
+			// Check for SvelteKit redirects (e.g., authentication issues)
+			if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
+				throw error; // Re-throw redirect objects
+			}
+
 			console.error('Failed to start timer session:', error);
-			// Still show timer even if DB save fails
-			timerStore.startTimer(categoryName, activityName, activityId, 0);
+
+			toast.error('Failed to start timer. Please check your connection and try again.');
 		}
 	}
 
 	// Stop timer function
 	async function stopTimer() {
 		try {
-			// Stop session in database if we have a session ID
-			if ($timerStore.sessionId && user?.id) {
+			// Stop session in database if we have a valid session ID
+			if ($timerStore.sessionId && $timerStore.sessionId > 0 && user?.id) {
 				await stopTimerSession({ sessionId: $timerStore.sessionId, userId: user.id });
 			}
 		} catch (error) {
+			// Check for SvelteKit redirects (e.g., authentication issues)
+			if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
+				throw error; // Re-throw redirect objects
+			}
+
 			console.error('Failed to stop timer session:', error);
+
+			toast.error('Failed to stop timer on server. The timer will be cleared locally.');
 		} finally {
-			// Always stop the timer in the store
+			// Always stop the timer in the store to clear the UI
 			timerStore.stopTimer();
 		}
 	}
