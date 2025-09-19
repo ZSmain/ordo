@@ -8,21 +8,18 @@
 	} from '$lib/components/tracker';
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
 	import { Separator } from '$lib/components/ui/separator';
-	import { getCategoriesWithActivities, startTimerSession, stopTimerSession } from './data.remote';
+	import { restoreTimerFromDatabase, selectionStore, timerStore } from '$lib/stores';
+	import { onMount } from 'svelte';
+	import { toast } from 'svelte-sonner';
+	import {
+		getActiveSession,
+		getCategoriesWithActivities,
+		startTimerSession,
+		stopTimerSession
+	} from './data.remote';
 
 	// Get user from page data
 	const user = $derived(page.data?.user);
-
-	// Timer state
-	let isTimerActive = $state(false);
-	let currentCategory = $state('');
-	let currentActivity = $state('');
-	let timerSeconds = $state(0);
-	let timerInterval: ReturnType<typeof setInterval> | null = null;
-	let currentSessionId = $state<number | null>(null);
-
-	// Selected category state
-	let selectedCategoryId = $state<string>('');
 
 	// Get categories with activities query - only if user is available
 	const categoriesQuery = $derived.by(() => {
@@ -33,11 +30,11 @@
 	// Computed: selected category with activities
 	const selectedCategory = $derived.by(() => {
 		// Don't process if no category is selected or data isn't loaded
-		if (!selectedCategoryId || !categoriesQuery?.current) {
+		if (!$selectionStore.selectedCategoryId || !categoriesQuery?.current) {
 			return null;
 		}
 
-		const categoryId = parseInt(selectedCategoryId);
+		const categoryId = parseInt($selectionStore.selectedCategoryId);
 		const category = categoriesQuery.current.find((cat) => cat.id === categoryId);
 
 		// Return the category with activities (or empty array if no activities property)
@@ -49,52 +46,52 @@
 			: null;
 	});
 
+	// Handle category selection changes
+	function handleCategorySelection(categoryId: string) {
+		selectionStore.setSelectedCategory(categoryId);
+	}
+
 	// Start timer function
-	async function startTimer(activityId: number) {
+	async function startTimer(activityId: number, categoryName: string, activityName: string) {
 		if (!user?.id) return;
 
 		try {
 			// Start session in database using remote function with activity ID parameter
 			const session = await startTimerSession({ activityId, userId: user.id });
-			currentSessionId = session.id;
 
-			// Start UI timer
-			isTimerActive = true;
-			timerSeconds = 0;
-			timerInterval = setInterval(() => {
-				timerSeconds++;
-			}, 1000);
+			// Start timer in store
+			timerStore.startTimer(categoryName, activityName, activityId, session.id);
 		} catch (error) {
+			// Check for SvelteKit redirects (e.g., authentication issues)
+			if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
+				throw error; // Re-throw redirect objects
+			}
+
 			console.error('Failed to start timer session:', error);
-			// Still show timer even if DB save fails
-			isTimerActive = true;
-			timerSeconds = 0;
-			timerInterval = setInterval(() => {
-				timerSeconds++;
-			}, 1000);
+
+			toast.error('Failed to start timer. Please check your connection and try again.');
 		}
 	}
 
 	// Stop timer function
 	async function stopTimer() {
 		try {
-			// Stop session in database if we have a session ID
-			if (currentSessionId && user?.id) {
-				await stopTimerSession({ sessionId: currentSessionId, userId: user.id });
-				currentSessionId = null;
+			// Stop session in database if we have a valid session ID
+			if ($timerStore.sessionId && $timerStore.sessionId > 0 && user?.id) {
+				await stopTimerSession({ sessionId: $timerStore.sessionId, userId: user.id });
 			}
 		} catch (error) {
-			console.error('Failed to stop timer session:', error);
-		} finally {
-			// Always stop the UI timer
-			isTimerActive = false;
-			if (timerInterval) {
-				clearInterval(timerInterval);
-				timerInterval = null;
+			// Check for SvelteKit redirects (e.g., authentication issues)
+			if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
+				throw error; // Re-throw redirect objects
 			}
-			timerSeconds = 0;
-			currentCategory = '';
-			currentActivity = '';
+
+			console.error('Failed to stop timer session:', error);
+
+			toast.error('Failed to stop timer on server. The timer will be cleared locally.');
+		} finally {
+			// Always stop the timer in the store to clear the UI
+			timerStore.stopTimer();
 		}
 	}
 
@@ -102,8 +99,19 @@
 	async function handleActivitySelect(categoryName: string, activityName: string) {
 		if (!user?.id) return;
 
+		// Check if this is the currently running activity (toggle behavior)
+		if (
+			$timerStore.isActive &&
+			$timerStore.categoryName === categoryName &&
+			$timerStore.activityName === activityName
+		) {
+			// Stop the timer if clicking the same activity
+			await stopTimer();
+			return;
+		}
+
 		// Stop any existing timer first
-		if (isTimerActive) {
+		if ($timerStore.isActive) {
 			await stopTimer();
 		}
 
@@ -123,12 +131,8 @@
 				return;
 			}
 
-			// Set current activity info
-			currentCategory = categoryName;
-			currentActivity = activityName;
-
-			// Start timer with the found activity ID
-			await startTimer(foundActivity.id);
+			// Start timer with the found activity
+			await startTimer(foundActivity.id, categoryName, activityName);
 		} catch (error) {
 			console.error('Failed to start activity:', error);
 		}
@@ -149,6 +153,25 @@
 			categoriesQuery?.refresh();
 		}
 	}
+
+	// Restore timer session on mount
+	onMount(async () => {
+		if (!user?.id) return;
+
+		try {
+			// Check the database for any active session
+			const activeSession = await getActiveSession(user.id);
+
+			if (activeSession) {
+				// Restore timer state from database
+				const dbTimerState = restoreTimerFromDatabase(activeSession);
+				timerStore.set(dbTimerState);
+				console.log('Restored timer from database:', dbTimerState);
+			}
+		} catch (error) {
+			console.error('Failed to restore timer session:', error);
+		}
+	});
 </script>
 
 <svelte:head>
@@ -156,13 +179,8 @@
 </svelte:head>
 
 <ScrollArea class="p-4">
-	{#if isTimerActive}
-		<Timer
-			categoryName={currentCategory}
-			activityName={currentActivity}
-			seconds={timerSeconds}
-			onStop={stopTimer}
-		/>
+	{#if $timerStore.isActive}
+		<Timer onStop={stopTimer} />
 	{:else}
 		<!-- Instructions when no timer is active -->
 		<div class="px-4 py-8 text-center">
@@ -178,7 +196,8 @@
 	<!-- Categories -->
 	<CategorySelector
 		categories={categoriesQuery?.current || []}
-		bind:selectedCategoryId
+		selectedCategoryId={$selectionStore.selectedCategoryId}
+		onCategoryChange={handleCategorySelection}
 		loading={categoriesQuery?.loading || false}
 		error={categoriesQuery?.error}
 		onCategoryUpdated={handleCategoryCreated}
@@ -191,6 +210,8 @@
 		onActivitySelect={handleActivitySelect}
 		onActivityUpdated={handleCategoryCreated}
 		userId={user?.id || ''}
+		currentCategory={$timerStore.categoryName}
+		currentActivity={$timerStore.activityName}
 	/>
 </ScrollArea>
 

@@ -8,9 +8,18 @@
 		onActivitySelect?: (categoryName: string, activityName: string) => void;
 		onActivityUpdated?: () => void;
 		userId?: string;
+		currentCategory?: string;
+		currentActivity?: string;
 	}
 
-	let { category, onActivitySelect, onActivityUpdated, userId }: Props = $props();
+	let {
+		category,
+		onActivitySelect,
+		onActivityUpdated,
+		userId,
+		currentCategory,
+		currentActivity
+	}: Props = $props();
 
 	// Filter out archived activities by default
 	let visibleActivities = $derived(
@@ -37,6 +46,8 @@
 						{onActivitySelect}
 						{onActivityUpdated}
 						{userId}
+						{currentCategory}
+						{currentActivity}
 					/>
 				{/each}
 			</div>

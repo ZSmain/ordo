@@ -53,6 +53,7 @@ export const timeSession = sqliteTable("time_session", {
 		.$defaultFn(() => new Date()),
 	stoppedAt: integer("stopped_at", { mode: "timestamp" }),
 	duration: integer("duration"), // in seconds, calculated when session ends
+	isActive: integer("is_active", { mode: "boolean" }).default(true).notNull(), // tracks if timer is currently running
 	notes: text("notes"), // optional notes for the time session
 	createdAt: integer("created_at", { mode: "timestamp" })
 		.$defaultFn(() => new Date())

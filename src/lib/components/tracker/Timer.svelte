@@ -1,23 +1,52 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
+	import { calculateElapsedTime, timerStore } from '$lib/stores';
 	import { formatTime } from '$lib/time';
 	import { Square } from '@lucide/svelte';
 
 	interface Props {
-		categoryName: string;
-		activityName: string;
-		seconds: number;
 		onStop: () => void;
 	}
 
-	let { categoryName, activityName, seconds, onStop }: Props = $props();
+	let { onStop }: Props = $props();
+
+	// Current elapsed time
+	let elapsedSeconds = $state(0);
+
+	// Subscribe to timer store
+	let timerState = $state($timerStore);
+	$effect(() => {
+		const unsubscribe = timerStore.subscribe((state) => {
+			timerState = state;
+		});
+		return unsubscribe;
+	});
+
+	// Update elapsed time every second when timer is active
+	$effect(() => {
+		if (timerState.isActive) {
+			// Update immediately
+			elapsedSeconds = calculateElapsedTime(timerState);
+
+			// Set up interval for real-time updates
+			const interval = setInterval(() => {
+				elapsedSeconds = calculateElapsedTime(timerState);
+			}, 1000);
+
+			return () => clearInterval(interval);
+		} else {
+			elapsedSeconds = 0;
+		}
+	});
 </script>
 
 <div class="rounded-2xl bg-slate-800 px-3 py-2 text-white">
 	<div class="flex items-center justify-between">
 		<div>
-			<div class="mb-1 text-sm text-gray-300">{categoryName} / {activityName}</div>
-			<div class="font-mono text-2xl font-bold">{formatTime(seconds)}</div>
+			<div class="mb-1 text-sm text-gray-300">
+				{timerState.categoryName} / {timerState.activityName}
+			</div>
+			<div class="font-mono text-2xl font-bold">{formatTime(elapsedSeconds)}</div>
 		</div>
 		<Button
 			onclick={onStop}

@@ -4,7 +4,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Label } from '$lib/components/ui/label';
 	import type { Activity } from '$lib/types';
-	import { Play } from '@lucide/svelte';
+	import { Pause, Play } from '@lucide/svelte';
 	import { archiveActivity, deleteActivity } from '../../../routes/(app)/data.remote';
 	import EditActivity from './EditActivity.svelte';
 
@@ -15,6 +15,8 @@
 		onActivitySelect?: (categoryName: string, activityName: string) => void;
 		onActivityUpdated?: () => void;
 		userId?: string;
+		currentCategory?: string;
+		currentActivity?: string;
 	}
 
 	let {
@@ -23,12 +25,17 @@
 		categoryName,
 		onActivitySelect,
 		onActivityUpdated,
-		userId = ''
+		userId = '',
+		currentCategory,
+		currentActivity
 	}: Props = $props();
 
 	let editActivityOpen = $state(false);
 	let deleteDialogOpen = $state(false);
 	let archiveDialogOpen = $state(false);
+
+	// Check if this activity is currently running
+	let isRunning = $derived(currentCategory === categoryName && currentActivity === activity.name);
 
 	function handleClick() {
 		onActivitySelect?.(categoryName, activity.name);
@@ -96,7 +103,7 @@
 		<Label
 			class="flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors hover:bg-input/10 {activity.archived
 				? 'opacity-60'
-				: ''}"
+				: ''} {isRunning ? 'border-primary bg-primary/5' : ''}"
 			style="background-color: {categoryColor}10"
 			onclick={handleClick}
 		>
@@ -116,7 +123,11 @@
 					</div>
 				{/if}
 			</div>
-			<Play class="ml-auto h-4 w-4 text-muted-foreground" />
+			{#if isRunning}
+				<Pause class="ml-auto h-4 w-4 text-primary" />
+			{:else}
+				<Play class="ml-auto h-4 w-4 text-muted-foreground" />
+			{/if}
 		</Label>
 	</ContextMenu.Trigger>
 	<ContextMenu.Content>
