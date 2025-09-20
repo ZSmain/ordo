@@ -90,7 +90,7 @@
 						/>
 					{/snippet}
 					{#snippet tooltip()}
-						<Chart.Tooltip hideLabel />
+						<Chart.Tooltip />
 					{/snippet}
 				</PieChart>
 			</Chart.Container>
