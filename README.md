@@ -50,13 +50,7 @@ A simple time tracking application inspired by "Simple Time Tracker" mobile appl
    pnpm run db:push
    ```
 
-4. **Seed the database with example data:**
-
-   ```sh
-   pnpm run db:seed
-   ```
-
-5. **Start the development server:**
+4. **Start the development server:**
 
    ```sh
    pnpm run dev
@@ -68,7 +62,6 @@ A simple time tracking application inspired by "Simple Time Tracker" mobile appl
 - `pnpm run db:generate` - Generate migration files
 - `pnpm run db:migrate` - Run pending migrations
 - `pnpm run db:studio` - Open Drizzle Studio
-- `pnpm run db:seed` - Seed database with example data
 
 ## Building
 
