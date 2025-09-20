@@ -73,19 +73,19 @@
 		<div class="space-y-6">
 			{#each groupedActivities as group (group.category.id)}
 				<div>
-					<div class="mb-3 flex items-center gap-2">
+					<div class="mb-2 flex items-center gap-2">
 						<div
-							class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium text-white"
+							class="font-small flex h-6 w-6 items-center justify-center rounded-full text-xs text-white"
 							style="background-color: {group.category.color}"
 						>
 							{group.category.icon}
 						</div>
 						<h4 class="font-medium text-muted-foreground">{group.category.name}</h4>
 					</div>
-					<div class="space-y-2 pl-8">
+					<div class="space-y-2">
 						{#each group.activities as activity (activity.activityId)}
-							<div class="flex items-center justify-between rounded-md bg-muted/50 p-3">
-								<div class="flex items-center gap-3">
+							<div class="flex items-center justify-between rounded-md bg-muted/50 p-1.5">
+								<div class="flex items-center gap-1">
 									<span class="text-sm">{activity.activityIcon}</span>
 									<div>
 										<p class="text-sm font-medium">{activity.activityName}</p>
