@@ -5,17 +5,27 @@ A simple time tracking application inspired by "Simple Time Tracker" mobile appl
 ## Features
 
 - 📊 Track time spent on various activities
-- 📁 Organize activities into categories
+- 📁 Organize activities into multiple categories
 - 🎯 Set daily, weekly, and monthly goals
 - 📈 View detailed statistics and progress
+- 🔍 Search and filter categories when creating/editing activities
 
 ## Tech Stack
 
 - **Frontend**: Svelte/SvelteKit, Tailwind CSS & Shadcn-svelte
 - **Backend**: SvelteKit remote functions
-- **Database**:  Cloudflare D1 (LibSQL) with Drizzle ORM
+- **Database**: Cloudflare D1 (LibSQL) with Drizzle ORM
 - **Authentication**: Better Auth
 - **Validation**: Valibot
+
+## Activity Management
+
+- **Multi-Category Support**: Activities can now belong to multiple categories simultaneously
+- **Enhanced Category Selection**: When creating or editing activities, you can:
+  - Select multiple categories using checkboxes
+  - Search through categories with a built-in search filter
+  - View selected categories as visual badges
+- **Improved User Experience**: Better accessibility with keyboard navigation and ARIA attributes
 
 ## Getting Started
 

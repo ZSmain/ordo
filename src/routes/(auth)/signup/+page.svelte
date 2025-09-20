@@ -70,7 +70,7 @@
 				</div>
 			{/each}
 
-			<Button type="submit" class="w-full" disabled={signup.pending}>
+			<Button type="submit" class="w-full" disabled={!!signup.pending}>
 				{signup.pending ? 'Creating account...' : 'Create account'}
 			</Button>
 		</form>

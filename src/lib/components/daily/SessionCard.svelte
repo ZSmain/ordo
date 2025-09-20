@@ -13,12 +13,12 @@
 				name: string;
 				icon: string;
 			};
-			category: {
+			categories: Array<{
 				id: number;
 				name: string;
 				color: string;
 				icon: string;
-			};
+			}>;
 		};
 	}
 
@@ -62,7 +62,7 @@
 
 <div
 	class="mb-1.5 rounded-lg border p-1 transition-colors hover:opacity-90"
-	style="background-color: {session.category.color}10"
+	style="background-color: {session.categories[0]?.color || '#gray'}10"
 >
 	<div class="flex items-start justify-between gap-2">
 		<div class="flex flex-1 items-center gap-3">
@@ -73,9 +73,25 @@
 			<div class="min-w-0 flex-1">
 				<div class="mb-1">
 					<h3 class="truncate text-sm font-medium">
-						{session.category.name} / {session.activity.name}
+						{session.activity.name}
 					</h3>
 				</div>
+
+				<!-- Categories as badges -->
+				{#if session.categories.length > 0}
+					<div class="mb-1 flex flex-wrap gap-1">
+						{#each session.categories as category}
+							<Badge
+								variant="outline"
+								class="h-auto px-1.5 py-0.5 text-xs"
+								style="border-color: {category.color}; color: {category.color};"
+							>
+								<span class="mr-1">{category.icon}</span>
+								{category.name}
+							</Badge>
+						{/each}
+					</div>
+				{/if}
 
 				<div class="mt-1 text-xs text-muted-foreground">
 					{formatTimeRange(session.startedAt, session.stoppedAt)}

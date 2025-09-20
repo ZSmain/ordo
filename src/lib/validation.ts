@@ -27,20 +27,20 @@ export function validateSelectCategory(data: unknown): SelectCategory {
  * @param data - The category data to validate
  * @returns Object with success status and either data or error
  */
-export function safeValidateInsertCategory(data: unknown): 
-	| { success: true; data: InsertCategory }
-	| { success: false; error: string } {
+export function safeValidateInsertCategory(
+	data: unknown
+): { success: true; data: InsertCategory } | { success: false; error: string } {
 	const result = v.safeParse(insertCategorySchema, data);
 	if (result.success) {
 		return { success: true, data: result.output };
 	}
-	return { 
-		success: false, 
-		error: v.flatten(result.issues).nested ? 
-			Object.entries(v.flatten(result.issues).nested!)
-				.map(([key, msgs]) => `${key}: ${msgs?.join(', ')}`)
-				.join(', ') :
-			v.flatten(result.issues).root?.join(', ') || 'Validation failed'
+	return {
+		success: false,
+		error: v.flatten(result.issues).nested
+			? Object.entries(v.flatten(result.issues).nested!)
+					.map(([key, msgs]) => `${key}: ${msgs?.join(', ')}`)
+					.join(', ')
+			: v.flatten(result.issues).root?.join(', ') || 'Validation failed'
 	};
 }
 
@@ -49,19 +49,19 @@ export function safeValidateInsertCategory(data: unknown):
  * @param data - The category data to validate
  * @returns Object with success status and either data or error
  */
-export function safeValidateSelectCategory(data: unknown): 
-	| { success: true; data: SelectCategory }
-	| { success: false; error: string } {
+export function safeValidateSelectCategory(
+	data: unknown
+): { success: true; data: SelectCategory } | { success: false; error: string } {
 	const result = v.safeParse(selectCategorySchema, data);
 	if (result.success) {
 		return { success: true, data: result.output };
 	}
-	return { 
-		success: false, 
-		error: v.flatten(result.issues).nested ? 
-			Object.entries(v.flatten(result.issues).nested!)
-				.map(([key, msgs]) => `${key}: ${msgs?.join(', ')}`)
-				.join(', ') :
-			v.flatten(result.issues).root?.join(', ') || 'Validation failed'
+	return {
+		success: false,
+		error: v.flatten(result.issues).nested
+			? Object.entries(v.flatten(result.issues).nested!)
+					.map(([key, msgs]) => `${key}: ${msgs?.join(', ')}`)
+					.join(', ')
+			: v.flatten(result.issues).root?.join(', ') || 'Validation failed'
 	};
 }

@@ -11,12 +11,13 @@
 	} from '$lib/components/ui/drawer';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import type { Activity } from '$lib/types';
-	import { updateActivity } from '../../../routes/(app)/data.remote';
+	import * as Select from '$lib/components/ui/select';
+	import type { ActivityWithOptionalCategories, Category } from '$lib/types';
+	import { updateActivity, getCategoriesWithActivities } from '../../../routes/(app)/data.remote';
 
 	interface Props {
 		open: boolean;
-		activity: Activity | null;
+		activity: ActivityWithOptionalCategories | null;
 		onOpenChange?: (open: boolean) => void;
 		onActivityUpdated?: () => void;
 		userId: string;
@@ -32,6 +33,21 @@
 		monthlyGoal: undefined as number | undefined
 	});
 
+	// Category selection using Select component
+	let selectedCategoryIds = $state<string[]>([]);
+
+	// Get categories for selection
+	const categoriesQuery = getCategoriesWithActivities(userId);
+
+	// Convert categories to Select format
+	let selectCategories = $derived.by(() => {
+		if (!categoriesQuery.current) return [];
+		return categoriesQuery.current.map((category) => ({
+			value: category.id.toString(),
+			label: `${category.icon} ${category.name}`
+		}));
+	});
+
 	// Available icons for activity
 	const icons = ['📋', '💻', '📚', '🏃‍♂️', '🎨', '🎵', '🍽️', '🛠️', '💼', '🎯'];
 
@@ -43,11 +59,17 @@
 			activityForm.dailyGoal = activity.dailyGoal || undefined;
 			activityForm.weeklyGoal = activity.weeklyGoal || undefined;
 			activityForm.monthlyGoal = activity.monthlyGoal || undefined;
+
+			// Initialize selected categories from the activity's categories
+			selectedCategoryIds = activity.categories?.map((cat: Category) => cat.id.toString()) || [];
+		} else {
+			// Reset form when activity is null
+			resetForm();
 		}
 	});
 
 	async function handleUpdateActivity() {
-		if (!activityForm.name.trim() || !activity) return;
+		if (!activityForm.name.trim() || !activity || selectedCategoryIds.length === 0) return;
 
 		try {
 			await updateActivity({
@@ -57,7 +79,8 @@
 				dailyGoal: activityForm.dailyGoal,
 				weeklyGoal: activityForm.weeklyGoal,
 				monthlyGoal: activityForm.monthlyGoal,
-				userId
+				userId,
+				categoryIds: selectedCategoryIds.map((id) => parseInt(id))
 			});
 
 			// Close drawer
@@ -79,6 +102,7 @@
 			activityForm.weeklyGoal = activity.weeklyGoal || undefined;
 			activityForm.monthlyGoal = activity.monthlyGoal || undefined;
 		}
+		selectedCategoryIds = [];
 	}
 
 	function handleOpenChange(newOpen: boolean) {
@@ -112,7 +136,7 @@
 				<div class="space-y-2">
 					<Label>Icon</Label>
 					<div class="flex flex-wrap gap-2">
-						{#each icons as icon}
+						{#each icons as icon (icon)}
 							<Button
 								variant="ghost"
 								size="icon"
@@ -127,6 +151,42 @@
 							</Button>
 						{/each}
 					</div>
+				</div>
+
+				<div class="space-y-2">
+					<Label for="activity-category">Categories</Label>
+					<Select.Root type="multiple" bind:value={selectedCategoryIds}>
+						<Select.Trigger class="w-full">
+							{#if selectedCategoryIds.length === 0}
+								<span class="text-muted-foreground">Select categories</span>
+							{:else}
+								<div class="flex flex-wrap gap-1">
+									{#each selectedCategoryIds as categoryId (categoryId)}
+										{#if categoriesQuery.current}
+											{@const category = categoriesQuery.current.find(
+												(c) => c.id.toString() === categoryId
+											)}
+											{#if category}
+												<span
+													class="inline-flex items-center gap-1 rounded bg-secondary px-2 py-1 text-xs"
+												>
+													{category.icon}
+													{category.name}
+												</span>
+											{/if}
+										{/if}
+									{/each}
+								</div>
+							{/if}
+						</Select.Trigger>
+						<Select.Content>
+							{#each selectCategories as category (category.value)}
+								<Select.Item value={category.value} label={category.label}>
+									{category.label}
+								</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
 				</div>
 
 				<div class="space-y-2">
@@ -173,7 +233,7 @@
 					</DrawerClose>
 					<Button
 						onclick={handleUpdateActivity}
-						disabled={!activityForm.name.trim()}
+						disabled={!activityForm.name.trim() || selectedCategoryIds.length === 0}
 						class="flex-1"
 					>
 						Update

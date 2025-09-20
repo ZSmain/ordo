@@ -38,7 +38,7 @@
 			<div class="text-center text-xs text-slate-400">No activities in this category yet</div>
 		{:else}
 			<div class="grid grid-cols-2 gap-3">
-				{#each visibleActivities as activity (activity.id)}
+				{#each visibleActivities as activity, index (activity.id + '-' + index)}
 					<ActivityCard
 						{activity}
 						categoryColor={category.color}

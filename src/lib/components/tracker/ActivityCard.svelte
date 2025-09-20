@@ -3,13 +3,13 @@
 	import * as ContextMenu from '$lib/components/ui/context-menu';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Label } from '$lib/components/ui/label';
-	import type { Activity } from '$lib/types';
+	import type { Activity, ActivityWithOptionalCategories } from '$lib/types';
 	import { Pause, Play } from '@lucide/svelte';
 	import { archiveActivity, deleteActivity } from '../../../routes/(app)/data.remote';
 	import EditActivity from './EditActivity.svelte';
 
 	interface Props {
-		activity: Activity;
+		activity: ActivityWithOptionalCategories;
 		categoryColor: string;
 		categoryName: string;
 		onActivitySelect?: (categoryName: string, activityName: string) => void;

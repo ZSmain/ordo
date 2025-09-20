@@ -165,7 +165,7 @@
 					<div class="space-y-6">
 						<div class="grid gap-6 lg:grid-cols-3">
 							<OverviewPieChart
-								categories={categoryStats}
+								activities={activityStats}
 								period={getPeriodLabel(selectedDate, selectedPeriod)}
 							/>
 						</div>
