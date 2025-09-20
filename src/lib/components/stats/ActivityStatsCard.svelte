@@ -71,7 +71,7 @@
 		<p class="text-center text-muted-foreground">No data available for this period.</p>
 	{:else}
 		<div class="space-y-6">
-			{#each groupedActivities as group (group.category.id)}
+			{#each groupedActivities as group, index (group.category.id + '-' + index)}
 				<div>
 					<div class="mb-2 flex items-center gap-2">
 						<div
@@ -83,7 +83,7 @@
 						<h4 class="font-medium text-muted-foreground">{group.category.name}</h4>
 					</div>
 					<div class="space-y-2">
-						{#each group.activities as activity (activity.activityId)}
+						{#each group.activities as activity, index (activity.activityId + '-' + index)}
 							<div class="flex items-center justify-between rounded-md bg-muted/50 p-1.5">
 								<div class="flex items-center gap-1">
 									<span class="text-sm">{activity.activityIcon}</span>

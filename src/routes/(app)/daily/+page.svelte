@@ -180,7 +180,7 @@
 							</p>
 						</div>
 					{:else}
-						{#each sessions as session (session.id)}
+						{#each sessions as session, index (session.id + '-' + index)}
 							<SessionCard {session} />
 						{/each}
 					{/if}

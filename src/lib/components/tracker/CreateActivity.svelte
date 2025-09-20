@@ -11,7 +11,8 @@
 	} from '$lib/components/ui/drawer';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import type { InsertActivity } from '$lib/server/db/schema';
+	import * as Select from '$lib/components/ui/select';
+
 	import { createActivity, getCategoriesWithActivities } from '../../../routes/(app)/data.remote';
 
 	interface Props {
@@ -32,24 +33,36 @@
 		monthlyGoal: undefined as number | undefined
 	});
 
+	// Category selection using Select component
+	let selectedCategoryIds = $state<string[]>([]);
+
 	// Get categories for selection
 	const categoriesQuery = getCategoriesWithActivities(userId);
+
+	// Convert categories to Select format
+	let selectCategories = $derived.by(() => {
+		if (!categoriesQuery.current) return [];
+		return categoriesQuery.current.map((category) => ({
+			value: category.id.toString(),
+			label: `${category.icon} ${category.name}`
+		}));
+	});
 
 	// Available icons for activity
 	const icons = ['⚡', '🏃‍♂️', '📚', '💻', '🎨', '🍽️', '🛠️', '🎵', '🧘‍♀️', '💼'];
 
 	async function handleCreateActivity() {
-		if (!activityForm.name.trim() || !activityForm.categoryId) return;
+		if (!activityForm.name.trim() || selectedCategoryIds.length === 0) return;
 
 		try {
-			const activityData: InsertActivity = {
+			const activityData = {
 				name: activityForm.name.trim(),
 				icon: activityForm.icon,
-				categoryId: activityForm.categoryId,
 				userId,
 				...(activityForm.dailyGoal && { dailyGoal: activityForm.dailyGoal }),
 				...(activityForm.weeklyGoal && { weeklyGoal: activityForm.weeklyGoal }),
-				...(activityForm.monthlyGoal && { monthlyGoal: activityForm.monthlyGoal })
+				...(activityForm.monthlyGoal && { monthlyGoal: activityForm.monthlyGoal }),
+				categoryIds: selectedCategoryIds.map((id) => parseInt(id))
 			};
 
 			await createActivity(activityData);
@@ -77,6 +90,7 @@
 			weeklyGoal: undefined,
 			monthlyGoal: undefined
 		};
+		selectedCategoryIds = [];
 	}
 
 	function handleOpenChange(newOpen: boolean) {
@@ -108,28 +122,45 @@
 				</div>
 
 				<div class="space-y-2">
-					<Label for="activity-category">Category</Label>
-					<select
-						id="activity-category"
-						bind:value={activityForm.categoryId}
-						class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-					>
-						<option value={0}>Select a category</option>
-						{#if categoriesQuery.current}
-							{#each categoriesQuery.current as category}
-								<option value={category.id}>
-									{category.icon}
-									{category.name}
-								</option>
+					<Label for="activity-category">Categories</Label>
+					<Select.Root type="multiple" bind:value={selectedCategoryIds}>
+						<Select.Trigger class="w-full">
+							{#if selectedCategoryIds.length === 0}
+								<span class="text-muted-foreground">Select categories</span>
+							{:else}
+								<div class="flex flex-wrap gap-1">
+									{#each selectedCategoryIds as categoryId (categoryId)}
+										{#if categoriesQuery.current}
+											{@const category = categoriesQuery.current.find(
+												(c) => c.id.toString() === categoryId
+											)}
+											{#if category}
+												<span
+													class="inline-flex items-center gap-1 rounded bg-secondary px-2 py-1 text-xs"
+												>
+													{category.icon}
+													{category.name}
+												</span>
+											{/if}
+										{/if}
+									{/each}
+								</div>
+							{/if}
+						</Select.Trigger>
+						<Select.Content>
+							{#each selectCategories as category (category.value)}
+								<Select.Item value={category.value} label={category.label}>
+									{category.label}
+								</Select.Item>
 							{/each}
-						{/if}
-					</select>
+						</Select.Content>
+					</Select.Root>
 				</div>
 
 				<div class="space-y-2">
 					<Label>Icon</Label>
 					<div class="flex flex-wrap gap-2">
-						{#each icons as icon}
+						{#each icons as icon (icon)}
 							<Button
 								variant="ghost"
 								size="icon"
@@ -193,7 +224,7 @@
 					</DrawerClose>
 					<Button
 						onclick={handleCreateActivity}
-						disabled={!activityForm.name.trim() || !activityForm.categoryId}
+						disabled={!activityForm.name.trim() || selectedCategoryIds.length === 0}
 						class="flex-1"
 					>
 						Create

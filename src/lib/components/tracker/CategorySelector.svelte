@@ -97,7 +97,7 @@
 			onValueChange={handleCategoryChange}
 			class="flex flex-wrap justify-center gap-3"
 		>
-			{#each categories as category (category.id)}
+			{#each categories as category, index (category.id + '-' + index)}
 				<ContextMenu.Root>
 					<ContextMenu.Trigger>
 						<Label

@@ -13,12 +13,30 @@
 		sessionCount: number;
 	}
 
+	interface ActivityStat {
+		activityId: number;
+		activityName: string;
+		activityIcon: string;
+		categoryId: number;
+		categoryName: string;
+		categoryColor: string;
+		categoryIcon: string;
+		allCategories?: Array<{
+			categoryId: number;
+			categoryName: string;
+			categoryColor: string;
+			categoryIcon: string;
+		}>;
+		totalDuration: number;
+		sessionCount: number;
+	}
+
 	interface Props {
-		categories: CategoryStat[];
+		activities: ActivityStat[];
 		period: string;
 	}
 
-	let { categories, period }: Props = $props();
+	let { activities, period }: Props = $props();
 
 	function formatDuration(seconds: number): string {
 		const hours = Math.floor(seconds / 3600);
@@ -26,36 +44,44 @@
 		return hours === 0 ? `${minutes}m` : `${hours}h ${minutes}m`;
 	}
 
-	let chartData = $derived(
-		categories.map((category) => ({
-			category: category.categoryName,
-			duration: category.totalDuration,
-			color: category.categoryColor,
-			icon: category.categoryIcon
-		}))
+	let chartData = $derived.by(() => {
+		// Now activities are already deduplicated from the remote function
+		return activities.map((activity) => ({
+			category: activity.activityName,
+			duration: activity.totalDuration,
+			color: activity.categoryColor,
+			icon: activity.activityIcon
+		}));
+	});
+
+	let chartConfig = $derived.by(() => {
+		const data = chartData;
+		return {
+			duration: { label: 'Duration' },
+			...Object.fromEntries(
+				data.map((item: any) => [
+					item.category.toLowerCase().replace(/\s+/g, ''),
+					{
+						label: item.category,
+						color: item.color
+					}
+				])
+			)
+		} satisfies Chart.ChartConfig;
+	});
+
+	let totalDuration = $derived.by(() =>
+		chartData.reduce((acc: number, curr: any) => acc + curr.duration, 0)
 	);
-
-	let chartConfig = $derived({
-		duration: { label: 'Duration' },
-		...Object.fromEntries(
-			categories.map((category) => [
-				category.categoryName.toLowerCase().replace(/\s+/g, ''),
-				{
-					label: category.categoryName,
-					color: category.categoryColor
-				}
-			])
-		)
-	} satisfies Chart.ChartConfig);
-
-	let totalDuration = $derived(chartData.reduce((acc, curr) => acc + curr.duration, 0));
-	let totalSessions = $derived(categories.reduce((sum, cat) => sum + cat.sessionCount, 0));
+	let totalSessions = $derived.by(() =>
+		activities.reduce((sum: number, activity: any) => sum + activity.sessionCount, 0)
+	);
 </script>
 
 <Card.Root class="flex flex-col">
 	<Card.Header class="items-center pb-2">
-		<Card.Title>Time Distribution</Card.Title>
-		<Card.Description>Overview for {period}</Card.Description>
+		<Card.Title>Activity Distribution</Card.Title>
+		<Card.Description>Time spent on activities {period}</Card.Description>
 	</Card.Header>
 	<Card.Content class="flex-1 pb-2">
 		{#if chartData.length === 0}
@@ -100,14 +126,16 @@
 		<div class="grid w-full grid-cols-2 gap-2">
 			<div class="flex items-center gap-2 leading-none font-medium">
 				<TrendingUpIcon class="size-4" />
-				<span class="text-xs">{categories.length} categories tracked</span>
+				<span class="text-xs">
+					{activities.length} activities tracked
+				</span>
 			</div>
 			<div class="flex items-center gap-2 leading-none font-medium">
 				<span class="text-xs">{totalSessions} total sessions</span>
 			</div>
 		</div>
 		<div class="text-center leading-none text-muted-foreground">
-			Time spent across different categories {period}
+			Time spent on different activities {period}
 		</div>
 	</Card.Footer>
 </Card.Root>

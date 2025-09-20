@@ -43,7 +43,7 @@
 		<p class="text-center text-muted-foreground">No data available for this period.</p>
 	{:else}
 		<div class="space-y-4">
-			{#each categories as category (category.categoryId)}
+			{#each categories as category, index (category.categoryId + '-' + index)}
 				<div class="flex items-center justify-between">
 					<div class="flex items-center gap-3">
 						<div
