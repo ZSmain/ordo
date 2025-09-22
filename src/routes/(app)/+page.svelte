@@ -77,8 +77,8 @@
 	async function stopTimer() {
 		try {
 			// Stop session in database if we have a valid session ID
-			if ($timerStore.sessionId && $timerStore.sessionId > 0 && user?.id) {
-				await stopTimerSession({ sessionId: $timerStore.sessionId, userId: user.id });
+			if (timerStore.current.sessionId && timerStore.current.sessionId > 0 && user?.id) {
+				await stopTimerSession({ sessionId: timerStore.current.sessionId, userId: user.id });
 			}
 		} catch (error) {
 			// Check for SvelteKit redirects (e.g., authentication issues)
@@ -101,9 +101,9 @@
 
 		// Check if this is the currently running activity (toggle behavior)
 		if (
-			$timerStore.isActive &&
-			$timerStore.categoryName === categoryName &&
-			$timerStore.activityName === activityName
+			timerStore.current.isActive &&
+			timerStore.current.categoryName === categoryName &&
+			timerStore.current.activityName === activityName
 		) {
 			// Stop the timer if clicking the same activity
 			await stopTimer();
@@ -111,7 +111,7 @@
 		}
 
 		// Stop any existing timer first
-		if ($timerStore.isActive) {
+		if (timerStore.current.isActive) {
 			await stopTimer();
 		}
 
@@ -163,10 +163,27 @@
 			const activeSession = await getActiveSession(user.id);
 
 			if (activeSession) {
-				// Restore timer state from database
+				// Check if the persisted timer state matches the database session
 				const dbTimerState = restoreTimerFromDatabase(activeSession);
-				timerStore.set(dbTimerState);
-				console.log('Restored timer from database:', dbTimerState);
+
+				// Only update if the database session is different from persisted state
+				// This handles cases where the session was stopped on another device
+				if (
+					!timerStore.current.isActive ||
+					timerStore.current.sessionId !== dbTimerState.sessionId ||
+					timerStore.current.activityId !== dbTimerState.activityId
+				) {
+					timerStore.set(dbTimerState);
+					console.log('Synced timer with database:', dbTimerState);
+				} else {
+					console.log('Timer state already in sync with database');
+				}
+			} else {
+				// No active session in database, clear any persisted timer state
+				if (timerStore.current.isActive) {
+					timerStore.stopTimer();
+					console.log('Cleared stale timer state - no active session in database');
+				}
 			}
 		} catch (error) {
 			console.error('Failed to restore timer session:', error);
@@ -179,7 +196,7 @@
 </svelte:head>
 
 <ScrollArea class="p-4">
-	{#if $timerStore.isActive}
+	{#if timerStore.current.isActive}
 		<Timer onStop={stopTimer} />
 	{:else}
 		<!-- Instructions when no timer is active -->
@@ -210,8 +227,8 @@
 		onActivitySelect={handleActivitySelect}
 		onActivityUpdated={handleCategoryCreated}
 		userId={user?.id || ''}
-		currentCategory={$timerStore.categoryName}
-		currentActivity={$timerStore.activityName}
+		currentCategory={timerStore.current.categoryName}
+		currentActivity={timerStore.current.activityName}
 	/>
 </ScrollArea>
 

@@ -13,14 +13,8 @@
 	// Current elapsed time
 	let elapsedSeconds = $state(0);
 
-	// Subscribe to timer store
-	let timerState = $state($timerStore);
-	$effect(() => {
-		const unsubscribe = timerStore.subscribe((state) => {
-			timerState = state;
-		});
-		return unsubscribe;
-	});
+	// Get timer state directly from the store (reactive)
+	const timerState = $derived(timerStore.current);
 
 	// Update elapsed time every second when timer is active
 	$effect(() => {

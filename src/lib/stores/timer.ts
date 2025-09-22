@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store';
+import { PersistedState } from 'runed';
 
 // Timer state interface
 export interface TimerState {
@@ -36,20 +36,32 @@ const defaultTimerState: TimerState = {
 	startTime: null
 };
 
-// Create a simple store without localStorage complexity
-function createTimerStore() {
-	const { subscribe, set } = writable<TimerState>(defaultTimerState);
+// Create timer store with automatic persistence using PersistedState
+export const timerPersistedState = new PersistedState('ordo-timer-state', defaultTimerState, {
+	storage: 'local', // Use localStorage for persistence across sessions
+	syncTabs: true // Synchronize timer state across browser tabs
+});
 
+// Create store interface that maintains compatibility with existing code
+function createTimerStore() {
 	return {
-		subscribe,
-		set,
+		// For reactive access in Svelte 5 (using runes) - this is the primary interface
+		get current() {
+			return timerPersistedState.current;
+		},
+
+		// Direct set method (for backward compatibility)
+		set: (value: TimerState) => {
+			timerPersistedState.current = value;
+		},
+
 		startTimer: (
 			categoryName: string,
 			activityName: string,
 			activityId: number,
 			sessionId: number
 		) => {
-			const newState: TimerState = {
+			timerPersistedState.current = {
 				isActive: true,
 				categoryName,
 				activityName,
@@ -57,13 +69,14 @@ function createTimerStore() {
 				sessionId,
 				startTime: Date.now()
 			};
-			set(newState);
 		},
+
 		stopTimer: () => {
-			set(defaultTimerState);
+			timerPersistedState.current = defaultTimerState;
 		},
+
 		reset: () => {
-			set(defaultTimerState);
+			timerPersistedState.current = defaultTimerState;
 		}
 	};
 }
