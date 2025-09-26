@@ -2,13 +2,7 @@
 	import { SessionCard } from '$lib/components/daily';
 	import { Button } from '$lib/components/ui/button';
 	import { Calendar } from '$lib/components/ui/calendar';
-	import {
-		Dialog,
-		DialogContent,
-		DialogHeader,
-		DialogTitle,
-		DialogTrigger
-	} from '$lib/components/ui/dialog';
+	import * as Dialog from '$lib/components/ui/dialog';
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
 	import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date';
 	import { CalendarIcon, ChevronLeft, ChevronRight } from '@lucide/svelte';
@@ -181,12 +175,12 @@
 						</div>
 					{:else}
 						{#each sessions as session, index (session.id + '-' + index)}
-							<SessionCard {session} />
+							<SessionCard {session} userId={data.user.id} onSessionUpdated={loadSessions} />
 						{/each}
 					{/if}
 				</div>
-			</div></ScrollArea
-		>
+			</div>
+		</ScrollArea>
 	</div>
 
 	<!-- Date navigation -->
@@ -196,17 +190,17 @@
 				<ChevronLeft class="size-4" />
 			</Button>
 
-			<Dialog bind:open={calendarOpen}>
-				<DialogTrigger
+			<Dialog.Root bind:open={calendarOpen}>
+				<Dialog.Trigger
 					class="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
 				>
 					<CalendarIcon class="size-4" />
 					<span class="font-medium">{formatDisplayDate(selectedDateValue)}</span>
-				</DialogTrigger>
-				<DialogContent class="w-auto max-w-fit">
-					<DialogHeader>
-						<DialogTitle>Select Date</DialogTitle>
-					</DialogHeader>
+				</Dialog.Trigger>
+				<Dialog.Content class="w-auto max-w-fit">
+					<Dialog.Header>
+						<Dialog.Title>Select Date</Dialog.Title>
+					</Dialog.Header>
 					<div class="flex justify-center p-4">
 						<Calendar
 							type="single"
@@ -216,8 +210,8 @@
 							class="rounded-md border"
 						/>
 					</div>
-				</DialogContent>
-			</Dialog>
+				</Dialog.Content>
+			</Dialog.Root>
 
 			<Button variant="ghost" size="icon" onclick={goToNextDay} disabled={!canGoToNextDay()}>
 				<ChevronRight class="size-4" />
