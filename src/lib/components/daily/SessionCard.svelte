@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { DeleteSessionDialog, ModifySessionDrawer } from '$lib/components/daily';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as ContextMenu from '$lib/components/ui/context-menu';
 	import { PencilLine, Trash2 } from '@lucide/svelte';
@@ -140,3 +141,20 @@
 		</ContextMenu.Item>
 	</ContextMenu.Content>
 </ContextMenu.Root>
+
+<!-- Dialogs -->
+<ModifySessionDrawer
+	bind:open={modifyDialogOpen}
+	{session}
+	{userId}
+	onOpenChange={(open) => (modifyDialogOpen = open)}
+	onSessionUpdated={() => onSessionUpdated?.()}
+/>
+
+<DeleteSessionDialog
+	bind:open={deleteDialogOpen}
+	{session}
+	{userId}
+	onOpenChange={(open) => (deleteDialogOpen = open)}
+	onSessionDeleted={() => onSessionUpdated?.()}
+/>
