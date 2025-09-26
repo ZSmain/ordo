@@ -79,6 +79,53 @@ export const getSessionsForDate = query(
 		});
 	}
 );
+
+// Update a session's start and end times
+export const updateSession = command(
+	v.object({
+		sessionId: v.pipe(v.number(), v.minValue(1, 'Session ID must be valid')),
+		userId: v.string(),
+		startedAt: v.pipe(v.string(), v.isoTimestamp('Start time must be a valid ISO timestamp')),
+		stoppedAt: v.pipe(v.string(), v.isoTimestamp('End time must be a valid ISO timestamp'))
+	}),
+	async ({ sessionId, userId, startedAt, stoppedAt }) => {
+		const startDate = new Date(startedAt);
+		const endDate = new Date(stoppedAt);
+
+		// Validate that end time is after start time
+		if (endDate <= startDate) {
+			throw new Error('End time must be after start time');
+		}
+
+		// Calculate duration in seconds
+		const duration = Math.floor((endDate.getTime() - startDate.getTime()) / 1000);
+
+		// Verify the session belongs to the user
+		const existingSession = await db
+			.select({ id: timeSession.id })
+			.from(timeSession)
+			.where(and(eq(timeSession.id, sessionId), eq(timeSession.userId, userId)))
+			.get();
+
+		if (!existingSession) {
+			throw new Error('Session not found or does not belong to user');
+		}
+
+		// Update the session
+		await db
+			.update(timeSession)
+			.set({
+				startedAt: startDate,
+				stoppedAt: endDate,
+				duration,
+				updatedAt: new Date()
+			})
+			.where(eq(timeSession.id, sessionId));
+
+		return { success: true };
+	}
+);
+
 // Delete a session
 export const deleteSession = command(
 	v.object({
