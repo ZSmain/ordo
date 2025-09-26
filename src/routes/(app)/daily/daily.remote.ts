@@ -122,6 +122,18 @@ export const updateSession = command(
 			})
 			.where(eq(timeSession.id, sessionId));
 
+		// Refresh the sessions query for both start and end dates
+		// (in case the session was moved to a different date)
+		const startDateStr = startDate.toISOString().split('T')[0];
+		const endDateStr = endDate.toISOString().split('T')[0];
+
+		await getSessionsForDate({ userId, date: startDateStr }).refresh();
+
+		// If the session spans different dates, refresh both
+		if (startDateStr !== endDateStr) {
+			await getSessionsForDate({ userId, date: endDateStr }).refresh();
+		}
+
 		return { success: true };
 	}
 );
@@ -133,9 +145,12 @@ export const deleteSession = command(
 		userId: v.string()
 	}),
 	async ({ sessionId, userId }) => {
-		// Verify the session belongs to the user
+		// Verify the session belongs to the user and get session details for cache invalidation
 		const existingSession = await db
-			.select({ id: timeSession.id })
+			.select({
+				id: timeSession.id,
+				startedAt: timeSession.startedAt
+			})
 			.from(timeSession)
 			.where(and(eq(timeSession.id, sessionId), eq(timeSession.userId, userId)))
 			.get();
@@ -144,10 +159,16 @@ export const deleteSession = command(
 			throw new Error('Session not found or does not belong to user');
 		}
 
+		// Get the date for cache invalidation before deleting
+		const sessionDate = existingSession.startedAt.toISOString().split('T')[0];
+
 		// Delete the session
 		await db
 			.delete(timeSession)
 			.where(eq(timeSession.id, sessionId));
+
+		// Refresh the sessions query for the date this session was on
+		await getSessionsForDate({ userId, date: sessionDate }).refresh();
 
 		return { success: true };
 	}
