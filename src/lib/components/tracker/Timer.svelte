@@ -3,6 +3,7 @@
 	import { calculateElapsedTime, timerStore } from '$lib/stores';
 	import { formatTime } from '$lib/time';
 	import { Square } from '@lucide/svelte';
+	import { useInterval } from 'runed';
 
 	interface Props {
 		onStop: () => void;
@@ -13,28 +14,31 @@
 	// Current elapsed time
 	let elapsedSeconds = $state(0);
 
-	// Subscribe to timer store
-	let timerState = $state($timerStore);
-	$effect(() => {
-		const unsubscribe = timerStore.subscribe((state) => {
-			timerState = state;
-		});
-		return unsubscribe;
-	});
+	// Get timer state directly from the store (reactive)
+	const timerState = $derived(timerStore.current);
 
-	// Update elapsed time every second when timer is active
+	// Create interval for updating elapsed time every second
+	const timerInterval = useInterval(
+		() => {
+			elapsedSeconds = calculateElapsedTime(timerState);
+		},
+		1000,
+		{
+			immediate: false // Don't start automatically, we'll control it based on timer state
+		}
+	);
+
+	// Control the interval based on timer state
 	$effect(() => {
 		if (timerState.isActive) {
-			// Update immediately
+			// Update immediately when timer becomes active
 			elapsedSeconds = calculateElapsedTime(timerState);
 
-			// Set up interval for real-time updates
-			const interval = setInterval(() => {
-				elapsedSeconds = calculateElapsedTime(timerState);
-			}, 1000);
-
-			return () => clearInterval(interval);
+			// Start the interval for continuous updates
+			timerInterval.resume();
 		} else {
+			// Pause the interval when timer is not active
+			timerInterval.pause();
 			elapsedSeconds = 0;
 		}
 	});

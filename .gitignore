@@ -26,4 +26,4 @@ vite.config.ts.timestamp-*
 *.db
 
 # AI instructions
-.github/copilot-instructions.md
+.github
