@@ -1,4 +1,4 @@
-import { query } from '$app/server';
+import { command, query } from '$app/server';
 import { db } from '$lib/server/db';
 import { activity, activityCategory, category, timeSession } from '$lib/server/db/schema';
 import { and, eq, gte, inArray, isNotNull, lt } from 'drizzle-orm';
@@ -77,5 +77,31 @@ export const getSessionsForDate = query(
 				}))
 			};
 		});
+	}
+);
+// Delete a session
+export const deleteSession = command(
+	v.object({
+		sessionId: v.pipe(v.number(), v.minValue(1, 'Session ID must be valid')),
+		userId: v.string()
+	}),
+	async ({ sessionId, userId }) => {
+		// Verify the session belongs to the user
+		const existingSession = await db
+			.select({ id: timeSession.id })
+			.from(timeSession)
+			.where(and(eq(timeSession.id, sessionId), eq(timeSession.userId, userId)))
+			.get();
+
+		if (!existingSession) {
+			throw new Error('Session not found or does not belong to user');
+		}
+
+		// Delete the session
+		await db
+			.delete(timeSession)
+			.where(eq(timeSession.id, sessionId));
+
+		return { success: true };
 	}
 );
