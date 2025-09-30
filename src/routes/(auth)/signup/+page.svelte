@@ -3,9 +3,6 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { signup } from '../auth.remote';
-
-	let errorMessage = $state('');
-	let isSubmitting = $state(false);
 </script>
 
 <svelte:head>
@@ -22,17 +19,29 @@
 		<form {...signup} class="space-y-4">
 			<div class="space-y-2">
 				<Label for="name">Full Name</Label>
-				<Input id="name" name="name" type="text" placeholder="Enter your full name" required />
-				{#if signup.result?.errors?.name}
-					<p class="text-sm text-red-600">{signup.result.errors.name}</p>
+				<Input
+					id="name"
+					name={signup.field('name')}
+					type="text"
+					placeholder="Enter your full name"
+					required
+				/>
+				{#if signup.result?.message?.name}
+					<p class="text-sm text-red-600">{signup.result.message.name}</p>
 				{/if}
 			</div>
 
 			<div class="space-y-2">
 				<Label for="email">Email</Label>
-				<Input id="email" name="email" type="email" placeholder="Enter your email" required />
-				{#if signup.result?.errors?.email}
-					<p class="text-sm text-red-600">{signup.result.errors.email}</p>
+				<Input
+					id="email"
+					name={signup.field('email')}
+					type="email"
+					placeholder="Enter your email"
+					required
+				/>
+				{#if signup.result?.message?.email}
+					<p class="text-sm text-red-600">{signup.result.message.email}</p>
 				{/if}
 			</div>
 
@@ -40,13 +49,13 @@
 				<Label for="password">Password</Label>
 				<Input
 					id="password"
-					name="password"
+					name={signup.field('password')}
 					type="password"
 					placeholder="Create a password"
 					required
 				/>
-				{#if signup.result?.errors?.password}
-					<p class="text-sm text-red-600">{signup.result.errors.password}</p>
+				{#if signup.result?.message?.password}
+					<p class="text-sm text-red-600">{signup.result.message.password}</p>
 				{/if}
 			</div>
 
@@ -54,13 +63,13 @@
 				<Label for="confirmPassword">Confirm Password</Label>
 				<Input
 					id="confirmPassword"
-					name="confirmPassword"
+					name={signup.field('confirmPassword')}
 					type="password"
 					placeholder="Confirm your password"
 					required
 				/>
-				{#if signup.result?.errors?.confirmPassword}
-					<p class="text-sm text-red-600">{signup.result.errors.confirmPassword}</p>
+				{#if signup.result?.message?.confirmPassword}
+					<p class="text-sm text-red-600">{signup.result.message.confirmPassword}</p>
 				{/if}
 			</div>
 

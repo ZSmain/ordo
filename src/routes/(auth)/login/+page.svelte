@@ -23,23 +23,35 @@
 			<input type="hidden" name="redirectTo" value={redirectTo} />
 			<div class="space-y-2">
 				<Label for="email">Email</Label>
-				<Input id="email" name="email" type="email" placeholder="Enter your email" required />
+				<Input
+					id="email"
+					name={login.field('email')}
+					type="email"
+					placeholder="Enter your email"
+					required
+				/>
+				{#if login.issues?.email}
+					<p class="text-sm text-red-600">{login.issues.email}</p>
+				{/if}
 			</div>
 
 			<div class="space-y-2">
 				<Label for="password">Password</Label>
 				<Input
 					id="password"
-					name="password"
+					name={login.field('password')}
 					type="password"
 					placeholder="Enter your password"
 					required
 				/>
+				{#if login.issues?.password}
+					<p class="text-sm text-red-600">{login.issues.password}</p>
+				{/if}
 			</div>
 
-			{#if login.result?.message}
+			{#if !login.result?.success}
 				<div class="rounded-md bg-red-50 p-3 text-sm text-red-600">
-					{login.result.message}
+					{login.result?.message}
 				</div>
 			{/if}
 

@@ -1,5 +1,4 @@
-import { query } from '$app/server';
-import { db } from '$lib/server/db';
+import { getRequestEvent, query } from '$app/server';
 import { activity, activityCategory, category, timeSession } from '$lib/server/db/schema';
 import { and, eq, gte, inArray, isNotNull, lt, sql, sum } from 'drizzle-orm';
 import * as v from 'valibot';
@@ -11,6 +10,9 @@ export const getCategoryStats = query(
 		endDate: v.string()
 	}),
 	async ({ userId, startDate, endDate }) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
 		const start = new Date(startDate + 'T00:00:00.000Z');
 		const end = new Date(endDate + 'T23:59:59.999Z');
 
@@ -106,6 +108,9 @@ export const getActivityStats = query(
 		endDate: v.string()
 	}),
 	async ({ userId, startDate, endDate }) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
 		const start = new Date(startDate + 'T00:00:00.000Z');
 		const end = new Date(endDate + 'T23:59:59.999Z');
 
@@ -173,6 +178,9 @@ export const getOverviewStats = query(
 		endDate: v.string()
 	}),
 	async ({ userId, startDate, endDate }) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
 		const start = new Date(startDate + 'T00:00:00.000Z');
 		const end = new Date(endDate + 'T23:59:59.999Z');
 

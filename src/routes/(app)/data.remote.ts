@@ -1,5 +1,4 @@
-import { command, query } from '$app/server';
-import { db } from '$lib/server/db';
+import { command, getRequestEvent, query } from '$app/server';
 import {
 	activity,
 	activityCategory,
@@ -15,11 +14,13 @@ import * as v from 'valibot';
 export const getCategoriesWithActivities = query(
 	v.string(), // userId
 	async (userId) => {
+		const { locals } = getRequestEvent();
+
 		// Get all categories for the user
-		const categories = await db.select().from(category).where(eq(category.userId, userId)).all();
+		const categories = await locals.db.select().from(category).where(eq(category.userId, userId)).all();
 
 		// Get all activities with their associated categories in a single optimized query
-		const activitiesWithCategories = await db
+		const activitiesWithCategories = await locals.db
 			.select({
 				activity: activity,
 				category: category
@@ -77,6 +78,9 @@ export const getActiveSession = query(
 	v.string(), // userId
 	async (userId) => {
 		// First get the active session with activity
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
 		const activeSession = await db
 			.select({
 				timeSession: timeSession,
@@ -122,6 +126,9 @@ export const startTimerSession = command(
 		userId: v.string()
 	}),
 	async ({ activityId, userId }) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
 		// Use a transaction to ensure both stopping old sessions and creating new one succeed or fail together
 		const newSession = await db.transaction(async (tx) => {
 			// First, stop any currently active sessions for this user
@@ -175,6 +182,9 @@ export const stopTimerSession = command(
 		userId: v.string()
 	}),
 	async ({ sessionId, userId }) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
 		const session = await db.select().from(timeSession).where(eq(timeSession.id, sessionId)).get();
 
 		if (!session || session.stoppedAt || session.userId !== userId || !session.isActive) {
@@ -207,6 +217,9 @@ export const createCategory = command(
 		userId: v.string()
 	}),
 	async (categoryData) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
 		const newCategory = await db.insert(category).values(categoryData).returning().get();
 
 		return newCategory;
@@ -240,6 +253,9 @@ export const updateCategory = command(
 		userId: v.string()
 	}),
 	async ({ id, userId, ...updateData }) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
 		// Only include defined fields in the update
 		const fieldsToUpdate = Object.fromEntries(
 			Object.entries(updateData).filter(([, value]) => value !== undefined)
@@ -274,6 +290,9 @@ export const deleteCategory = command(
 		userId: v.string()
 	}),
 	async ({ id, userId }) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
 		// First check if the category exists and belongs to the user
 		const existingCategory = await db.select().from(category).where(eq(category.id, id)).get();
 
@@ -296,6 +315,10 @@ export const createActivity = command(
 		categoryIds: v.optional(v.array(v.number('Category ID must be a number')))
 	}),
 	async (activityData) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
+		// Destructure categoryIds from activityData
 		const { categoryIds, ...activityFields } = activityData;
 
 		// Create the activity
@@ -357,6 +380,9 @@ export const updateActivity = command(
 		categoryIds: v.optional(v.array(v.number('Category ID must be a number')))
 	}),
 	async ({ id, userId, categoryIds, ...updateData }) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
 		// Only include defined fields in the update
 		const fieldsToUpdate = Object.fromEntries(
 			Object.entries(updateData).filter(([, value]) => value !== undefined)
@@ -415,6 +441,9 @@ export const archiveActivity = command(
 		userId: v.string()
 	}),
 	async ({ id, archived, userId }) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
 		const updatedActivity = await db
 			.update(activity)
 			.set({
@@ -440,6 +469,9 @@ export const deleteActivity = command(
 		userId: v.string()
 	}),
 	async ({ id, userId }) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
 		// First check if the activity exists and belongs to the user
 		const existingActivity = await db.select().from(activity).where(eq(activity.id, id)).get();
 
