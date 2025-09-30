@@ -1,5 +1,4 @@
-import { command, query } from '$app/server';
-import { db } from '$lib/server/db';
+import { command, getRequestEvent, query } from '$app/server';
 import { activity, activityCategory, category, timeSession } from '$lib/server/db/schema';
 import { and, eq, gte, inArray, isNotNull, lt } from 'drizzle-orm';
 import * as v from 'valibot';
@@ -11,6 +10,9 @@ export const getSessionsForDate = query(
 		date: v.string() // YYYY-MM-DD format
 	}),
 	async ({ userId, date }) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
 		const startOfDay = new Date(date + 'T00:00:00.000Z');
 		const endOfDay = new Date(date + 'T23:59:59.999Z');
 
@@ -89,6 +91,9 @@ export const updateSession = command(
 		stoppedAt: v.pipe(v.string(), v.isoTimestamp('End time must be a valid ISO timestamp'))
 	}),
 	async ({ sessionId, userId, startedAt, stoppedAt }) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
 		const startDate = new Date(startedAt);
 		const endDate = new Date(stoppedAt);
 
@@ -145,6 +150,9 @@ export const deleteSession = command(
 		userId: v.string()
 	}),
 	async ({ sessionId, userId }) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
 		// Verify the session belongs to the user and get session details for cache invalidation
 		const existingSession = await db
 			.select({

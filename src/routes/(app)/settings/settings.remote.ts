@@ -1,5 +1,4 @@
-import { command } from '$app/server';
-import { db } from '$lib/server/db';
+import { command, getRequestEvent } from '$app/server';
 import {
 	account,
 	activity,
@@ -16,6 +15,9 @@ import * as v from 'valibot';
 export const deleteUserAccount = command(
 	v.string(), // userId
 	async (userId) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
 		try {
 			// Start a transaction to delete all user data in the correct order
 			await db.transaction(async (tx) => {
