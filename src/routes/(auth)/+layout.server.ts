@@ -1,11 +1,11 @@
-import { auth } from '$lib/auth';
-import type { RequestEvent } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 
-export const load = async (event: RequestEvent) => {
-	const session = await auth.api.getSession({
-		headers: event.request.headers
+export const load = async ({locals, request}) => {
+	const session = await locals.auth.api.getSession({
+		headers: request.headers
 	});
+
+	console.log("Layout server session:", session);
 
 	// If user is already authenticated, redirect to home
 	if (session) {

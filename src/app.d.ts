@@ -4,6 +4,8 @@ declare global {
 	namespace App {
 		// interface Error {}
 		interface Locals {
+			db: DrizzleClient;
+			auth: BetterAuth;
 			session?: {
 				id: string;
 				userId: string;
@@ -21,8 +23,10 @@ declare global {
 		}
 		// interface PageData {}
 		// interface PageState {}
-		// interface Platform {}
+		interface Platform {
+			env: Env;
+		}
 	}
 }
 
-export { };
+export {};

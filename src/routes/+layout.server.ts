@@ -1,9 +1,6 @@
-import { auth } from '$lib/auth';
-import type { RequestEvent } from '@sveltejs/kit';
-
-export const load = async (event: RequestEvent) => {
-    const session = await auth.api.getSession({
-        headers: event.request.headers
+export const load = async ({locals, request}) => {
+    const session = await locals.auth.api.getSession({
+        headers: request.headers
     });
 
     return {
