@@ -42,7 +42,19 @@ A simple time tracking application inspired by "Simple Time Tracker" mobile appl
    ```bash
    DATABASE_URL=your_database_url
    # Add other required environment variables for authentication
+   BETTER_AUTH_SECRET=your_better_auth_secret
+   BETTER_AUTH_URL=https://your-app-domain
+
+   # Optional tuning for password hashing (defaults work for local dev)
+   # Lower the iteration count if Cloudflare Workers report CPU limit errors
+   PASSWORD_HASH_ITERATIONS=60000
+   PASSWORD_HASH_KEY_LENGTH=32
+   PASSWORD_HASH_SALT_LENGTH=16
    ```
+
+   When deploying to Cloudflare Pages + D1, keep the iteration count between
+   40,000 and 80,000 to stay under the worker CPU budget while maintaining
+   strong hashing. Increase gradually if you observe low CPU usage.
 
 3. **Push database schema:**
 

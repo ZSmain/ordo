@@ -3,6 +3,7 @@ import { betterAuth } from "better-auth";
 import { sveltekitCookies } from "better-auth/svelte-kit";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { type DrizzleClient } from "$lib/server/db";
+import { passwordHasher } from "$lib/server/password";
 import { env } from "$env/dynamic/private";
 
 export function getAuth(db: DrizzleClient) {
@@ -16,6 +17,7 @@ export function getAuth(db: DrizzleClient) {
         baseURL: sanitizedBaseUrl,
         emailAndPassword: {
             enabled: true,
+            password: passwordHasher,
         },
         socialProviders: {
             google: {
