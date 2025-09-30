@@ -4,7 +4,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Separator } from '$lib/components/ui/separator';
-	import { AlertTriangle, LogOut, Trash2, User } from '@lucide/svelte';
+	import { TriangleAlert, LogOut, Trash2, User } from '@lucide/svelte';
 	import { deleteUserAccount } from './settings.remote';
 
 	const session = useSession();
@@ -105,7 +105,7 @@
 					<Dialog.Header>
 						<div class="flex items-center gap-3">
 							<div class="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-								<AlertTriangle class="h-5 w-5 text-red-600" />
+								<TriangleAlert class="h-5 w-5 text-red-600" />
 							</div>
 							<div>
 								<Dialog.Title class="text-left">Delete Account</Dialog.Title>
