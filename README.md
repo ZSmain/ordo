@@ -56,11 +56,16 @@ A simple time tracking application inspired by "Simple Time Tracker" mobile appl
    40,000 and 80,000 to stay under the worker CPU budget while maintaining
    strong hashing. Increase gradually if you observe low CPU usage.
 
-3. **Push database schema:**
+3. **Apply the database schema:**
 
    ```sh
-   pnpm run db:push
+   pnpm run db:migrate
    ```
+
+   This runs every migration in `drizzle/` against your local SQLite file
+   (the default `.env` points `DATABASE_URL` to `file:local.db`). Avoid using
+   `pnpm db:push` once migrations exist—it can drift the schema away from the
+   recorded migration history and break subsequent deploys.
 
 4. **Start the development server:**
 
@@ -70,10 +75,24 @@ A simple time tracking application inspired by "Simple Time Tracker" mobile appl
 
 ## Database Commands
 
-- `pnpm run db:push` - Push schema changes to database
+- `pnpm run db:migrate` - Run pending migrations (local SQLite by default)
 - `pnpm run db:generate` - Generate migration files
-- `pnpm run db:migrate` - Run pending migrations
 - `pnpm run db:studio` - Open Drizzle Studio
+
+### Cloudflare D1 notes
+
+- Local development with `pnpm dev` reads `DATABASE_URL` and therefore uses the
+   `local.db` file in the project root.
+- When you run `pnpm run preview` (or `wrangler pages dev`), Wrangler spins up a
+   Miniflare D1 database under
+   `.wrangler/state/v3/d1/miniflare-D1DatabaseObject/*.sqlite`. Apply migrations
+   to that instance with:
+
+   ```sh
+   pnpm dlx wrangler d1 migrations apply ordo_db --local
+   ```
+
+   Replace `--local` with `--remote` when targeting your production D1 database.
 
 ## Building
 
