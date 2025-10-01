@@ -7,7 +7,8 @@ import {
 	insertCategorySchema,
 	timeSession
 } from '$lib/server/db/schema';
-import { and, eq } from 'drizzle-orm';
+import type { InsertActivityCategory, SelectActivity, SelectCategory } from '$lib/server/db/schema';
+import { and, eq, inArray } from 'drizzle-orm';
 import * as v from 'valibot';
 
 // Return all categories with their activities for the current user
@@ -17,50 +18,68 @@ export const getCategoriesWithActivities = query(
 		const { locals } = getRequestEvent();
 
 		// Get all categories for the user
-		const categories = await locals.db.select().from(category).where(eq(category.userId, userId)).all();
-
-		// Get all activities with their associated categories in a single optimized query
-		const activitiesWithCategories = await locals.db
-			.select({
-				activity: activity,
-				category: category
-			})
-			.from(activity)
-			.leftJoin(activityCategory, eq(activity.id, activityCategory.activityId))
-			.leftJoin(category, eq(activityCategory.categoryId, category.id))
-			.where(eq(activity.userId, userId))
-			.orderBy(activity.id, category.id)
+		const categories: SelectCategory[] = await locals.db
+			.select()
+			.from(category)
+			.where(eq(category.userId, userId))
 			.all();
 
-		// Group activities by their ID and collect their categories
-		const activitiesMap = new Map();
+		type ActivityWithCategories = SelectActivity & { categories: SelectCategory[] };
+		type CategoryWithActivities = SelectCategory & { activities: ActivityWithCategories[] };
 
-		for (const item of activitiesWithCategories) {
-			const activityId = item.activity.id;
-
-			if (!activitiesMap.has(activityId)) {
-				activitiesMap.set(activityId, {
-					...item.activity,
-					categories: []
-				});
-			}
-
-			// Add category if it exists and isn't already in the list
-			if (item.category) {
-				const activity = activitiesMap.get(activityId);
-				if (!activity.categories.find((c: typeof item.category) => c.id === item.category!.id)) {
-					activity.categories.push(item.category);
-				}
-			}
+		if (categories.length === 0) {
+			return [] as CategoryWithActivities[];
 		}
 
-		// Convert map to array and group by category
-		const activities = Array.from(activitiesMap.values());
+		// Get all activities for the user first
+		const userActivities: SelectActivity[] = await locals.db
+			.select()
+			.from(activity)
+			.where(eq(activity.userId, userId))
+			.all();
+
+		if (userActivities.length === 0) {
+			return categories.map((cat) => ({
+				...cat,
+				activities: [] as ActivityWithCategories[]
+			})) satisfies CategoryWithActivities[];
+		}
+
+		const activityIds = userActivities.map((item) => item.id);
+
+		// Get all activity-category links for the fetched activities
+		const activityCategoryRows = await locals.db
+			.select({
+				activityId: activityCategory.activityId,
+				category: category
+			})
+			.from(activityCategory)
+			.leftJoin(category, eq(activityCategory.categoryId, category.id))
+			.where(inArray(activityCategory.activityId, activityIds))
+			.all();
+
+		const activityCategoryMap = new Map<number, SelectCategory[]>();
+
+		for (const row of activityCategoryRows) {
+			if (!row.category) continue;
+			const assignedCategories = activityCategoryMap.get(row.activityId) ?? [];
+			if (!assignedCategories.some((assigned) => assigned.id === row.category!.id)) {
+				assignedCategories.push(row.category);
+			}
+			activityCategoryMap.set(row.activityId, assignedCategories);
+		}
+
+		const activitiesWithCategories: ActivityWithCategories[] = userActivities.map(
+			(userActivity) => ({
+				...userActivity,
+				categories: activityCategoryMap.get(userActivity.id) ?? []
+			})
+		);
 
 		// Group activities by category
-		const categoriesWithActivities = categories.map((cat) => {
-			const categoryActivities = activities.filter((activity) =>
-				activity.categories.some((c: typeof cat) => c.id === cat.id)
+		const categoriesWithActivities: CategoryWithActivities[] = categories.map((cat) => {
+			const categoryActivities = activitiesWithCategories.filter((activity) =>
+				activity.categories.some((c: SelectCategory) => c.id === cat.id)
 			);
 
 			return {
@@ -128,9 +147,10 @@ export const startTimerSession = command(
 	async ({ activityId, userId }) => {
 		const { locals } = getRequestEvent();
 		const db = locals.db;
+		type DatabaseClient = typeof db;
 
 		// Use a transaction to ensure both stopping old sessions and creating new one succeed or fail together
-		const newSession = await db.transaction(async (tx) => {
+		const newSession = await db.transaction(async (tx: DatabaseClient) => {
 			// First, stop any currently active sessions for this user
 			const activeSessions = await tx
 				.select()
@@ -326,10 +346,9 @@ export const createActivity = command(
 
 		// If categoryIds are provided, create the activity-category relationships
 		if (categoryIds && categoryIds.length > 0) {
-			const activityCategoryData = categoryIds.map((categoryId) => ({
+			const activityCategoryData: InsertActivityCategory[] = categoryIds.map((categoryId) => ({
 				activityId: newActivity.id,
-				categoryId,
-				userId: activityFields.userId
+				categoryId
 			}));
 
 			await db.insert(activityCategory).values(activityCategoryData);
@@ -382,6 +401,7 @@ export const updateActivity = command(
 	async ({ id, userId, categoryIds, ...updateData }) => {
 		const { locals } = getRequestEvent();
 		const db = locals.db;
+		type DatabaseClient = typeof db;
 
 		// Only include defined fields in the update
 		const fieldsToUpdate = Object.fromEntries(
@@ -393,7 +413,7 @@ export const updateActivity = command(
 		}
 
 		// Use a transaction to update both activity and its categories
-		const updatedActivity = await db.transaction(async (tx) => {
+		const updatedActivity = await db.transaction(async (tx: DatabaseClient) => {
 			// Update the activity
 			const activityUpdate = await tx
 				.update(activity)

@@ -23,7 +23,7 @@ export const login = form(
 	async ({ email, password, redirectTo }) => {
 		const event = getRequestEvent();
 		const { auth } = event.locals;
-		
+
 		try {
 			await auth.api.signInEmail({
 				body: {
