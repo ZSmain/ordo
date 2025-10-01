@@ -1,4 +1,4 @@
-import { form, getRequestEvent } from '$app/server';
+import { command, form, getRequestEvent } from '$app/server';
 import { redirect } from '@sveltejs/kit';
 import * as v from 'valibot';
 
@@ -66,3 +66,31 @@ export const signup = form((signupSchema),
 		// Redirect to the main app on successful signup
 		redirect(303, '/');
 	});
+
+export const logout = command(async () => {
+	const event = getRequestEvent();
+	const { auth } = event.locals;
+
+	try {
+		await auth.api.signOut({
+			headers: event.request.headers
+		});
+		return { success: true };
+	} catch (error: unknown) {
+		// "Failed to get session" after signOut is expected - the session was cleared successfully
+		const errorBody = error && typeof error === 'object' && 'body' in error
+			? (error.body as { code?: string })
+			: null;
+
+		const isSessionError = error instanceof Error &&
+			(error.message.includes('Failed to get session') ||
+				errorBody?.code === 'FAILED_TO_GET_SESSION');
+
+		if (isSessionError) {
+			return { success: true };
+		}
+
+		console.error('Sign out error:', error);
+		return { success: false, message: error instanceof Error ? error.message : 'Sign out failed' };
+	}
+});

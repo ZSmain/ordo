@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { signOut, useSession } from '$lib/auth-client';
+	import { useSession } from '$lib/auth-client';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Separator } from '$lib/components/ui/separator';
-	import { TriangleAlert, LogOut, Trash2, User } from '@lucide/svelte';
+	import { LogOut, Trash2, TriangleAlert, User } from '@lucide/svelte';
+	import { logout } from '../../(auth)/auth.remote';
 	import { deleteUserAccount } from './settings.remote';
 
 	const session = useSession();
@@ -14,9 +15,10 @@
 
 	async function handleSignOut() {
 		try {
-			await signOut();
-			// Force a full page reload to clear any client state
-			goto('/login');
+			const result = await logout();
+			if (result.success) {
+				goto('/login');
+			}
 		} catch (error) {
 			console.error('Sign out error:', error);
 		}
@@ -31,8 +33,10 @@
 		try {
 			await deleteUserAccount($session.data.user.id);
 			// Sign out and redirect after successful deletion
-			await signOut();
-			goto('/login');
+			const result = await logout();
+			if (result.success) {
+				goto('/login');
+			}
 		} catch (error) {
 			console.error('Delete account error:', error);
 			deleteError = error instanceof Error ? error.message : 'Failed to delete account';
