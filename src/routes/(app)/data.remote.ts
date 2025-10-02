@@ -1,4 +1,5 @@
 import { command, getRequestEvent, query } from '$app/server';
+import type { InsertActivityCategory, SelectActivity, SelectCategory } from '$lib/server/db/schema';
 import {
 	activity,
 	activityCategory,
@@ -7,7 +8,6 @@ import {
 	insertCategorySchema,
 	timeSession
 } from '$lib/server/db/schema';
-import type { InsertActivityCategory, SelectActivity, SelectCategory } from '$lib/server/db/schema';
 import { and, eq, inArray } from 'drizzle-orm';
 import * as v from 'valibot';
 
