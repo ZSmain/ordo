@@ -7,7 +7,7 @@
 	"name": "ordo",
 	"compatibility_date": "2025-09-27",
 	"compatibility_flags": [
-		"nodejs_als"
+		"nodejs_als", "nodejs_compat"
 	],
 	"pages_build_output_dir": ".svelte-kit/cloudflare",
 	"observability": {
