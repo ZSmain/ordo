@@ -147,49 +147,43 @@ export const startTimerSession = command(
 	async ({ activityId, userId }) => {
 		const { locals } = getRequestEvent();
 		const db = locals.db;
-		type DatabaseClient = typeof db;
 
-		// Use a transaction to ensure both stopping old sessions and creating new one succeed or fail together
-		const newSession = await db.transaction(async (tx: DatabaseClient) => {
-			// First, stop any currently active sessions for this user
-			const activeSessions = await tx
-				.select()
-				.from(timeSession)
-				.where(and(eq(timeSession.userId, userId), eq(timeSession.isActive, true)))
-				.all();
+		// First, stop any currently active sessions for this user
+		const activeSessions = await db
+			.select()
+			.from(timeSession)
+			.where(and(eq(timeSession.userId, userId), eq(timeSession.isActive, true)))
+			.all();
 
-			// Stop all active sessions
-			for (const session of activeSessions) {
-				const stoppedAt = new Date();
-				const durationSeconds = Math.round(
-					(stoppedAt.getTime() - session.startedAt.getTime()) / 1000
-				);
+		// Stop all active sessions
+		for (const session of activeSessions) {
+			const stoppedAt = new Date();
+			const durationSeconds = Math.round(
+				(stoppedAt.getTime() - session.startedAt.getTime()) / 1000
+			);
 
-				await tx
-					.update(timeSession)
-					.set({
-						stoppedAt,
-						duration: durationSeconds,
-						isActive: false,
-						updatedAt: new Date()
-					})
-					.where(eq(timeSession.id, session.id));
-			}
-
-			// Create new active session
-			const newSession = await tx
-				.insert(timeSession)
-				.values({
-					activityId,
-					userId,
-					startedAt: new Date(),
-					isActive: true
+			await db
+				.update(timeSession)
+				.set({
+					stoppedAt,
+					duration: durationSeconds,
+					isActive: false,
+					updatedAt: new Date()
 				})
-				.returning()
-				.get();
+				.where(eq(timeSession.id, session.id));
+		}
 
-			return newSession;
-		});
+		// Create new active session
+		const newSession = await db
+			.insert(timeSession)
+			.values({
+				activityId,
+				userId,
+				startedAt: new Date(),
+				isActive: true
+			})
+			.returning()
+			.get();
 
 		return newSession;
 	}
@@ -401,7 +395,6 @@ export const updateActivity = command(
 	async ({ id, userId, categoryIds, ...updateData }) => {
 		const { locals } = getRequestEvent();
 		const db = locals.db;
-		type DatabaseClient = typeof db;
 
 		// Only include defined fields in the update
 		const fieldsToUpdate = Object.fromEntries(
@@ -412,44 +405,39 @@ export const updateActivity = command(
 			throw new Error('No fields to update');
 		}
 
-		// Use a transaction to update both activity and its categories
-		const updatedActivity = await db.transaction(async (tx: DatabaseClient) => {
-			// Update the activity
-			const activityUpdate = await tx
-				.update(activity)
-				.set({
-					...fieldsToUpdate,
-					updatedAt: new Date()
-				})
-				.where(eq(activity.id, id))
-				.returning()
-				.get();
+		// Update the activity
+		const activityUpdate = await db
+			.update(activity)
+			.set({
+				...fieldsToUpdate,
+				updatedAt: new Date()
+			})
+			.where(eq(activity.id, id))
+			.returning()
+			.get();
 
-			if (!activityUpdate || activityUpdate.userId !== userId) {
-				throw new Error('Activity not found or unauthorized');
+		if (!activityUpdate || activityUpdate.userId !== userId) {
+			throw new Error('Activity not found or unauthorized');
+		}
+
+		// Update categories if provided
+		if (categoryIds) {
+			// First, delete existing category relationships
+			await db.delete(activityCategory).where(eq(activityCategory.activityId, id));
+
+			// Then, create new category relationships
+			if (categoryIds.length > 0) {
+				const activityCategoryData = categoryIds.map((categoryId) => ({
+					activityId: id,
+					categoryId,
+					userId
+				}));
+
+				await db.insert(activityCategory).values(activityCategoryData);
 			}
+		}
 
-			// Update categories if provided
-			if (categoryIds) {
-				// First, delete existing category relationships
-				await tx.delete(activityCategory).where(eq(activityCategory.activityId, id));
-
-				// Then, create new category relationships
-				if (categoryIds.length > 0) {
-					const activityCategoryData = categoryIds.map((categoryId) => ({
-						activityId: id,
-						categoryId,
-						userId
-					}));
-
-					await tx.insert(activityCategory).values(activityCategoryData);
-				}
-			}
-
-			return activityUpdate;
-		});
-
-		return updatedActivity;
+		return activityUpdate;
 	}
 );
 
