@@ -57,6 +57,13 @@
       "when": 1758387285205,
       "tag": "0007_aberrant_albert_cleary",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1759422801990,
+      "tag": "0008_milky_firestar",
+      "breakpoints": true
     }
   ]
 }

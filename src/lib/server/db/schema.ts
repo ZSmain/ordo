@@ -3,7 +3,7 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-valibot';
 import * as v from 'valibot';
 
 export const category = sqliteTable('category', {
-	id: integer('id').primaryKey(),
+	id: integer('id').primaryKey({ autoIncrement: true }),
 	name: text('name').notNull(),
 	color: text('color').notNull(),
 	icon: text('icon').notNull(),
@@ -19,7 +19,7 @@ export const category = sqliteTable('category', {
 });
 
 export const activity = sqliteTable('activity', {
-	id: integer('id').primaryKey(),
+	id: integer('id').primaryKey({ autoIncrement: true }),
 	name: text('name').notNull(),
 	icon: text('icon').notNull(),
 	dailyGoal: integer('daily_goal'), // in minutes
@@ -41,7 +41,7 @@ export const activity = sqliteTable('activity', {
 export const activityCategory = sqliteTable(
 	'activity_category',
 	{
-		id: integer('id').primaryKey(),
+		id: integer('id').primaryKey({ autoIncrement: true }),
 		activityId: integer('activity_id')
 			.notNull()
 			.references(() => activity.id, { onDelete: 'cascade' }),
@@ -61,7 +61,7 @@ export const activityCategory = sqliteTable(
 );
 
 export const timeSession = sqliteTable('time_session', {
-	id: integer('id').primaryKey(),
+	id: integer('id').primaryKey({ autoIncrement: true }),
 	activityId: integer('activity_id')
 		.notNull()
 		.references(() => activity.id, { onDelete: 'cascade' }),
