@@ -32,9 +32,10 @@ export const login = form(
 				},
 				headers: event.request.headers
 			});
-		} catch (error: any) {
+		} catch (error) {
 			console.error("Login error:", error);
-			return { success: false, message: error?.message ?? 'Login failed' };
+			const msg = error instanceof Error ? error.message : 'Login failed';
+			return { success: false, message: msg };
 		}
 
 		// Redirect to the intended page upon successful login
@@ -59,8 +60,9 @@ export const signup = form((signupSchema),
 				},
 				headers: event.request.headers
 			});
-		} catch (error: any) {
-			return { success: false, message: error?.message ?? 'Failed to create account' };
+		} catch (error) {
+			const msg = error instanceof Error ? error.message : 'Failed to create account';
+			return { success: false, message: msg };
 		}
 
 		// Redirect to the main app on successful signup
@@ -94,3 +96,57 @@ export const logout = command(async () => {
 		return { success: false, message: error instanceof Error ? error.message : 'Sign out failed' };
 	}
 });
+
+const googleSignInSchema = v.object({
+	provider: v.literal('google'),
+	redirectTo: v.optional(v.string())
+});
+
+export const loginWithGoogle = form(
+	googleSignInSchema,
+	async ({ provider, redirectTo }) => {
+		const event = getRequestEvent();
+		const { auth } = event.locals;
+
+		try {
+			const result = await auth.api.signInSocial({
+				body: { provider },
+				headers: event.request.headers
+			});
+
+			// Try to extract redirect URL from various response formats
+			let redirectUrl: string | null = null;
+
+			if (result instanceof Response) {
+				redirectUrl = result.headers.get('location');
+
+				// If no location header, try parsing JSON body
+				if (!redirectUrl) {
+					const contentType = result.headers.get('content-type') ?? '';
+					if (contentType.includes('application/json')) {
+						try {
+							const data = await result.json() as Record<string, unknown>;
+							redirectUrl = (data?.location || data?.url) as string | null;
+						} catch {
+							// Failed to parse JSON, continue with fallback
+						}
+					}
+				}
+			} else if (result && typeof result === 'object') {
+				const data = result as Record<string, unknown>;
+				redirectUrl = (data.location || data.url) as string | null;
+			}
+
+			// Redirect to discovered URL or fallback
+			redirect(303, redirectUrl || redirectTo || '/');
+		} catch (error) {
+			// Re-throw SvelteKit redirects
+			if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
+				throw error;
+			}
+			console.error('Google sign-in error:', error);
+			const message = error instanceof Error ? error.message : 'Google sign-in failed';
+			return { success: false, message };
+		}
+	}
+);
