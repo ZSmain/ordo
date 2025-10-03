@@ -5,7 +5,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { toast } from 'svlete-sonner';
+	import { toast } from 'svelte-sonner';
 	import { login } from '../auth.remote';
 
 	let redirectTo = $derived(page.url.searchParams.get('redirectTo') || '/');
