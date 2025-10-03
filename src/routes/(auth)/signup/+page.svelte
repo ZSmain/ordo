@@ -4,15 +4,20 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+	import { toast } from 'svelte-sonner';
 	import { signup } from '../auth.remote';
 
 	async function loginWithGoogle() {
-		await authClient.signIn.social({
-			provider: 'google',
-			callbackURL: '/',
-			errorCallbackURL: '/',
-			newUserCallbackURL: '/'
-		});
+		try {
+			await authClient.signIn.social({
+				provider: 'google',
+				callbackURL: '/',
+				errorCallbackURL: '/',
+				newUserCallbackURL: '/'
+			});
+		} catch (error: any) {
+			toast.error('Google sign-in error:', error);
+		}
 	}
 </script>
 
