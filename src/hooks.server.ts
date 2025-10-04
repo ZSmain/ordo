@@ -73,7 +73,7 @@ export const handle: Handle = async ({ event, resolve }) => {
             });
         }
 
-        let response = await event.locals.auth.handler(request);
+        const response = await event.locals.auth.handler(request);
 
         if (
             configuredHostname &&
@@ -81,60 +81,27 @@ export const handle: Handle = async ({ event, resolve }) => {
             event.url.pathname.startsWith("/api/auth/callback")
         ) {
             const previewOrigin = event.cookies.get("__auth_redirect_origin");
-            let rewroteRedirect = false;
             if (previewOrigin && previewOrigin !== event.url.origin) {
-                // If the flow started on a preview host, rewrite the post-auth redirect to send the user back there.
-                const location = response.headers.get("location");
-                if (location) {
-                    const fallbackBase = configuredBase ?? event.url.origin;
-                    const resolvedTarget = new URL(location, fallbackBase);
-                    const previewRedirect = new URL(
-                        `${resolvedTarget.pathname}${resolvedTarget.search}${resolvedTarget.hash}`,
-                        previewOrigin
-                    );
-                    const updatedHeaders = new Headers(response.headers);
-                    updatedHeaders.set("location", previewRedirect.toString());
-                    response = new Response(response.body, {
-                        status: response.status,
-                        statusText: response.statusText,
-                        headers: updatedHeaders
-                    });
-                    rewroteRedirect = true;
-                }
-            }
+                const location = response.headers.get("location") ?? "/";
+                const fallbackBase = configuredBase ?? event.url.origin;
+                const resolvedTarget = new URL(location, fallbackBase);
+                const previewRedirect = new URL(
+                    `${resolvedTarget.pathname}${resolvedTarget.search}${resolvedTarget.hash}`,
+                    previewOrigin
+                );
 
-            if (rewroteRedirect && cookieDomain && previewOrigin) {
-                event.cookies.delete("__auth_redirect_origin", {
-                    path: "/",
-                    domain: cookieDomain
-                });
+                if (cookieDomain) {
+                    event.cookies.delete("__auth_redirect_origin", {
+                        path: "/",
+                        domain: cookieDomain
+                    });
+                }
+
+                return Response.redirect(previewRedirect.toString(), 303);
             }
         }
 
         return response;
-    }
-
-    if (
-        configuredHostname &&
-        event.url.hostname === configuredHostname &&
-        !event.url.pathname.startsWith("/api/auth")
-    ) {
-        const previewOrigin = event.cookies.get("__auth_redirect_origin");
-        if (previewOrigin && previewOrigin !== event.url.origin) {
-            const target = new URL(
-                `${event.url.pathname}${event.url.search}${event.url.hash}`,
-                previewOrigin
-            );
-
-            if (cookieDomain) {
-                event.cookies.delete("__auth_redirect_origin", {
-                    path: "/",
-                    domain: cookieDomain
-                });
-            }
-
-            return Response.redirect(target.toString(), 302);
-        }
     }
 
     return svelteKitHandler({ event, resolve, auth: event.locals.auth, building });
