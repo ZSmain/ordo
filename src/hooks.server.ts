@@ -37,6 +37,25 @@ export const handle: Handle = async ({ event, resolve }) => {
 
     if (event.url.pathname.startsWith("/api/auth")) {
         const isPreviewHost = configuredHostname && event.url.hostname !== configuredHostname;
+        let request = event.request;
+
+        if (isPreviewHost && configuredHostname && configuredBase) {
+            const baseUrl = new URL(configuredBase);
+            const canonicalUrl = new URL(event.request.url);
+            canonicalUrl.protocol = baseUrl.protocol;
+            canonicalUrl.host = baseUrl.host;
+
+            const rehostedRequest = new Request(canonicalUrl.toString(), request);
+            const headers = new Headers(rehostedRequest.headers);
+            headers.set("host", baseUrl.host);
+            headers.set("origin", baseUrl.origin);
+            headers.set(
+                "referer",
+                `${baseUrl.origin}${event.url.pathname}${event.url.search}`
+            );
+
+            request = new Request(rehostedRequest, { headers });
+        }
 
         if (
             isPreviewHost &&
@@ -54,7 +73,7 @@ export const handle: Handle = async ({ event, resolve }) => {
             });
         }
 
-        let response = await event.locals.auth.handler(event.request);
+        let response = await event.locals.auth.handler(request);
 
         if (
             configuredHostname &&
