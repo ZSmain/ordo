@@ -16,8 +16,23 @@ function resolveBaseUrl(): string | undefined {
     return event?.url.origin;
 }
 
+function resolveCookieDomain(baseURL: string | undefined): string | undefined {
+    if (!baseURL) return undefined;
+
+    try {
+        const hostname = new URL(baseURL).hostname;
+        if (!hostname || hostname === "localhost" || hostname === "127.0.0.1") {
+            return undefined;
+        }
+        return `.${hostname}`;
+    } catch {
+        return undefined;
+    }
+}
+
 export function getAuth(db: DrizzleClient) {
     const baseURL = resolveBaseUrl();
+    const cookieDomain = resolveCookieDomain(baseURL ?? env.BETTER_AUTH_URL);
 
     return betterAuth({
         database: drizzleAdapter(db, {
@@ -35,6 +50,17 @@ export function getAuth(db: DrizzleClient) {
                 clientSecret: env.GOOGLE_CLIENT_SECRET,
             }
         },
+        ...(cookieDomain
+            ? {
+                advanced: {
+                    crossSubDomainCookies: {
+                        enabled: true,
+                        domain: cookieDomain
+                    },
+                    useSecureCookies: baseURL?.startsWith("https://") ?? true
+                }
+            }
+            : {}),
         plugins: [sveltekitCookies(getRequestEvent)]
     });
 }
