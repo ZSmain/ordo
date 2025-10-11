@@ -8,6 +8,7 @@ import { sveltekitCookies } from "better-auth/svelte-kit";
 
 export function getAuth(db: DrizzleClient) {
     return betterAuth({
+        baseUrl: env.CF_PAGES_URL || env.BETTER_AUTH_URL,
         database: drizzleAdapter(db, { provider: "sqlite" }),
         emailAndPassword: {
             enabled: true,
