@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { login } from '$lib/api/auth.remote';
 	import { authClient } from '$lib/auth-client';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { login } from '../auth.remote';
 
 	let redirectTo = $derived(page.url.searchParams.get('redirectTo') || '/');
 
@@ -59,30 +59,27 @@
 								<div class="grid gap-3">
 									<Label for="email">Email</Label>
 									<Input
-										id="email"
-										name={login.field('email')}
-										type="email"
+										{...login.fields.email.as('email')}
 										placeholder="Enter your email"
 										required
 									/>
-									{#if login.issues?.email}
-										<p class="text-sm text-red-600">{login.issues.email}</p>
-									{/if}
+									{#each login.fields.email.issues() ?? [] as issue}
+										<p class="text-sm text-red-600">{issue.message}</p>
+									{/each}
 								</div>
 								<div class="grid gap-3">
 									<div class="flex items-center">
 										<Label for="password">Password</Label>
 									</div>
 									<Input
-										id="password"
-										name={login.field('password')}
+										{...login.fields.password.as('password')}
 										type="password"
 										placeholder="Enter your password"
 										required
 									/>
-									{#if login.issues?.password}
-										<p class="text-sm text-red-600">{login.issues.password}</p>
-									{/if}
+									{#each login.fields.password.issues() ?? [] as issue}
+										<p class="text-sm text-red-600">{issue.message}</p>
+									{/each}
 								</div>
 
 								{#if !login.result?.success && login.result?.message}

@@ -1,10 +1,10 @@
 <script lang="ts">
+	import { signup } from '$lib/api/auth.remote';
 	import { authClient } from '$lib/auth-client';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { signup } from '../auth.remote';
 
 	async function loginWithGoogle() {
 		await authClient.signIn.social({
@@ -55,58 +55,48 @@
 							<div class="grid gap-6">
 								<div class="grid gap-3">
 									<Label for="name">Full name</Label>
-									<Input
-										id="name"
-										name={signup.field('name')}
-										type="text"
-										placeholder="Your full name"
-										required
-									/>
-									{#if signup.issues?.name}
-										<p class="text-sm text-red-600">{signup.issues.name}</p>
-									{/if}
+									<Input {...signup.fields.name.as('name')} placeholder="Your full name" required />
+									{#each signup.fields.name.issues() ?? [] as issue}
+										<p class="text-sm text-red-600">{issue.message}</p>
+									{/each}
 								</div>
 
 								<div class="grid gap-3">
 									<Label for="email">Email</Label>
 									<Input
-										id="email"
-										name={signup.field('email')}
-										type="email"
+										{...signup.fields.email.as('email')}
 										placeholder="Enter your email"
 										required
 									/>
-									{#if signup.issues?.email}
-										<p class="text-sm text-red-600">{signup.issues.email}</p>
-									{/if}
+									{#each signup.fields.email.issues() ?? [] as issue}
+										<p class="text-sm text-red-600">{issue.message}</p>
+									{/each}
 								</div>
 
 								<div class="grid gap-3">
 									<Label for="password">Password</Label>
 									<Input
-										id="password"
-										name={signup.field('password')}
+										{...signup.fields.password.as('password')}
 										type="password"
 										placeholder="Create a password"
 										required
 									/>
-									{#if signup.issues?.password}
-										<p class="text-sm text-red-600">{signup.issues.password}</p>
-									{/if}
+									{#each signup.fields.password.issues() ?? [] as issue}
+										<p class="text-sm text-red-600">{issue.message}</p>
+									{/each}
 								</div>
 
 								<div class="grid gap-3">
 									<Label for="confirmPassword">Confirm password</Label>
 									<Input
-										id="confirmPassword"
-										name={signup.field('confirmPassword')}
+										{...signup.fields.confirmPassword.as('confirmPassword')}
 										type="password"
 										placeholder="Confirm your password"
 										required
 									/>
-									{#if signup.issues?.confirmPassword}
-										<p class="text-sm text-red-600">{signup.issues.confirmPassword}</p>
-									{/if}
+									{#each signup.fields.confirmPassword.issues() ?? [] as issue}
+										<p class="text-sm text-red-600">{issue.message}</p>
+									{/each}
 								</div>
 
 								{#if typeof signup.result?.message === 'string'}

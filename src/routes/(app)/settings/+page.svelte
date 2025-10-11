@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { useSession } from '$lib/auth-client';
+	import { logout } from '$lib/api/auth.remote';
+	import { deleteUserAccount } from '$lib/api/settings.remote';
+	import { authClient } from '$lib/auth-client';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Separator } from '$lib/components/ui/separator';
 	import { LogOut, Trash2, TriangleAlert, User } from '@lucide/svelte';
-	import { logout } from '../../(auth)/auth.remote';
-	import { deleteUserAccount } from './settings.remote';
 
-	const session = useSession();
+	const session = authClient.useSession();
 	let isDeleteDialogOpen = $state(false);
 	let isDeleting = $state(false);
 	let deleteError = $state('');

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { createCategory } from '$lib/api/data.remote';
 	import { Button } from '$lib/components/ui/button';
 	import {
 		Drawer,
@@ -12,7 +13,6 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import type { InsertCategory } from '$lib/server/db/schema';
-	import { createCategory } from '../../../routes/(app)/data.remote';
 
 	interface Props {
 		open: boolean;

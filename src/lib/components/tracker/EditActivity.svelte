@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { getCategoriesWithActivities, updateActivity } from '$lib/api/data.remote';
 	import { Button } from '$lib/components/ui/button';
 	import {
 		Drawer,
@@ -13,7 +14,6 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
 	import type { ActivityWithOptionalCategories, Category } from '$lib/types';
-	import { updateActivity, getCategoriesWithActivities } from '../../../routes/(app)/data.remote';
 
 	interface Props {
 		open: boolean;

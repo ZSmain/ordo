@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { deleteSession } from '$lib/api/daily.remote';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Trash2 } from '@lucide/svelte';
-	import { deleteSession } from '../../../routes/(app)/daily/daily.remote';
 
 	interface Props {
 		open: boolean;

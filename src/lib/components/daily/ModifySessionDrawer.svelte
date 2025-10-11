@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { updateSession } from '$lib/api/daily.remote';
 	import { Button } from '$lib/components/ui/button';
 	import { Calendar } from '$lib/components/ui/calendar';
 	import * as Drawer from '$lib/components/ui/drawer';
@@ -7,7 +8,6 @@
 	import * as Popover from '$lib/components/ui/popover';
 	import { CalendarDate, getLocalTimeZone } from '@internationalized/date';
 	import { ChevronDown, Clock } from '@lucide/svelte';
-	import { updateSession } from '../../../routes/(app)/daily/daily.remote';
 
 	interface Props {
 		open: boolean;

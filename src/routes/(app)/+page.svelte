@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import {
+		getActiveSession,
+		getCategoriesWithActivities,
+		startTimerSession,
+		stopTimerSession
+	} from '$lib/api/data.remote';
+	import {
 		ActivityList,
 		CategorySelector,
 		FloatingAddButton,
@@ -11,12 +17,6 @@
 	import { restoreTimerFromDatabase, selectionStore, timerStore } from '$lib/stores';
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
-	import {
-		getActiveSession,
-		getCategoriesWithActivities,
-		startTimerSession,
-		stopTimerSession
-	} from './data.remote';
 
 	// Get user from page data
 	const user = $derived(page.data?.user);
