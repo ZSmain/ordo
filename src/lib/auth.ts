@@ -29,6 +29,5 @@ export function getAuth(db: DrizzleClient, origin?: string) {
         plugins: [sveltekitCookies(getRequestEvent)]
     });
 }
-}
 
 export type BetterAuth = ReturnType<typeof getAuth>;
