@@ -8,13 +8,13 @@ import { sveltekitCookies } from "better-auth/svelte-kit";
 
 export function getAuth(db: DrizzleClient, origin?: string) {
     const event = getRequestEvent();
-    const baseUrl = origin ?? event?.url.origin ?? env.BETTER_AUTH_URL ?? env.CF_PAGES_URL;
+    const baseUrl = env.BETTER_AUTH_URL ?? origin ?? event?.url.origin ?? env.CF_PAGES_URL;
 
     console.log("getAuth baseUrl:", baseUrl);
 
     return betterAuth({
         baseUrl,
-        trustedOrigins: [baseUrl, env.BETTER_AUTH_URL ?? ""],
+        trustedOrigins: [baseUrl, origin ?? "", event?.url.origin ?? "", env.BETTER_AUTH_URL ?? "", "https://ordo.pages.dev", "https://ordo.ismailzouaoui.com"],
         database: drizzleAdapter(db, { provider: "sqlite" }),
         emailAndPassword: {
             enabled: true,
@@ -25,6 +25,9 @@ export function getAuth(db: DrizzleClient, origin?: string) {
                 clientId: env.GOOGLE_CLIENT_ID,
                 clientSecret: env.GOOGLE_CLIENT_SECRET,
             }
+        },
+        advanced: {
+            cookiePrefix: "ordo",
         },
         plugins: [sveltekitCookies(getRequestEvent)]
     });
