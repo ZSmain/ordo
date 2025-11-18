@@ -1,22 +1,6 @@
 import { command, form, getRequestEvent } from '$app/server';
+import { googleSignInSchema, loginSchema, signupSchema } from '$lib/schema/auth';
 import { redirect } from '@sveltejs/kit';
-import * as v from 'valibot';
-
-const loginSchema = v.object({
-	email: v.pipe(v.string(), v.email('Please provide a valid email address')),
-	password: v.pipe(v.string(), v.minLength(6, 'Password must be at least 6 characters long')),
-	redirectTo: v.optional(v.string())
-});
-
-const signupSchema = v.object({
-	name: v.pipe(v.string(), v.minLength(2, 'Name must be at least 2 characters long')),
-	email: v.pipe(v.string(), v.email('Please provide a valid email address')),
-	password: v.pipe(v.string(), v.minLength(6, 'Password must be at least 6 characters long')),
-	confirmPassword: v.pipe(
-		v.string(),
-		v.minLength(6, 'Confirm Password must be at least 6 characters long')
-	)
-});
 
 export const login = form(
 	loginSchema,
@@ -95,11 +79,6 @@ export const logout = command(async () => {
 		console.error('Sign out error:', error);
 		return { success: false, message: error instanceof Error ? error.message : 'Sign out failed' };
 	}
-});
-
-const googleSignInSchema = v.object({
-	provider: v.literal('google'),
-	redirectTo: v.optional(v.string())
 });
 
 export const loginWithGoogle = form(

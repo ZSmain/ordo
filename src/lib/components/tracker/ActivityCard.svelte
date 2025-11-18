@@ -1,11 +1,11 @@
 <script lang="ts">
+	import { archiveActivity, deleteActivity } from '$lib/api/data.remote';
 	import { Button } from '$lib/components/ui/button';
 	import * as ContextMenu from '$lib/components/ui/context-menu';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Label } from '$lib/components/ui/label';
-	import type { Activity, ActivityWithOptionalCategories } from '$lib/types';
+	import type { ActivityWithOptionalCategories } from '$lib/types';
 	import { Pause, Play } from '@lucide/svelte';
-	import { archiveActivity, deleteActivity } from '../../../routes/(app)/data.remote';
 	import EditActivity from './EditActivity.svelte';
 
 	interface Props {

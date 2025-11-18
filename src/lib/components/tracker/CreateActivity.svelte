@@ -13,7 +13,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
 
-	import { createActivity, getCategoriesWithActivities } from '../../../routes/(app)/data.remote';
+	import { createActivity, getCategoriesWithActivities } from '$lib/api/data.remote';
 
 	interface Props {
 		open: boolean;

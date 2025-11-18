@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { getSessionsForDate } from '$lib/api/daily.remote';
 	import { SessionCard } from '$lib/components/daily';
 	import { Button } from '$lib/components/ui/button';
 	import { Calendar } from '$lib/components/ui/calendar';
@@ -7,7 +8,6 @@
 	import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date';
 	import { CalendarIcon, ChevronLeft, ChevronRight } from '@lucide/svelte';
 	import type { PageProps } from './$types';
-	import { getSessionsForDate } from './daily.remote';
 
 	let { data }: PageProps = $props();
 

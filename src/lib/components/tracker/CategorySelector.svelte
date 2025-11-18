@@ -1,11 +1,11 @@
 <script lang="ts">
+	import { deleteCategory } from '$lib/api/data.remote';
 	import { Button } from '$lib/components/ui/button';
 	import * as ContextMenu from '$lib/components/ui/context-menu';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Label } from '$lib/components/ui/label';
 	import * as RadioGroup from '$lib/components/ui/radio-group';
 	import type { Category } from '$lib/types';
-	import { deleteCategory } from '../../../routes/(app)/data.remote';
 	import EditCategory from './EditCategory.svelte';
 
 	interface Props {
