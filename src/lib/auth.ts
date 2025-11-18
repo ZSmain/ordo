@@ -10,9 +10,11 @@ export function getAuth(db: DrizzleClient, origin?: string) {
     const event = getRequestEvent();
     const baseUrl = origin ?? event?.url.origin ?? env.BETTER_AUTH_URL ?? env.CF_PAGES_URL;
 
+    console.log("getAuth baseUrl:", baseUrl);
+
     return betterAuth({
         baseUrl,
-        trustedOrigins: [baseUrl],
+        trustedOrigins: [baseUrl, env.BETTER_AUTH_URL ?? ""],
         database: drizzleAdapter(db, { provider: "sqlite" }),
         emailAndPassword: {
             enabled: true,
