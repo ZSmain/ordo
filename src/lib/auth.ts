@@ -8,7 +8,7 @@ import { sveltekitCookies } from "better-auth/svelte-kit";
 
 export function getAuth(db: DrizzleClient, origin?: string) {
     const event = getRequestEvent();
-    const baseUrl = env.BETTER_AUTH_URL ?? origin ?? event?.url.origin ?? env.CF_PAGES_URL;
+    const baseUrl = origin ?? event?.url.origin ?? env.BETTER_AUTH_URL ?? env.CF_PAGES_URL;
 
     return betterAuth({
         baseUrl,
