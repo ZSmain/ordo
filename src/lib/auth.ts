@@ -12,6 +12,7 @@ export function getAuth(db: DrizzleClient, origin?: string) {
 
     return betterAuth({
         baseUrl,
+        trustedOrigins: [baseUrl],
         database: drizzleAdapter(db, { provider: "sqlite" }),
         emailAndPassword: {
             enabled: true,
