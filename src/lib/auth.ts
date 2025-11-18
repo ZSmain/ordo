@@ -14,7 +14,6 @@ export function getAuth(db: DrizzleClient, origin?: string) {
 
     return betterAuth({
         baseUrl,
-        trustedOrigins: [baseUrl, origin ?? "", event?.url.origin ?? "", env.BETTER_AUTH_URL ?? "", "https://ordo.pages.dev", "https://ordo.ismailzouaoui.com"],
         database: drizzleAdapter(db, { provider: "sqlite" }),
         emailAndPassword: {
             enabled: true,
