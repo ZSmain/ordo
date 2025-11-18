@@ -7,7 +7,7 @@ import { svelteKitHandler } from 'better-auth/svelte-kit'
 
 export const handle: Handle = async ({ event, resolve }) => {
     event.locals.db = getDb(event.platform?.env?.ordo_db, env.DATABASE_URL)
-    event.locals.auth = getAuth(event.locals.db)
+    event.locals.auth = getAuth(event.locals.db, event.url.origin)
 
     const session = await event.locals.auth.api.getSession({
         headers: event.request.headers
