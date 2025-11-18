@@ -26,11 +26,9 @@ export function getAuth(db: DrizzleClient, origin?: string) {
                 clientSecret: env.GOOGLE_CLIENT_SECRET,
             }
         },
-        advanced: {
-            cookiePrefix: "ordo",
-        },
         plugins: [sveltekitCookies(getRequestEvent)]
     });
+}
 }
 
 export type BetterAuth = ReturnType<typeof getAuth>;
