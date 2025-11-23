@@ -161,10 +161,9 @@
 		const remainingSeconds = seconds % 60;
 
 		if (hours > 0) {
-			if (minutes === 0) {
-				return `${hours}h`;
-			}
-			return `${hours}h ${minutes}m`;
+			if (minutes === 0 && remainingSeconds === 0) return `${hours}h`;
+			if (remainingSeconds === 0) return `${hours}h ${minutes}m`;
+			return `${hours}h ${minutes}m ${remainingSeconds}s`;
 		}
 
 		if (minutes > 0) {

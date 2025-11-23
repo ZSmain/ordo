@@ -53,8 +53,15 @@
 	function formatDuration(seconds: number | null) {
 		if (!seconds) return '0s';
 
-		const minutes = Math.floor(seconds / 60);
+		const hours = Math.floor(seconds / 3600);
+		const minutes = Math.floor((seconds % 3600) / 60);
 		const remainingSeconds = seconds % 60;
+
+		if (hours > 0) {
+			if (minutes === 0 && remainingSeconds === 0) return `${hours}h`;
+			if (remainingSeconds === 0) return `${hours}h ${minutes}m`;
+			return `${hours}h ${minutes}m ${remainingSeconds}s`;
+		}
 
 		if (minutes === 0) {
 			return `${remainingSeconds}s`;
