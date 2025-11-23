@@ -64,7 +64,7 @@
 										required
 									/>
 									{#each login.fields.email.issues() ?? [] as issue}
-										<p class="text-sm text-red-600">{issue.message}</p>
+										<p class="text-sm text-red-600 dark:text-red-400">{issue.message}</p>
 									{/each}
 								</div>
 								<div class="grid gap-3">
@@ -78,12 +78,14 @@
 										required
 									/>
 									{#each login.fields.password.issues() ?? [] as issue}
-										<p class="text-sm text-red-600">{issue.message}</p>
+										<p class="text-sm text-red-600 dark:text-red-400">{issue.message}</p>
 									{/each}
 								</div>
 
 								{#if !login.result?.success && login.result?.message}
-									<div class="rounded-md bg-red-50 p-3 text-sm text-red-600">
+									<div
+										class="rounded-md bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400"
+									>
 										{login.result.message}
 									</div>
 								{/if}

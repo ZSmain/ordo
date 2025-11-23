@@ -83,14 +83,16 @@
 </script>
 
 <div class="mt-4 space-y-2">
-	<h2 class="text-lg font-semibold text-gray-800">Categories</h2>
+	<h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Categories</h2>
 
 	{#if error}
 		<div class="mt-4 text-center text-xs text-red-500">Failed to load categories</div>
 	{:else if loading}
-		<div class="mt-4 text-center text-xs text-slate-400">Loading categories...</div>
+		<div class="mt-4 text-center text-xs text-slate-400 dark:text-slate-500">
+			Loading categories...
+		</div>
 	{:else if !categories || categories.length === 0}
-		<div class="mt-4 text-center text-xs text-slate-400">No categories yet</div>
+		<div class="mt-4 text-center text-xs text-slate-400 dark:text-slate-500">No categories yet</div>
 	{:else}
 		<RadioGroup.Root
 			bind:value={selectedCategoryId}

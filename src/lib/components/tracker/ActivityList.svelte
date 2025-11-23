@@ -30,12 +30,14 @@
 {#if category}
 	<Separator class="my-4" />
 	<div class="mt-4 space-y-2">
-		<h2 class="text-lg font-semibold text-gray-800">
+		<h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
 			Activities - {category.name}
 		</h2>
 
 		{#if !visibleActivities || visibleActivities.length === 0}
-			<div class="text-center text-xs text-slate-400">No activities in this category yet</div>
+			<div class="text-center text-xs text-slate-400 dark:text-slate-500">
+				No activities in this category yet
+			</div>
 		{:else}
 			<div class="grid grid-cols-2 gap-3">
 				{#each visibleActivities as activity, index (activity.id + '-' + index)}

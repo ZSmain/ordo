@@ -5,6 +5,7 @@
 	import { authClient } from '$lib/auth-client';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import ModeToggle from '$lib/components/ui/ModeToggle.svelte';
 	import { Separator } from '$lib/components/ui/separator';
 	import { LogOut, Trash2, TriangleAlert, User } from '@lucide/svelte';
 
@@ -59,13 +60,15 @@
 	<div class="mx-auto max-w-2xl space-y-6">
 		<!-- Page Header -->
 		<div>
-			<h1 class="text-2xl font-bold text-gray-900">Settings</h1>
-			<p class="text-sm text-gray-600">Manage your account and preferences</p>
+			<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+			<p class="text-sm text-gray-600 dark:text-gray-400">Manage your account and preferences</p>
 		</div>
 
 		<!-- User Profile Section -->
 		{#if $session.data?.user}
-			<div class="rounded-lg border border-gray-200 bg-white p-4">
+			<div
+				class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950"
+			>
 				<div class="flex items-center gap-4">
 					<div
 						class="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-lg font-medium text-primary-foreground"
@@ -73,17 +76,35 @@
 						<User class="h-6 w-6" />
 					</div>
 					<div>
-						<h2 class="text-lg font-semibold text-gray-900">
+						<h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
 							{$session.data.user.name || 'User'}
 						</h2>
-						<p class="text-sm text-gray-600">{$session.data.user.email}</p>
-						<p class="text-xs text-gray-500">
+						<p class="text-sm text-gray-600 dark:text-gray-400">{$session.data.user.email}</p>
+						<p class="text-xs text-gray-500 dark:text-gray-500">
 							Member since {new Date($session.data.user.createdAt).toLocaleDateString()}
 						</p>
 					</div>
 				</div>
 			</div>
 		{/if}
+
+		<Separator />
+
+		<!-- Appearance Section -->
+		<div class="space-y-3">
+			<h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Appearance</h3>
+			<div
+				class="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950"
+			>
+				<div class="space-y-0.5">
+					<div class="text-sm font-medium text-gray-900 dark:text-gray-100">Theme</div>
+					<div class="text-xs text-gray-500 dark:text-gray-400">
+						Customize the look and feel of the app
+					</div>
+				</div>
+				<ModeToggle />
+			</div>
+		</div>
 
 		<Separator />
 
@@ -108,8 +129,10 @@
 				<Dialog.Content class="sm:max-w-md">
 					<Dialog.Header>
 						<div class="flex items-center gap-3">
-							<div class="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-								<TriangleAlert class="h-5 w-5 text-red-600" />
+							<div
+								class="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20"
+							>
+								<TriangleAlert class="h-5 w-5 text-red-600 dark:text-red-400" />
 							</div>
 							<div>
 								<Dialog.Title class="text-left">Delete Account</Dialog.Title>
@@ -120,9 +143,11 @@
 						</div>
 					</Dialog.Header>
 					<div class="py-4">
-						<div class="rounded-lg bg-red-50 p-4">
-							<h4 class="mb-2 font-semibold text-red-900">This will permanently delete:</h4>
-							<ul class="space-y-1 text-sm text-red-800">
+						<div class="rounded-lg bg-red-50 p-4 dark:bg-red-900/10">
+							<h4 class="mb-2 font-semibold text-red-900 dark:text-red-200">
+								This will permanently delete:
+							</h4>
+							<ul class="space-y-1 text-sm text-red-800 dark:text-red-300">
 								<li>• Your account and profile information</li>
 								<li>• All your categories and activities</li>
 								<li>• All your time tracking sessions</li>
@@ -130,8 +155,8 @@
 							</ul>
 						</div>
 						{#if deleteError}
-							<div class="mt-4 rounded-lg bg-red-100 p-3">
-								<p class="text-sm text-red-800">{deleteError}</p>
+							<div class="mt-4 rounded-lg bg-red-100 p-3 dark:bg-red-900/20">
+								<p class="text-sm text-red-800 dark:text-red-300">{deleteError}</p>
 							</div>
 						{/if}
 					</div>

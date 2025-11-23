@@ -57,7 +57,7 @@
 									<Label for="name">Full name</Label>
 									<Input {...signup.fields.name.as('name')} placeholder="Your full name" required />
 									{#each signup.fields.name.issues() ?? [] as issue}
-										<p class="text-sm text-red-600">{issue.message}</p>
+										<p class="text-sm text-red-600 dark:text-red-400">{issue.message}</p>
 									{/each}
 								</div>
 
@@ -69,7 +69,7 @@
 										required
 									/>
 									{#each signup.fields.email.issues() ?? [] as issue}
-										<p class="text-sm text-red-600">{issue.message}</p>
+										<p class="text-sm text-red-600 dark:text-red-400">{issue.message}</p>
 									{/each}
 								</div>
 
@@ -82,7 +82,7 @@
 										required
 									/>
 									{#each signup.fields.password.issues() ?? [] as issue}
-										<p class="text-sm text-red-600">{issue.message}</p>
+										<p class="text-sm text-red-600 dark:text-red-400">{issue.message}</p>
 									{/each}
 								</div>
 
@@ -95,19 +95,23 @@
 										required
 									/>
 									{#each signup.fields.confirmPassword.issues() ?? [] as issue}
-										<p class="text-sm text-red-600">{issue.message}</p>
+										<p class="text-sm text-red-600 dark:text-red-400">{issue.message}</p>
 									{/each}
 								</div>
 
 								{#if typeof signup.result?.message === 'string'}
-									<div class="rounded-md bg-red-50 p-3 text-sm text-red-600">
+									<div
+										class="rounded-md bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400"
+									>
 										{signup.result.message}
 									</div>
 								{/if}
 
 								{#if Array.isArray(signup.result?.message)}
 									{#each signup.result.message as error, index (index)}
-										<div class="rounded-md bg-red-50 p-3 text-sm text-red-600">
+										<div
+											class="rounded-md bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400"
+										>
 											{error}
 										</div>
 									{/each}

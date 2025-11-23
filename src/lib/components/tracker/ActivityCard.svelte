@@ -136,7 +136,9 @@
 			{activity.archived ? 'Unarchive' : 'Archive'}
 		</ContextMenu.Item>
 		<ContextMenu.Separator />
-		<ContextMenu.Item onclick={handleDeleteActivity} class="text-red-600">Delete</ContextMenu.Item>
+		<ContextMenu.Item onclick={handleDeleteActivity} class="text-red-600 dark:text-red-400"
+			>Delete</ContextMenu.Item
+		>
 	</ContextMenu.Content>
 </ContextMenu.Root>
 
