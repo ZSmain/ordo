@@ -21,7 +21,7 @@
 	</main>
 
 	<!-- Bottom Navigation - Fixed -->
-	<nav class="flex-shrink-0 border-t border-gray-200 bg-white">
+	<nav class="shrink-0 border-t border-gray-200 bg-white">
 		<div class="flex items-center justify-around py-3">
 			<a
 				href="/"
