@@ -6,7 +6,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Label } from '$lib/components/ui/label';
 	import type { ActivityWithOptionalCategories } from '$lib/types';
-	import { BarChart3, Pause, Play } from '@lucide/svelte';
+	import { ChartBar, Pause, Play } from '@lucide/svelte';
 	import EditActivity from './EditActivity.svelte';
 
 	interface Props {
@@ -135,7 +135,7 @@
 	<ContextMenu.Content>
 		<ContextMenu.Item onclick={handleModifyActivity}>Modify</ContextMenu.Item>
 		<ContextMenu.Item onclick={() => (statisticsOpen = true)}>
-			<BarChart3 class="mr-2 h-4 w-4" />
+			<ChartBar class="mr-2 h-4 w-4" />
 			Statistics
 		</ContextMenu.Item>
 		<ContextMenu.Item onclick={handleArchiveActivity}>

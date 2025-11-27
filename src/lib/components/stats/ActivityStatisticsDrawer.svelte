@@ -4,7 +4,7 @@
 	import * as Drawer from '$lib/components/ui/drawer';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
-	import { BarChart3, Calendar, ChevronDown, Clock, Hash, Timer } from '@lucide/svelte';
+	import { Calendar, ChartBar, ChevronDown, Clock, Hash, Timer } from '@lucide/svelte';
 	import { scaleBand } from 'd3-scale';
 	import { BarChart, type ChartContextValue } from 'layerchart';
 	import { cubicInOut } from 'svelte/easing';
@@ -206,7 +206,7 @@
 					<div
 						class="flex items-center justify-center gap-2 text-sm font-normal text-muted-foreground"
 					>
-						<BarChart3 class="h-4 w-4" />
+						<ChartBar class="h-4 w-4" />
 						<span>Activity Statistics</span>
 					</div>
 				</Drawer.Title>

@@ -3,7 +3,7 @@
 	import { ActivityStatisticsDrawer } from '$lib/components/stats';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as ContextMenu from '$lib/components/ui/context-menu';
-	import { BarChart3, PencilLine, Trash2 } from '@lucide/svelte';
+	import { ChartBar, PencilLine, Trash2 } from '@lucide/svelte';
 
 	interface Props {
 		session: {
@@ -141,7 +141,7 @@
 			Modify Times
 		</ContextMenu.Item>
 		<ContextMenu.Item onclick={() => (statisticsOpen = true)}>
-			<BarChart3 class="mr-2 h-4 w-4" />
+			<ChartBar class="mr-2 h-4 w-4" />
 			Activity Statistics
 		</ContextMenu.Item>
 		<ContextMenu.Separator />
