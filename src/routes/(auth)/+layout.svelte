@@ -8,6 +8,6 @@
 	<title>Authentication - Ordo</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+<div class="min-h-screen bg-background">
 	{@render children?.()}
 </div>

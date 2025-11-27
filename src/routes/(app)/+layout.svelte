@@ -14,22 +14,20 @@
 
 <Toaster />
 
-<div class="flex h-dvh flex-col overflow-hidden bg-gray-100 dark:bg-gray-900">
+<div class="flex h-dvh flex-col overflow-hidden bg-muted">
 	<!-- Main content area with proper scrolling -->
 	<main class="flex-1 overflow-y-auto">
 		{@render children?.()}
 	</main>
 
 	<!-- Bottom Navigation - Fixed -->
-	<nav class="shrink-0 border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+	<nav class="shrink-0 border-t border-border bg-background">
 		<div class="flex items-center justify-around py-3">
 			<a
 				href="/"
 				class="flex flex-col items-center gap-1 transition-colors"
-				class:text-blue-600={page.url.pathname === '/'}
-				class:dark:text-blue-400={page.url.pathname === '/'}
-				class:text-gray-600={page.url.pathname !== '/'}
-				class:dark:text-gray-400={page.url.pathname !== '/'}
+				class:text-primary={page.url.pathname === '/'}
+				class:text-muted-foreground={page.url.pathname !== '/'}
 			>
 				<Timer class="h-6 w-6" />
 				<span class="text-xs font-medium">Timer</span>
@@ -38,10 +36,8 @@
 			<a
 				href="/daily"
 				class="flex flex-col items-center gap-1 transition-colors"
-				class:text-blue-600={page.url.pathname === '/daily'}
-				class:dark:text-blue-400={page.url.pathname === '/daily'}
-				class:text-gray-600={page.url.pathname !== '/daily'}
-				class:dark:text-gray-400={page.url.pathname !== '/daily'}
+				class:text-primary={page.url.pathname === '/daily'}
+				class:text-muted-foreground={page.url.pathname !== '/daily'}
 			>
 				<Calendar class="h-6 w-6" />
 				<span class="text-xs font-medium">Daily</span>
@@ -50,10 +46,8 @@
 			<a
 				href="/stats"
 				class="flex flex-col items-center gap-1 transition-colors"
-				class:text-blue-600={page.url.pathname === '/stats'}
-				class:dark:text-blue-400={page.url.pathname === '/stats'}
-				class:text-gray-600={page.url.pathname !== '/stats'}
-				class:dark:text-gray-400={page.url.pathname !== '/stats'}
+				class:text-primary={page.url.pathname === '/stats'}
+				class:text-muted-foreground={page.url.pathname !== '/stats'}
 			>
 				<ChartColumn class="h-6 w-6" />
 				<span class="text-xs font-medium">Stats</span>
@@ -62,10 +56,8 @@
 			<a
 				href="/settings"
 				class="flex flex-col items-center gap-1 transition-colors"
-				class:text-blue-600={page.url.pathname === '/settings'}
-				class:dark:text-blue-400={page.url.pathname === '/settings'}
-				class:text-gray-600={page.url.pathname !== '/settings'}
-				class:dark:text-gray-400={page.url.pathname !== '/settings'}
+				class:text-primary={page.url.pathname === '/settings'}
+				class:text-muted-foreground={page.url.pathname !== '/settings'}
 			>
 				<Settings class="h-6 w-6" />
 				<span class="text-xs font-medium">Settings</span>

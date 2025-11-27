@@ -86,7 +86,7 @@
 			<div class="flex items-start justify-between gap-2">
 				<div class="flex flex-1 items-center gap-3">
 					<!-- Activity icon -->
-					<span class="flex-shrink-0 text-lg">{session.activity.icon}</span>
+					<span class="shrink-0 text-lg">{session.activity.icon}</span>
 
 					<!-- Activity info -->
 					<div class="min-w-0 flex-1">
@@ -99,7 +99,7 @@
 						<!-- Categories as badges -->
 						{#if session.categories.length > 0}
 							<div class="mb-1 flex flex-wrap gap-1">
-								{#each session.categories as category}
+								{#each session.categories as category (category.id)}
 									<Badge
 										variant="outline"
 										class="h-auto px-1.5 py-0.5 text-xs"
@@ -119,7 +119,7 @@
 				</div>
 
 				<!-- Duration -->
-				<div class="flex-shrink-0 text-right">
+				<div class="shrink-0 text-right">
 					<Badge variant="secondary" class="text-xs">
 						{formatDuration(session.duration)}
 					</Badge>

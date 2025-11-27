@@ -217,8 +217,8 @@
 
 			<div class="space-y-6 px-4 pb-0">
 				{#if error}
-					<div class="rounded-md bg-red-50 p-3">
-						<p class="text-sm text-red-800">{error}</p>
+					<div class="rounded-md bg-destructive/10 p-3">
+						<p class="text-sm text-destructive">{error}</p>
 					</div>
 				{/if}
 

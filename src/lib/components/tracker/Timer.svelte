@@ -34,20 +34,20 @@
 	});
 </script>
 
-<div class="rounded-2xl bg-slate-800 px-3 py-2 text-white">
+<div class="rounded-2xl bg-primary px-3 py-2 text-primary-foreground">
 	<div class="flex items-center justify-between">
 		<div>
-			<div class="mb-1 text-sm text-gray-300">
+			<div class="mb-1 text-sm opacity-80">
 				{timerState.categoryName} / {timerState.activityName}
 			</div>
 			<div class="font-mono text-2xl font-bold">{formatTime(elapsedSeconds)}</div>
 		</div>
 		<Button
 			onclick={onStop}
-			class="flex h-10 w-10 items-center justify-center rounded-xl bg-white transition-colors hover:bg-gray-100"
+			class="flex h-10 w-10 items-center justify-center rounded-xl bg-background transition-colors hover:bg-muted"
 			aria-label="Stop timer"
 		>
-			<Square class="h-6 w-6 text-gray-800" />
+			<Square class="h-6 w-6 text-foreground" />
 		</Button>
 	</div>
 </div>

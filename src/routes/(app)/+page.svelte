@@ -201,10 +201,10 @@
 	{:else}
 		<!-- Instructions when no timer is active -->
 		<div class="px-4 py-8 text-center">
-			<div class="mb-2 text-xl font-semibold text-gray-800">
+			<div class="mb-2 text-xl font-semibold text-foreground">
 				Click on activity to start tracking
 			</div>
-			<div class="text-sm text-gray-500">Long click to edit</div>
+			<div class="text-sm text-muted-foreground">Long click to edit</div>
 		</div>
 	{/if}
 
