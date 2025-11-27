@@ -6,6 +6,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as RadioGroup from '$lib/components/ui/radio-group';
 	import type { Category } from '$lib/types';
+	import { PencilLine, Trash2 } from '@lucide/svelte';
 	import EditCategory from './EditCategory.svelte';
 
 	interface Props {
@@ -121,9 +122,15 @@
 					</ContextMenu.Trigger>
 					<ContextMenu.Content>
 						<ContextMenu.Item onclick={() => handleModifyCategory(category)}>
+							<PencilLine class="mr-2 h-4 w-4" />
 							Modify
 						</ContextMenu.Item>
-						<ContextMenu.Item onclick={() => handleDeleteCategory(category)} class="text-red-600">
+						<ContextMenu.Separator />
+						<ContextMenu.Item
+							onclick={() => handleDeleteCategory(category)}
+							class="text-red-600 focus:text-red-600"
+						>
+							<Trash2 class="mr-2 h-4 w-4" />
 							Delete
 						</ContextMenu.Item>
 					</ContextMenu.Content>

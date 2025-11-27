@@ -6,7 +6,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Label } from '$lib/components/ui/label';
 	import type { ActivityWithOptionalCategories } from '$lib/types';
-	import { ChartBar, Pause, Play } from '@lucide/svelte';
+	import { Archive, ChartBar, Pause, PencilLine, Play, Trash2 } from '@lucide/svelte';
 	import EditActivity from './EditActivity.svelte';
 
 	interface Props {
@@ -133,18 +133,23 @@
 		</Label>
 	</ContextMenu.Trigger>
 	<ContextMenu.Content>
-		<ContextMenu.Item onclick={handleModifyActivity}>Modify</ContextMenu.Item>
+		<ContextMenu.Item onclick={handleModifyActivity}>
+			<PencilLine class="mr-2 h-4 w-4" />
+			Modify
+		</ContextMenu.Item>
 		<ContextMenu.Item onclick={() => (statisticsOpen = true)}>
 			<ChartBar class="mr-2 h-4 w-4" />
 			Statistics
 		</ContextMenu.Item>
 		<ContextMenu.Item onclick={handleArchiveActivity}>
+			<Archive class="mr-2 h-4 w-4" />
 			{activity.archived ? 'Unarchive' : 'Archive'}
 		</ContextMenu.Item>
 		<ContextMenu.Separator />
-		<ContextMenu.Item onclick={handleDeleteActivity} class="text-red-600 dark:text-red-400"
-			>Delete</ContextMenu.Item
-		>
+		<ContextMenu.Item onclick={handleDeleteActivity} class="text-red-600 focus:text-red-600">
+			<Trash2 class="mr-2 h-4 w-4" />
+			Delete
+		</ContextMenu.Item>
 	</ContextMenu.Content>
 </ContextMenu.Root>
 

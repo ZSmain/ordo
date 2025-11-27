@@ -138,11 +138,11 @@
 	<ContextMenu.Content>
 		<ContextMenu.Item onclick={() => (modifyDialogOpen = true)}>
 			<PencilLine class="mr-2 h-4 w-4" />
-			Modify Times
+			Modify
 		</ContextMenu.Item>
 		<ContextMenu.Item onclick={() => (statisticsOpen = true)}>
 			<ChartBar class="mr-2 h-4 w-4" />
-			Activity Statistics
+			Statistics
 		</ContextMenu.Item>
 		<ContextMenu.Separator />
 		<ContextMenu.Item
@@ -150,7 +150,7 @@
 			class="text-red-600 focus:text-red-600"
 		>
 			<Trash2 class="mr-2 h-4 w-4" />
-			Delete Session
+			Delete
 		</ContextMenu.Item>
 	</ContextMenu.Content>
 </ContextMenu.Root>
