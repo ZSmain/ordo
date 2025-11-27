@@ -13,9 +13,10 @@
 
 	interface Props {
 		activities: ActivityStat[];
+		onActivityClick?: (activity: { id: number; name: string; icon: string }) => void;
 	}
 
-	let { activities }: Props = $props();
+	let { activities, onActivityClick }: Props = $props();
 
 	function formatDuration(seconds: number) {
 		const hours = Math.floor(seconds / 3600);
@@ -84,7 +85,16 @@
 					</div>
 					<div class="space-y-2">
 						{#each group.activities as activity, index (activity.activityId + '-' + index)}
-							<div class="flex items-center justify-between rounded-md bg-muted/50 p-1.5">
+							<button
+								type="button"
+								class="flex w-full items-center justify-between rounded-md bg-muted/50 p-1.5 text-left transition-colors hover:bg-muted"
+								onclick={() =>
+									onActivityClick?.({
+										id: activity.activityId,
+										name: activity.activityName,
+										icon: activity.activityIcon
+									})}
+							>
 								<div class="flex items-center gap-1">
 									<span class="text-sm">{activity.activityIcon}</span>
 									<div>
@@ -97,7 +107,7 @@
 								<div class="text-right">
 									<p class="text-sm font-medium">{formatDuration(activity.totalDuration)}</p>
 								</div>
-							</div>
+							</button>
 						{/each}
 					</div>
 				</div>

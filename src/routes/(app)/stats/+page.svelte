@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {
+		ActivityStatisticsDrawer,
 		ActivityStatsCard,
 		CategoryStatsCard,
 		OverviewPieChart,
@@ -34,6 +35,15 @@
 		categoriesWorkedOn: 0,
 		activitiesWorkedOn: 0
 	});
+
+	// Activity statistics drawer state
+	let statisticsDrawerOpen = $state(false);
+	let selectedActivity = $state<{ id: number; name: string; icon: string } | null>(null);
+
+	function handleActivityClick(activity: { id: number; name: string; icon: string }) {
+		selectedActivity = activity;
+		statisticsDrawerOpen = true;
+	}
 
 	function getPeriodStart(date: CalendarDate, period: PeriodType): CalendarDate {
 		switch (period) {
@@ -172,7 +182,7 @@
 
 						<div class="grid gap-6 lg:grid-cols-2">
 							<CategoryStatsCard categories={categoryStats} />
-							<ActivityStatsCard activities={activityStats} />
+							<ActivityStatsCard activities={activityStats} onActivityClick={handleActivityClick} />
 						</div>
 					</div>
 				{/if}
@@ -192,3 +202,13 @@
 		</div>
 	</div>
 </div>
+
+<!-- Activity Statistics Drawer -->
+{#if data.user}
+	<ActivityStatisticsDrawer
+		bind:open={statisticsDrawerOpen}
+		activity={selectedActivity}
+		userId={data.user.id}
+		onOpenChange={(open) => (statisticsDrawerOpen = open)}
+	/>
+{/if}

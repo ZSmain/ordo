@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { DeleteSessionDialog, ModifySessionDrawer } from '$lib/components/daily';
+	import { ActivityStatisticsDrawer } from '$lib/components/stats';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as ContextMenu from '$lib/components/ui/context-menu';
-	import { PencilLine, Trash2 } from '@lucide/svelte';
+	import { BarChart3, PencilLine, Trash2 } from '@lucide/svelte';
 
 	interface Props {
 		session: {
@@ -31,6 +32,7 @@
 
 	let modifyDialogOpen = $state(false);
 	let deleteDialogOpen = $state(false);
+	let statisticsOpen = $state(false);
 
 	function formatTimeRange(startedAt: Date, stoppedAt: Date | null) {
 		const start = new Date(startedAt).toLocaleTimeString('en-US', {
@@ -138,6 +140,10 @@
 			<PencilLine class="mr-2 h-4 w-4" />
 			Modify Times
 		</ContextMenu.Item>
+		<ContextMenu.Item onclick={() => (statisticsOpen = true)}>
+			<BarChart3 class="mr-2 h-4 w-4" />
+			Activity Statistics
+		</ContextMenu.Item>
 		<ContextMenu.Separator />
 		<ContextMenu.Item
 			onclick={() => (deleteDialogOpen = true)}
@@ -164,4 +170,12 @@
 	{userId}
 	onOpenChange={(open) => (deleteDialogOpen = open)}
 	onSessionDeleted={() => onSessionUpdated?.()}
+/>
+
+<!-- Activity Statistics Drawer -->
+<ActivityStatisticsDrawer
+	bind:open={statisticsOpen}
+	activity={session.activity}
+	{userId}
+	onOpenChange={(open) => (statisticsOpen = open)}
 />

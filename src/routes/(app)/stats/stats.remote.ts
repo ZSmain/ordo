@@ -213,3 +213,214 @@ export const getOverviewStats = query(
 		};
 	}
 );
+
+export const getSessionsForActivity = query(
+	v.object({
+		userId: v.string(),
+		activityId: v.number(),
+		startDate: v.string(),
+		endDate: v.string()
+	}),
+	async ({ userId, activityId, startDate, endDate }) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
+		const start = new Date(startDate + 'T00:00:00.000Z');
+		const end = new Date(endDate + 'T23:59:59.999Z');
+
+		// Get all sessions for this activity within the date range
+		const sessions = await db
+			.select({
+				id: timeSession.id,
+				startedAt: timeSession.startedAt,
+				stoppedAt: timeSession.stoppedAt,
+				duration: timeSession.duration,
+				notes: timeSession.notes,
+				activityId: activity.id,
+				activityName: activity.name,
+				activityIcon: activity.icon
+			})
+			.from(timeSession)
+			.innerJoin(activity, eq(timeSession.activityId, activity.id))
+			.where(
+				and(
+					eq(timeSession.userId, userId),
+					eq(timeSession.activityId, activityId),
+					gte(timeSession.startedAt, start),
+					lt(timeSession.startedAt, end),
+					isNotNull(timeSession.stoppedAt)
+				)
+			)
+			.orderBy(sql`${timeSession.startedAt} DESC`)
+			.all();
+
+		// Get categories for the activity
+		const categories = await db
+			.select({
+				categoryId: category.id,
+				categoryName: category.name,
+				categoryColor: category.color,
+				categoryIcon: category.icon
+			})
+			.from(activityCategory)
+			.innerJoin(category, eq(activityCategory.categoryId, category.id))
+			.where(eq(activityCategory.activityId, activityId))
+			.all();
+
+		// Transform sessions to match SessionCard format
+		return sessions.map((session: typeof sessions[number]) => ({
+			id: session.id,
+			startedAt: session.startedAt,
+			stoppedAt: session.stoppedAt,
+			duration: session.duration,
+			notes: session.notes,
+			activity: {
+				id: session.activityId,
+				name: session.activityName,
+				icon: session.activityIcon
+			},
+			categories: categories.map((cat: typeof categories[number]) => ({
+				id: cat.categoryId,
+				name: cat.categoryName,
+				color: cat.categoryColor,
+				icon: cat.categoryIcon
+			}))
+		}));
+	}
+);
+
+export const getActivityStatistics = query(
+	v.object({
+		userId: v.string(),
+		activityId: v.number(),
+		startDate: v.optional(v.string()),
+		endDate: v.optional(v.string()),
+		granularity: v.picklist(['daily', 'weekly', 'monthly'])
+	}),
+	async ({ userId, activityId, startDate, endDate, granularity }) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
+		// Build date filters - if no dates provided, get all sessions
+		const dateFilters = [];
+		if (startDate) {
+			const start = new Date(startDate + 'T00:00:00.000Z');
+			dateFilters.push(gte(timeSession.startedAt, start));
+		}
+		if (endDate) {
+			const end = new Date(endDate + 'T23:59:59.999Z');
+			dateFilters.push(lt(timeSession.startedAt, end));
+		}
+
+		// Get all sessions for this activity within the date range
+		const sessions = await db
+			.select({
+				id: timeSession.id,
+				startedAt: timeSession.startedAt,
+				stoppedAt: timeSession.stoppedAt,
+				duration: timeSession.duration
+			})
+			.from(timeSession)
+			.where(
+				and(
+					eq(timeSession.userId, userId),
+					eq(timeSession.activityId, activityId),
+					isNotNull(timeSession.stoppedAt),
+					...dateFilters
+				)
+			)
+			.orderBy(sql`${timeSession.startedAt} ASC`)
+			.all();
+
+		if (sessions.length === 0) {
+			return {
+				chartData: [],
+				totalDuration: 0,
+				totalSessions: 0,
+				shortestSession: null,
+				averageSession: null,
+				longestSession: null,
+				firstSession: null,
+				lastSession: null
+			};
+		}
+
+		// Calculate aggregated chart data based on granularity
+		const chartDataMap: Record<string, { label: string; duration: number; sortKey: string }> = {};
+
+		sessions.forEach((session: typeof sessions[number]) => {
+			const date = new Date(session.startedAt);
+			let key: string;
+			let label: string;
+			let sortKey: string;
+
+			switch (granularity) {
+				case 'daily': {
+					const year = date.getUTCFullYear();
+					const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+					const day = String(date.getUTCDate()).padStart(2, '0');
+					key = `${year}-${month}-${day}`;
+					sortKey = key;
+					// Format as "Nov 24"
+					label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+					break;
+				}
+				case 'weekly': {
+					// Get ISO week number and year
+					const tempDate = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+					const dayNum = tempDate.getUTCDay() || 7;
+					tempDate.setUTCDate(tempDate.getUTCDate() + 4 - dayNum);
+					const yearStart = new Date(Date.UTC(tempDate.getUTCFullYear(), 0, 1));
+					const weekNum = Math.ceil((((tempDate.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+					const year = tempDate.getUTCFullYear();
+					key = `${year}-W${String(weekNum).padStart(2, '0')}`;
+					sortKey = key;
+					label = `W${weekNum}`;
+					break;
+				}
+				case 'monthly': {
+					const year = date.getUTCFullYear();
+					const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+					key = `${year}-${month}`;
+					sortKey = key;
+					label = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit', timeZone: 'UTC' });
+					break;
+				}
+			}
+
+			if (!chartDataMap[key]) {
+				chartDataMap[key] = { label, duration: 0, sortKey };
+			}
+			chartDataMap[key].duration += session.duration || 0;
+		});
+
+		// Convert to sorted array (only entries with data)
+		const chartData = Object.values(chartDataMap)
+			.sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+			.map(({ label, duration }) => ({ label, duration }));
+
+		// Calculate statistics
+		const durations = sessions.map((s: typeof sessions[number]) => s.duration || 0).filter((d: number) => d > 0);
+		const totalDuration = durations.reduce((sum: number, d: number) => sum + d, 0);
+		const totalSessions = sessions.length;
+
+		const shortestSession = durations.length > 0 ? Math.min(...durations) : null;
+		const longestSession = durations.length > 0 ? Math.max(...durations) : null;
+		const averageSession = durations.length > 0 ? Math.round(totalDuration / durations.length) : null;
+
+		// First and last session times
+		const firstSession = sessions[0]?.startedAt || null;
+		const lastSession = sessions[sessions.length - 1]?.startedAt || null;
+
+		return {
+			chartData,
+			totalDuration,
+			totalSessions,
+			shortestSession,
+			averageSession,
+			longestSession,
+			firstSession,
+			lastSession
+		};
+	}
+);

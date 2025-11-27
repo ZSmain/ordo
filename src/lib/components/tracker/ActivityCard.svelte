@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { archiveActivity, deleteActivity } from '$lib/api/data.remote';
+	import { ActivityStatisticsDrawer } from '$lib/components/stats';
 	import { Button } from '$lib/components/ui/button';
 	import * as ContextMenu from '$lib/components/ui/context-menu';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Label } from '$lib/components/ui/label';
 	import type { ActivityWithOptionalCategories } from '$lib/types';
-	import { Pause, Play } from '@lucide/svelte';
+	import { BarChart3, Pause, Play } from '@lucide/svelte';
 	import EditActivity from './EditActivity.svelte';
 
 	interface Props {
@@ -33,6 +34,7 @@
 	let editActivityOpen = $state(false);
 	let deleteDialogOpen = $state(false);
 	let archiveDialogOpen = $state(false);
+	let statisticsOpen = $state(false);
 
 	// Check if this activity is currently running
 	let isRunning = $derived(currentCategory === categoryName && currentActivity === activity.name);
@@ -132,6 +134,10 @@
 	</ContextMenu.Trigger>
 	<ContextMenu.Content>
 		<ContextMenu.Item onclick={handleModifyActivity}>Modify</ContextMenu.Item>
+		<ContextMenu.Item onclick={() => (statisticsOpen = true)}>
+			<BarChart3 class="mr-2 h-4 w-4" />
+			Statistics
+		</ContextMenu.Item>
 		<ContextMenu.Item onclick={handleArchiveActivity}>
 			{activity.archived ? 'Unarchive' : 'Archive'}
 		</ContextMenu.Item>
@@ -148,6 +154,14 @@
 	{activity}
 	onActivityUpdated={handleActivityUpdated}
 	{userId}
+/>
+
+<!-- Activity Statistics Drawer -->
+<ActivityStatisticsDrawer
+	bind:open={statisticsOpen}
+	activity={{ id: activity.id, name: activity.name, icon: activity.icon }}
+	{userId}
+	onOpenChange={(open) => (statisticsOpen = open)}
 />
 
 <!-- Archive Confirmation Dialog -->
