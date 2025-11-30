@@ -32,10 +32,9 @@
 	function formatDisplayDate(dateValue: CalendarDate) {
 		const jsDate = dateValueToJSDate(dateValue);
 		const todayDate = new Date();
-		const yesterday = new Date();
-		yesterday.setDate(todayDate.getDate() - 1);
-		const tomorrow = new Date();
-		tomorrow.setDate(todayDate.getDate() + 1);
+		// Use milliseconds to avoid mutable Date methods
+		const yesterday = new Date(todayDate.getTime() - 86400000);
+		const tomorrow = new Date(todayDate.getTime() + 86400000);
 
 		if (jsDate.toDateString() === todayDate.toDateString()) {
 			return 'Today';
