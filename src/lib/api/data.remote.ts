@@ -236,6 +236,9 @@ export const createCategory = command(
 
 		const newCategory = await db.insert(category).values(categoryData).returning().get();
 
+		// Refresh the categories query to update UI
+		await getCategoriesWithActivities(categoryData.userId).refresh();
+
 		return newCategory;
 	}
 );
@@ -293,6 +296,9 @@ export const updateCategory = command(
 			throw new Error('Category not found or unauthorized');
 		}
 
+		// Refresh the categories query to update UI
+		await getCategoriesWithActivities(userId).refresh();
+
 		return updatedCategory;
 	}
 );
@@ -316,6 +322,9 @@ export const deleteCategory = command(
 
 		// Delete the category (activities will be cascaded due to foreign key constraint)
 		const deletedCategory = await db.delete(category).where(eq(category.id, id)).returning().get();
+
+		// Refresh the categories query to update UI
+		await getCategoriesWithActivities(userId).refresh();
 
 		return deletedCategory;
 	}
@@ -347,6 +356,9 @@ export const createActivity = command(
 
 			await db.insert(activityCategory).values(activityCategoryData);
 		}
+
+		// Refresh the categories query to update UI
+		await getCategoriesWithActivities(activityData.userId).refresh();
 
 		return newActivity;
 	}
@@ -437,6 +449,9 @@ export const updateActivity = command(
 			}
 		}
 
+		// Refresh the categories query to update UI
+		await getCategoriesWithActivities(userId).refresh();
+
 		return activityUpdate;
 	}
 );
@@ -466,6 +481,9 @@ export const archiveActivity = command(
 			throw new Error('Activity not found or unauthorized');
 		}
 
+		// Refresh the categories query to update UI
+		await getCategoriesWithActivities(userId).refresh();
+
 		return updatedActivity;
 	}
 );
@@ -489,6 +507,9 @@ export const deleteActivity = command(
 
 		// Delete the activity (time sessions will be cascaded due to foreign key constraint)
 		const deletedActivity = await db.delete(activity).where(eq(activity.id, id)).returning().get();
+
+		// Refresh the categories query to update UI
+		await getCategoriesWithActivities(userId).refresh();
 
 		return deletedActivity;
 	}

@@ -51,52 +51,77 @@
 		selectionStore.setSelectedCategory(categoryId);
 	}
 
-	// Start timer function
-	async function startTimer(activityId: number, categoryName: string, activityName: string) {
+	// Start timer function with optimistic update
+	function startTimer(activityId: number, categoryName: string, activityName: string) {
 		if (!user?.id) return;
 
-		try {
-			// Start session in database using remote function with activity ID parameter
-			const session = await startTimerSession({ activityId, userId: user.id });
+		// Optimistically update the timer store immediately
+		// Use a temporary session ID (-1) until the server responds
+		timerStore.startTimer(categoryName, activityName, activityId, -1);
 
-			// Start timer in store
-			timerStore.startTimer(categoryName, activityName, activityId, session.id);
-		} catch (error) {
-			// Check for SvelteKit redirects (e.g., authentication issues)
-			if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
-				throw error; // Re-throw redirect objects
-			}
+		// Start session in database with optimistic update on getActiveSession
+		startTimerSession({ activityId, userId: user.id })
+			.updates(
+				getActiveSession(user.id).withOverride(() => ({
+					session: {
+						id: -1,
+						activityId,
+						userId: user.id,
+						startedAt: new Date(),
+						stoppedAt: null,
+						duration: null,
+						notes: null,
+						isActive: true,
+						createdAt: new Date(),
+						updatedAt: new Date()
+					},
+					activity: { id: activityId, name: activityName, icon: '⏱️', userId: user.id },
+					category: { name: categoryName }
+				}))
+			)
+			.then((session) => {
+				// Update the timer store with the real session ID once server responds
+				timerStore.updateSessionId(session.id);
+			})
+			.catch((error) => {
+				// Check for SvelteKit redirects (e.g., authentication issues)
+				if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
+					throw error; // Re-throw redirect objects
+				}
 
-			console.error('Failed to start timer session:', error);
-
-			toast.error('Failed to start timer. Please check your connection and try again.');
-		}
+				console.error('Failed to start timer session:', error);
+				// Rollback the optimistic update
+				timerStore.stopTimer();
+				toast.error('Failed to start timer. Please check your connection and try again.');
+			});
 	}
 
-	// Stop timer function
-	async function stopTimer() {
-		try {
-			// Stop session in database if we have a valid session ID
-			if (timerStore.current.sessionId && timerStore.current.sessionId > 0 && user?.id) {
-				await stopTimerSession({ sessionId: timerStore.current.sessionId, userId: user.id });
-			}
-		} catch (error) {
-			// Check for SvelteKit redirects (e.g., authentication issues)
-			if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
-				throw error; // Re-throw redirect objects
-			}
+	// Stop timer function with optimistic update
+	function stopTimer() {
+		const currentSessionId = timerStore.current.sessionId;
+		const currentUserId = user?.id;
 
-			console.error('Failed to stop timer session:', error);
+		// Optimistically stop the timer immediately
+		timerStore.stopTimer();
 
-			toast.error('Failed to stop timer on server. The timer will be cleared locally.');
-		} finally {
-			// Always stop the timer in the store to clear the UI
-			timerStore.stopTimer();
+		// Stop session in database if we have a valid session ID
+		if (currentSessionId && currentSessionId > 0 && currentUserId) {
+			stopTimerSession({ sessionId: currentSessionId, userId: currentUserId })
+				.updates(getActiveSession(currentUserId).withOverride(() => null))
+				.catch((error) => {
+					// Check for SvelteKit redirects (e.g., authentication issues)
+					if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
+						throw error; // Re-throw redirect objects
+					}
+
+					console.error('Failed to stop timer session:', error);
+					toast.error('Failed to stop timer on server. The timer was cleared locally.');
+				});
 		}
 	}
 
 	// Handle activity selection
-	async function handleActivitySelect(categoryName: string, activityName: string) {
+	function handleActivitySelect(categoryName: string, activityName: string) {
 		if (!user?.id) return;
 
 		// Check if this is the currently running activity (toggle behavior)
@@ -106,36 +131,36 @@
 			timerStore.current.activityName === activityName
 		) {
 			// Stop the timer if clicking the same activity
-			await stopTimer();
+			stopTimer();
 			return;
 		}
 
 		// Stop any existing timer first
 		if (timerStore.current.isActive) {
-			await stopTimer();
+			stopTimer();
 		}
 
-		try {
-			// Get categories data to find the activity ID
-			const categoriesData = await getCategoriesWithActivities(user.id);
-
-			const foundCategory = categoriesData.find((cat) => cat.name === categoryName);
-			if (!foundCategory) {
-				console.error('Category not found:', categoryName);
-				return;
-			}
-
-			const foundActivity = foundCategory.activities.find((act) => act.name === activityName);
-			if (!foundActivity) {
-				console.error('Activity not found:', activityName);
-				return;
-			}
-
-			// Start timer with the found activity
-			await startTimer(foundActivity.id, categoryName, activityName);
-		} catch (error) {
-			console.error('Failed to start activity:', error);
+		// Get categories data to find the activity ID
+		const categoriesData = categoriesQuery?.current;
+		if (!categoriesData) {
+			console.error('Categories not loaded');
+			return;
 		}
+
+		const foundCategory = categoriesData.find((cat) => cat.name === categoryName);
+		if (!foundCategory) {
+			console.error('Category not found:', categoryName);
+			return;
+		}
+
+		const foundActivity = foundCategory.activities.find((act) => act.name === activityName);
+		if (!foundActivity) {
+			console.error('Activity not found:', activityName);
+			return;
+		}
+
+		// Start timer with the found activity
+		startTimer(foundActivity.id, categoryName, activityName);
 	}
 
 	// Handle category creation

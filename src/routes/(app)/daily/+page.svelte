@@ -13,20 +13,19 @@
 
 	// Current selected date (defaults to today)
 	let selectedDateValue = $state(today(getLocalTimeZone()));
-	let sessions = $state<any[]>([]);
-	let loading = $state(false);
-	let error = $state<string | null>(null);
 	let calendarOpen = $state(false);
 	let addSessionOpen = $state(false);
+
+	// Derive sessions reactively based on selected date
+	const sessionsQuery = $derived.by(() => {
+		if (!data.user) return null;
+		const dateStr = formatDateForAPI(selectedDateValue);
+		return getSessionsForDate({ userId: data.user.id, date: dateStr });
+	});
 
 	// Convert DateValue to JS Date for display formatting
 	function dateValueToJSDate(dateValue: CalendarDate): Date {
 		return new Date(dateValue.year, dateValue.month - 1, dateValue.day);
-	}
-
-	// Convert JS Date to DateValue for calendar
-	function jsDateToDateValue(jsDate: Date): CalendarDate {
-		return new CalendarDate(jsDate.getFullYear(), jsDate.getMonth() + 1, jsDate.getDate());
 	}
 
 	// Format date for display
@@ -85,30 +84,13 @@
 		return tomorrow.compare(todayDate) <= 0;
 	}
 
-	// Load sessions for the selected date
-	async function loadSessions() {
-		if (!data.user) return;
-
-		loading = true;
-		error = null;
-		try {
-			const dateStr = formatDateForAPI(selectedDateValue);
-			sessions = await getSessionsForDate({ userId: data.user.id, date: dateStr });
-		} catch (err) {
-			error = 'Failed to load sessions. Please try again.';
-			sessions = [];
-		} finally {
-			loading = false;
-		}
-	}
-
 	// Handle calendar date selection
 	function handleDateSelect() {
 		calendarOpen = false;
 	}
 
 	// Calculate total duration for the day
-	function getTotalDuration() {
+	function getTotalDuration(sessions: { duration: number | null }[]) {
 		return sessions.reduce((total, session) => total + (session.duration || 0), 0);
 	}
 
@@ -123,103 +105,116 @@
 		return `${hours}h ${minutes}m`;
 	}
 
-	// Load sessions when component mounts or date changes
-	$effect(() => {
-		loadSessions();
-	});
+	// Refresh sessions after create/update/delete
+	function handleSessionUpdated() {
+		sessionsQuery?.refresh();
+	}
 </script>
 
 <svelte:head>
 	<title>Ordo - Daily</title>
 </svelte:head>
 
-<div
-	class="grid h-full"
-	class:grid-rows-[auto_1fr_auto]={sessions.length > 0}
-	class:grid-rows-[1fr_auto]={sessions.length === 0}
->
-	<!-- Total duration summary -->
-	{#if sessions.length > 0}
-		<div class="container mx-auto max-w-2xl p-4 pb-0">
-			<div class="rounded-lg bg-muted/50 p-4">
-				<div class="text-center">
-					<p class="text-sm text-muted-foreground">Total time tracked</p>
-					<p class="text-2xl font-bold">{formatDuration(getTotalDuration())}</p>
-					<p class="text-sm text-muted-foreground">
-						{sessions.length} session{sessions.length === 1 ? '' : 's'}
-					</p>
-				</div>
-			</div>
+<svelte:boundary>
+	{#snippet pending()}
+		<div class="flex h-full items-center justify-center">
+			<p class="text-muted-foreground">Loading sessions...</p>
 		</div>
-	{/if}
+	{/snippet}
 
-	<!-- Content area -->
-	<div class="overflow-hidden">
-		<ScrollArea class="h-full">
-			<div class="container mx-auto max-w-2xl p-4">
-				<!-- Sessions list -->
-				<div class="space-y-4">
-					{#if loading}
-						<div class="py-8 text-center">
-							<p class="text-muted-foreground">Loading sessions...</p>
-						</div>
-					{:else if error}
-						<div class="py-8 text-center">
-							<p class="text-red-500">{error}</p>
-						</div>
-					{:else if sessions.length === 0}
-						<div class="py-8 text-center">
-							<p class="text-muted-foreground">No sessions recorded for this day.</p>
-							<p class="mt-2 text-sm text-muted-foreground">
-								Tap the + button to log a past activity
-							</p>
-						</div>
-					{:else}
-						{#each sessions as session, index (session.id + '-' + index)}
-							<SessionCard {session} userId={data.user.id} onSessionUpdated={loadSessions} />
-						{/each}
-					{/if}
-				</div>
-			</div>
-		</ScrollArea>
-	</div>
+	{#snippet failed(_error)}
+		<div class="flex h-full items-center justify-center">
+			<p class="text-destructive">Failed to load sessions. Please try again.</p>
+		</div>
+	{/snippet}
 
-	<!-- Date navigation -->
-	<div class="border-t bg-background/80 p-1.5 backdrop-blur-sm">
-		<div class="container mx-auto flex max-w-2xl items-center justify-between">
-			<Button variant="ghost" size="icon" onclick={goToPreviousDay}>
-				<ChevronLeft class="size-4" />
-			</Button>
+	{@const sessions = sessionsQuery?.current ?? []}
 
-			<Dialog.Root bind:open={calendarOpen}>
-				<Dialog.Trigger
-					class="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-				>
-					<CalendarIcon class="size-4" />
-					<span class="font-medium">{formatDisplayDate(selectedDateValue)}</span>
-				</Dialog.Trigger>
-				<Dialog.Content class="w-auto max-w-fit">
-					<Dialog.Header>
-						<Dialog.Title>Select Date</Dialog.Title>
-					</Dialog.Header>
-					<div class="flex justify-center p-4">
-						<Calendar
-							type="single"
-							bind:value={selectedDateValue}
-							initialFocus
-							maxValue={today(getLocalTimeZone())}
-							class="rounded-md border"
-						/>
+	<div
+		class="grid h-full"
+		class:grid-rows-[auto_1fr_auto]={sessions.length > 0}
+		class:grid-rows-[1fr_auto]={sessions.length === 0}
+	>
+		<!-- Total duration summary -->
+		{#if sessions.length > 0}
+			<div class="container mx-auto max-w-2xl p-4 pb-0">
+				<div class="rounded-lg bg-muted/50 p-4">
+					<div class="text-center">
+						<p class="text-sm text-muted-foreground">Total time tracked</p>
+						<p class="text-2xl font-bold">{formatDuration(getTotalDuration(sessions))}</p>
+						<p class="text-sm text-muted-foreground">
+							{sessions.length} session{sessions.length === 1 ? '' : 's'}
+						</p>
 					</div>
-				</Dialog.Content>
-			</Dialog.Root>
+				</div>
+			</div>
+		{/if}
 
-			<Button variant="ghost" size="icon" onclick={goToNextDay} disabled={!canGoToNextDay()}>
-				<ChevronRight class="size-4" />
-			</Button>
+		<!-- Content area -->
+		<div class="overflow-hidden">
+			<ScrollArea class="h-full">
+				<div class="container mx-auto max-w-2xl p-4">
+					<!-- Sessions list -->
+					<div class="space-y-4">
+						{#if sessions.length === 0}
+							<div class="py-8 text-center">
+								<p class="text-muted-foreground">No sessions recorded for this day.</p>
+								<p class="mt-2 text-sm text-muted-foreground">
+									Tap the + button to log a past activity
+								</p>
+							</div>
+						{:else}
+							{#each sessions as session, index (session.id + '-' + index)}
+								<SessionCard
+									{session}
+									userId={data.user.id}
+									onSessionUpdated={handleSessionUpdated}
+								/>
+							{/each}
+						{/if}
+					</div>
+				</div>
+			</ScrollArea>
+		</div>
+
+		<!-- Date navigation -->
+		<div class="border-t bg-background/80 p-1.5 backdrop-blur-sm">
+			<div class="container mx-auto flex max-w-2xl items-center justify-between">
+				<Button variant="ghost" size="icon" onclick={goToPreviousDay}>
+					<ChevronLeft class="size-4" />
+				</Button>
+
+				<Dialog.Root bind:open={calendarOpen}>
+					<Dialog.Trigger
+						class="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+					>
+						<CalendarIcon class="size-4" />
+						<span class="font-medium">{formatDisplayDate(selectedDateValue)}</span>
+					</Dialog.Trigger>
+					<Dialog.Content class="w-auto max-w-fit">
+						<Dialog.Header>
+							<Dialog.Title>Select Date</Dialog.Title>
+						</Dialog.Header>
+						<div class="flex justify-center p-4">
+							<Calendar
+								type="single"
+								bind:value={selectedDateValue}
+								initialFocus
+								maxValue={today(getLocalTimeZone())}
+								class="rounded-md border"
+								onValueChange={handleDateSelect}
+							/>
+						</div>
+					</Dialog.Content>
+				</Dialog.Root>
+
+				<Button variant="ghost" size="icon" onclick={goToNextDay} disabled={!canGoToNextDay()}>
+					<ChevronRight class="size-4" />
+				</Button>
+			</div>
 		</div>
 	</div>
-</div>
+</svelte:boundary>
 
 <!-- Floating Add Button -->
 <div class="fixed right-6 bottom-32 z-50">
@@ -239,6 +234,6 @@
 		userId={data.user.id}
 		selectedDate={selectedDateValue}
 		onOpenChange={(open) => (addSessionOpen = open)}
-		onSessionCreated={loadSessions}
+		onSessionCreated={handleSessionUpdated}
 	/>
 {/if}

@@ -71,6 +71,16 @@ function createTimerStore() {
 			};
 		},
 
+		// Update session ID after server confirms (for optimistic updates)
+		updateSessionId: (sessionId: number) => {
+			if (timerPersistedState.current.isActive) {
+				timerPersistedState.current = {
+					...timerPersistedState.current,
+					sessionId
+				};
+			}
+		},
+
 		stopTimer: () => {
 			timerPersistedState.current = defaultTimerState;
 		},
