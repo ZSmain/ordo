@@ -3,6 +3,133 @@ import { activity, activityCategory, category, timeSession } from '$lib/server/d
 import { and, eq, gte, inArray, isNotNull, lt } from 'drizzle-orm';
 import * as v from 'valibot';
 
+// Get all activities with their categories for the current user (for manual session entry)
+export const getActivitiesForUser = query(
+	v.object({
+		userId: v.string()
+	}),
+	async ({ userId }) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
+		// Get all non-archived activities for the user
+		const activities = await db
+			.select({
+				id: activity.id,
+				name: activity.name,
+				icon: activity.icon
+			})
+			.from(activity)
+			.where(and(eq(activity.userId, userId), eq(activity.archived, false)))
+			.orderBy(activity.name)
+			.all();
+
+		if (activities.length === 0) {
+			return [];
+		}
+
+		// Get categories for these activities
+		const activityIds = activities.map((a) => a.id);
+		const activityCategories = await db
+			.select({
+				activityId: activityCategory.activityId,
+				categoryId: category.id,
+				categoryName: category.name,
+				categoryColor: category.color,
+				categoryIcon: category.icon
+			})
+			.from(activityCategory)
+			.innerJoin(category, eq(activityCategory.categoryId, category.id))
+			.where(inArray(activityCategory.activityId, activityIds))
+			.all();
+
+		// Combine activities with their categories
+		return activities.map((act) => {
+			const categories = activityCategories
+				.filter((ac) => ac.activityId === act.id)
+				.map((ac) => ({
+					id: ac.categoryId,
+					name: ac.categoryName,
+					color: ac.categoryColor,
+					icon: ac.categoryIcon
+				}));
+
+			return {
+				...act,
+				categories
+			};
+		});
+	}
+);
+
+// Create a manual session (for logging past activities)
+export const createManualSession = command(
+	v.object({
+		activityId: v.pipe(v.number(), v.minValue(1, 'Activity ID must be valid')),
+		userId: v.string(),
+		startedAt: v.pipe(v.string(), v.isoTimestamp('Start time must be a valid ISO timestamp')),
+		stoppedAt: v.pipe(v.string(), v.isoTimestamp('End time must be a valid ISO timestamp')),
+		notes: v.optional(
+			v.pipe(
+				v.string('Notes must be a string'),
+				v.maxLength(500, 'Notes must be 500 characters or less')
+			)
+		)
+	}),
+	async ({ activityId, userId, startedAt, stoppedAt, notes }) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
+		const startDate = new Date(startedAt);
+		const endDate = new Date(stoppedAt);
+
+		// Validate that end time is after start time
+		if (endDate <= startDate) {
+			throw new Error('End time must be after start time');
+		}
+
+		// Validate that start time is not in the future
+		if (startDate > new Date()) {
+			throw new Error('Start time cannot be in the future');
+		}
+
+		// Calculate duration in seconds
+		const duration = Math.floor((endDate.getTime() - startDate.getTime()) / 1000);
+
+		// Verify the activity belongs to the user
+		const existingActivity = await db
+			.select({ id: activity.id })
+			.from(activity)
+			.where(and(eq(activity.id, activityId), eq(activity.userId, userId)))
+			.get();
+
+		if (!existingActivity) {
+			throw new Error('Activity not found or does not belong to user');
+		}
+
+		// Create the session
+		const newSession = await db
+			.insert(timeSession)
+			.values({
+				activityId,
+				userId,
+				startedAt: startDate,
+				stoppedAt: endDate,
+				duration,
+				isActive: false,
+				notes: notes || null
+			})
+			.returning()
+			.get();
+
+		// Refresh the sessions query for the date
+		const sessionDateStr = startDate.toISOString().split('T')[0];
+		await getSessionsForDate({ userId, date: sessionDateStr }).refresh();
+
+		return newSession;
+	}
+);
+
 // Get all completed sessions for a specific date
 export const getSessionsForDate = query(
 	v.object({

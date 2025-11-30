@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { getSessionsForDate } from '$lib/api/daily.remote';
-	import { SessionCard } from '$lib/components/daily';
+	import { AddSessionDrawer, SessionCard } from '$lib/components/daily';
 	import { Button } from '$lib/components/ui/button';
 	import { Calendar } from '$lib/components/ui/calendar';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
 	import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date';
-	import { CalendarIcon, ChevronLeft, ChevronRight } from '@lucide/svelte';
+	import { CalendarIcon, ChevronLeft, ChevronRight, Plus } from '@lucide/svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -17,6 +17,7 @@
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 	let calendarOpen = $state(false);
+	let addSessionOpen = $state(false);
 
 	// Convert DateValue to JS Date for display formatting
 	function dateValueToJSDate(dateValue: CalendarDate): Date {
@@ -170,7 +171,7 @@
 						<div class="py-8 text-center">
 							<p class="text-muted-foreground">No sessions recorded for this day.</p>
 							<p class="mt-2 text-sm text-muted-foreground">
-								Start tracking activities to see them here!
+								Tap the + button to log a past activity
 							</p>
 						</div>
 					{:else}
@@ -219,3 +220,25 @@
 		</div>
 	</div>
 </div>
+
+<!-- Floating Add Button -->
+<div class="fixed right-6 bottom-32 z-50">
+	<Button
+		size="lg"
+		class="h-14 w-14 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl"
+		onclick={() => (addSessionOpen = true)}
+	>
+		<Plus class="h-6 w-6" />
+	</Button>
+</div>
+
+<!-- Add Session Drawer -->
+{#if data.user}
+	<AddSessionDrawer
+		bind:open={addSessionOpen}
+		userId={data.user.id}
+		selectedDate={selectedDateValue}
+		onOpenChange={(open) => (addSessionOpen = open)}
+		onSessionCreated={loadSessions}
+	/>
+{/if}
