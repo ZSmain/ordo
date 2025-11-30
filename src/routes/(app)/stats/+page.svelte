@@ -15,26 +15,9 @@
 
 	type PeriodType = 'day' | 'week' | 'month' | 'year';
 
-	interface OverviewStats {
-		totalDuration: number;
-		totalSessions: number;
-		categoriesWorkedOn: number;
-		activitiesWorkedOn: number;
-	}
-
-	// State
+	// State for period selection
 	let selectedPeriod = $state<PeriodType>('day');
 	let selectedDate = $state(today(getLocalTimeZone()));
-	let loading = $state(false);
-	let error = $state<string | null>(null);
-	let categoryStats = $state<any[]>([]);
-	let activityStats = $state<any[]>([]);
-	let overviewStats = $state<OverviewStats>({
-		totalDuration: 0,
-		totalSessions: 0,
-		categoriesWorkedOn: 0,
-		activitiesWorkedOn: 0
-	});
 
 	// Activity statistics drawer state
 	let statisticsDrawerOpen = $state(false);
@@ -49,11 +32,12 @@
 		switch (period) {
 			case 'day':
 				return date;
-			case 'week':
+			case 'week': {
 				const jsDate = date.toDate(getLocalTimeZone());
 				const dayOfWeek = jsDate.getDay();
 				const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 				return date.subtract({ days: daysToSubtract });
+			}
 			case 'month':
 				return new CalendarDate(date.year, date.month, 1);
 			case 'year':
@@ -65,15 +49,17 @@
 		switch (period) {
 			case 'day':
 				return date;
-			case 'week':
+			case 'week': {
 				const jsDate = date.toDate(getLocalTimeZone());
 				const dayOfWeek = jsDate.getDay();
 				const daysToAdd = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
 				return date.add({ days: daysToAdd });
-			case 'month':
+			}
+			case 'month': {
 				const nextMonth = date.month === 12 ? 1 : date.month + 1;
 				const yearForNextMonth = date.month === 12 ? date.year + 1 : date.year;
 				return new CalendarDate(yearForNextMonth, nextMonth, 1).subtract({ days: 1 });
+			}
 			case 'year':
 				return new CalendarDate(date.year, 12, 31);
 		}
@@ -99,40 +85,32 @@
 		}
 	}
 
-	async function loadStats(): Promise<void> {
-		if (!data.user) return;
+	// Reactive queries that update when period/date changes
+	const statsParams = $derived.by(() => {
+		if (!data.user) return null;
+		const startDate = getPeriodStart(selectedDate, selectedPeriod);
+		const endDate = getPeriodEnd(selectedDate, selectedPeriod);
+		return {
+			userId: data.user.id,
+			startDate: formatDateForAPI(startDate),
+			endDate: formatDateForAPI(endDate)
+		};
+	});
 
-		loading = true;
-		error = null;
-		try {
-			const startDate = getPeriodStart(selectedDate, selectedPeriod);
-			const endDate = getPeriodEnd(selectedDate, selectedPeriod);
-			const startDateStr = formatDateForAPI(startDate);
-			const endDateStr = formatDateForAPI(endDate);
+	const categoryStatsQuery = $derived.by(() => {
+		if (!statsParams) return null;
+		return getCategoryStats(statsParams);
+	});
 
-			const [categoryData, activityData, overviewData] = await Promise.all([
-				getCategoryStats({ userId: data.user.id, startDate: startDateStr, endDate: endDateStr }),
-				getActivityStats({ userId: data.user.id, startDate: startDateStr, endDate: endDateStr }),
-				getOverviewStats({ userId: data.user.id, startDate: startDateStr, endDate: endDateStr })
-			]);
+	const activityStatsQuery = $derived.by(() => {
+		if (!statsParams) return null;
+		return getActivityStats(statsParams);
+	});
 
-			categoryStats = categoryData;
-			activityStats = activityData;
-			overviewStats = overviewData;
-		} catch (err) {
-			error = 'Failed to load statistics. Please try again.';
-			categoryStats = [];
-			activityStats = [];
-			overviewStats = {
-				totalDuration: 0,
-				totalSessions: 0,
-				categoriesWorkedOn: 0,
-				activitiesWorkedOn: 0
-			};
-		} finally {
-			loading = false;
-		}
-	}
+	const overviewStatsQuery = $derived.by(() => {
+		if (!statsParams) return null;
+		return getOverviewStats(statsParams);
+	});
 
 	function handlePeriodChange(period: PeriodType): void {
 		selectedPeriod = period;
@@ -141,10 +119,6 @@
 	function handleDateChange(date: CalendarDate): void {
 		selectedDate = date;
 	}
-
-	$effect(() => {
-		loadStats();
-	});
 </script>
 
 <svelte:head>
@@ -156,36 +130,54 @@
 	<div class="overflow-hidden">
 		<ScrollArea class="h-full">
 			<div class="container mx-auto max-w-4xl p-4">
-				{#if loading}
-					<div class="py-8 text-center">
-						<p class="text-muted-foreground">Loading statistics...</p>
-					</div>
-				{:else if error}
-					<div class="py-8 text-center">
-						<p class="text-red-500">{error}</p>
-					</div>
-				{:else if overviewStats.totalSessions === 0}
-					<div class="py-8 text-center">
-						<p class="text-muted-foreground">No data recorded for this period.</p>
-						<p class="mt-2 text-sm text-muted-foreground">
-							Start tracking activities to see statistics here!
-						</p>
-					</div>
-				{:else}
-					<div class="space-y-6">
-						<div class="grid gap-6 lg:grid-cols-3">
-							<OverviewPieChart
-								activities={activityStats}
-								period={getPeriodLabel(selectedDate, selectedPeriod)}
-							/>
+				<svelte:boundary>
+					{#snippet pending()}
+						<div class="py-8 text-center">
+							<p class="text-muted-foreground">Loading statistics...</p>
 						</div>
+					{/snippet}
 
-						<div class="grid gap-6 lg:grid-cols-2">
-							<CategoryStatsCard categories={categoryStats} />
-							<ActivityStatsCard activities={activityStats} onActivityClick={handleActivityClick} />
+					{#snippet failed()}
+						<div class="py-8 text-center">
+							<p class="text-red-500">Failed to load statistics. Please try again.</p>
 						</div>
-					</div>
-				{/if}
+					{/snippet}
+
+					{@const categoryStats = categoryStatsQuery?.current ?? []}
+					{@const activityStats = activityStatsQuery?.current ?? []}
+					{@const overviewStats = overviewStatsQuery?.current ?? {
+						totalDuration: 0,
+						totalSessions: 0,
+						categoriesWorkedOn: 0,
+						activitiesWorkedOn: 0
+					}}
+
+					{#if overviewStats.totalSessions === 0}
+						<div class="py-8 text-center">
+							<p class="text-muted-foreground">No data recorded for this period.</p>
+							<p class="mt-2 text-sm text-muted-foreground">
+								Start tracking activities to see statistics here!
+							</p>
+						</div>
+					{:else}
+						<div class="space-y-6">
+							<div class="grid gap-6 lg:grid-cols-3">
+								<OverviewPieChart
+									activities={activityStats}
+									period={getPeriodLabel(selectedDate, selectedPeriod)}
+								/>
+							</div>
+
+							<div class="grid gap-6 lg:grid-cols-2">
+								<CategoryStatsCard categories={categoryStats} />
+								<ActivityStatsCard
+									activities={activityStats}
+									onActivityClick={handleActivityClick}
+								/>
+							</div>
+						</div>
+					{/if}
+				</svelte:boundary>
 			</div>
 		</ScrollArea>
 	</div>
