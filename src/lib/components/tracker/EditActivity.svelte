@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { getCategoriesWithActivities, updateActivity } from '$lib/api/data.remote';
+	import { IconPicker } from '$lib/components/icon-picker';
 	import { Button } from '$lib/components/ui/button';
 	import {
 		Drawer,
@@ -47,9 +48,6 @@
 			label: `${category.icon} ${category.name}`
 		}));
 	});
-
-	// Available icons for activity
-	const icons = ['📋', '💻', '📚', '🏃‍♂️', '🎨', '🎵', '🍽️', '🛠️', '💼', '🎯'];
 
 	// Initialize form when activity changes
 	$effect(() => {
@@ -123,36 +121,24 @@
 			</DrawerHeader>
 
 			<div class="space-y-4 p-4 pb-0">
+				<!-- Name and Icon in one row -->
 				<div class="space-y-2">
-					<Label for="activity-name">Activity Name</Label>
-					<Input
-						id="activity-name"
-						bind:value={activityForm.name}
-						placeholder="Enter activity name"
-						class="w-full"
-					/>
-				</div>
-
-				<div class="space-y-2">
-					<Label>Icon</Label>
-					<div class="flex flex-wrap gap-2">
-						{#each icons as icon (icon)}
-							<Button
-								variant="ghost"
-								size="icon"
-								class="h-10 w-10 rounded-lg border-2 text-lg transition-all hover:bg-gray-50 {activityForm.icon ===
-								icon
-									? 'border-gray-900'
-									: 'border-gray-300'}"
-								onclick={() => (activityForm.icon = icon)}
-								aria-label="Select icon {icon}"
-							>
-								{icon}
-							</Button>
-						{/each}
+					<Label for="activity-name">Name & Icon</Label>
+					<div class="flex items-center gap-2">
+						<Input
+							id="activity-name"
+							bind:value={activityForm.name}
+							placeholder="Activity name"
+							class="flex-1"
+						/>
+						<IconPicker
+							value={activityForm.icon}
+							onSelect={(emoji) => (activityForm.icon = emoji)}
+						/>
 					</div>
 				</div>
 
+				<!-- Categories -->
 				<div class="space-y-2">
 					<Label for="activity-category">Categories</Label>
 					<Select.Root type="multiple" bind:value={selectedCategoryIds}>
@@ -189,47 +175,48 @@
 					</Select.Root>
 				</div>
 
+				<!-- Goals in a compact grid -->
 				<div class="space-y-2">
-					<Label for="daily-goal">Daily Goal (minutes)</Label>
-					<Input
-						id="daily-goal"
-						type="number"
-						bind:value={activityForm.dailyGoal}
-						placeholder="Enter daily goal in minutes"
-						class="w-full"
-						min="1"
-					/>
-				</div>
-
-				<div class="space-y-2">
-					<Label for="weekly-goal">Weekly Goal (minutes)</Label>
-					<Input
-						id="weekly-goal"
-						type="number"
-						bind:value={activityForm.weeklyGoal}
-						placeholder="Enter weekly goal in minutes"
-						class="w-full"
-						min="1"
-					/>
-				</div>
-
-				<div class="space-y-2">
-					<Label for="monthly-goal">Monthly Goal (minutes)</Label>
-					<Input
-						id="monthly-goal"
-						type="number"
-						bind:value={activityForm.monthlyGoal}
-						placeholder="Enter monthly goal in minutes"
-						class="w-full"
-						min="1"
-					/>
+					<Label>Goals (minutes)</Label>
+					<div class="grid grid-cols-3 gap-2">
+						<div class="space-y-1">
+							<span class="text-xs text-muted-foreground">Daily</span>
+							<Input
+								id="daily-goal"
+								type="number"
+								bind:value={activityForm.dailyGoal}
+								placeholder="0"
+								min="1"
+							/>
+						</div>
+						<div class="space-y-1">
+							<span class="text-xs text-muted-foreground">Weekly</span>
+							<Input
+								id="weekly-goal"
+								type="number"
+								bind:value={activityForm.weeklyGoal}
+								placeholder="0"
+								min="1"
+							/>
+						</div>
+						<div class="space-y-1">
+							<span class="text-xs text-muted-foreground">Monthly</span>
+							<Input
+								id="monthly-goal"
+								type="number"
+								bind:value={activityForm.monthlyGoal}
+								placeholder="0"
+								min="1"
+							/>
+						</div>
+					</div>
 				</div>
 			</div>
 
 			<DrawerFooter>
 				<div class="flex gap-2">
-					<DrawerClose>
-						<Button variant="outline" class="flex-1">Cancel</Button>
+					<DrawerClose class="flex-1">
+						<Button variant="outline" class="w-full">Cancel</Button>
 					</DrawerClose>
 					<Button
 						onclick={handleUpdateActivity}

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { updateCategory } from '$lib/api/data.remote';
+	import { IconPicker } from '$lib/components/icon-picker';
 	import { Button } from '$lib/components/ui/button';
 	import {
 		Drawer,
@@ -43,9 +44,6 @@
 		'#EC4899', // pink
 		'#6B7280' // gray
 	];
-
-	// Available icons for category
-	const icons = ['📁', '💼', '🎯', '📚', '🏃‍♂️', '🎨', '💻', '🍽️', '🛠️', '🎵'];
 
 	// Initialize form when category changes
 	$effect(() => {
@@ -104,52 +102,39 @@
 				<DrawerDescription>Update the category details</DrawerDescription>
 			</DrawerHeader>
 
-			<div class="space-y-4 p-4 pb-0">
+			<div class="space-y-5 p-4 pb-0">
+				<!-- Name and Icon in one row -->
 				<div class="space-y-2">
-					<Label for="category-name">Category Name</Label>
-					<Input
-						id="category-name"
-						bind:value={categoryForm.name}
-						placeholder="Enter category name"
-						class="w-full"
-					/>
+					<Label for="category-name">Name & Icon</Label>
+					<div class="flex items-center gap-2">
+						<Input
+							id="category-name"
+							bind:value={categoryForm.name}
+							placeholder="Enter category name"
+							class="flex-1"
+						/>
+						<IconPicker
+							value={categoryForm.icon}
+							onSelect={(emoji) => (categoryForm.icon = emoji)}
+						/>
+					</div>
 				</div>
 
+				<!-- Color picker -->
 				<div class="space-y-2">
 					<Label>Color</Label>
 					<div class="flex flex-wrap gap-2">
 						{#each colors as color}
-							<Button
-								variant="ghost"
-								size="icon"
-								class="h-8 w-8 rounded-full border-2 p-0 transition-all {categoryForm.color ===
+							<button
+								type="button"
+								class="h-8 w-8 rounded-full border-2 transition-all hover:scale-110 {categoryForm.color ===
 								color
-									? 'border-gray-900'
-									: 'border-gray-300'}"
+									? 'border-foreground ring-2 ring-foreground/20'
+									: 'border-transparent'}"
 								style="background-color: {color}"
 								onclick={() => (categoryForm.color = color)}
 								aria-label="Select color {color}"
-							></Button>
-						{/each}
-					</div>
-				</div>
-
-				<div class="space-y-2">
-					<Label>Icon</Label>
-					<div class="flex flex-wrap gap-2">
-						{#each icons as icon}
-							<Button
-								variant="ghost"
-								size="icon"
-								class="h-10 w-10 rounded-lg border-2 text-lg transition-all hover:bg-gray-50 {categoryForm.icon ===
-								icon
-									? 'border-gray-900'
-									: 'border-gray-300'}"
-								onclick={() => (categoryForm.icon = icon)}
-								aria-label="Select icon {icon}"
-							>
-								{icon}
-							</Button>
+							></button>
 						{/each}
 					</div>
 				</div>
@@ -157,8 +142,8 @@
 
 			<DrawerFooter>
 				<div class="flex gap-2">
-					<DrawerClose>
-						<Button variant="outline" class="flex-1">Cancel</Button>
+					<DrawerClose class="flex-1">
+						<Button variant="outline" class="w-full">Cancel</Button>
 					</DrawerClose>
 					<Button
 						onclick={handleUpdateCategory}

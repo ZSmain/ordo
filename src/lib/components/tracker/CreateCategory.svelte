@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { createCategory } from '$lib/api/data.remote';
+	import { IconPicker } from '$lib/components/icon-picker';
 	import { Button } from '$lib/components/ui/button';
 	import {
 		Drawer,
@@ -12,6 +13,7 @@
 	} from '$lib/components/ui/drawer';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+	import { DEFAULT_CATEGORY_EMOJI } from '$lib/constants/emojis';
 	import type { InsertCategory } from '$lib/server/db/schema';
 
 	interface Props {
@@ -26,7 +28,7 @@
 	let categoryForm = $state({
 		name: '',
 		color: '#3B82F6',
-		icon: '📁'
+		icon: DEFAULT_CATEGORY_EMOJI
 	});
 
 	// Available colors for category
@@ -42,9 +44,6 @@
 		'#EC4899', // pink
 		'#6B7280' // gray
 	];
-
-	// Available icons for category
-	const icons = ['📁', '💼', '🎯', '📚', '🏃‍♂️', '🎨', '💻', '🍽️', '🛠️', '🎵'];
 
 	async function handleCreateCategory() {
 		if (!categoryForm.name.trim()) return;
@@ -77,7 +76,7 @@
 		categoryForm = {
 			name: '',
 			color: '#3B82F6',
-			icon: '📁'
+			icon: DEFAULT_CATEGORY_EMOJI
 		};
 	}
 
@@ -130,22 +129,7 @@
 
 				<div class="space-y-2">
 					<Label>Icon</Label>
-					<div class="flex flex-wrap gap-2">
-						{#each icons as icon}
-							<Button
-								variant="ghost"
-								size="icon"
-								class="h-10 w-10 rounded-lg border-2 text-lg transition-all hover:bg-gray-50 {categoryForm.icon ===
-								icon
-									? 'border-gray-900'
-									: 'border-gray-300'}"
-								onclick={() => (categoryForm.icon = icon)}
-								aria-label="Select icon {icon}"
-							>
-								{icon}
-							</Button>
-						{/each}
-					</div>
+					<IconPicker value={categoryForm.icon} onSelect={(emoji) => (categoryForm.icon = emoji)} />
 				</div>
 			</div>
 

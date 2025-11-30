@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { IconPicker } from '$lib/components/icon-picker';
 	import { Button } from '$lib/components/ui/button';
 	import {
 		Drawer,
@@ -12,6 +13,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
+	import { DEFAULT_ACTIVITY_EMOJI } from '$lib/constants/emojis';
 
 	import { createActivity, getCategoriesWithActivities } from '$lib/api/data.remote';
 
@@ -26,7 +28,7 @@
 
 	let activityForm = $state({
 		name: '',
-		icon: '⚡',
+		icon: DEFAULT_ACTIVITY_EMOJI,
 		categoryId: 0,
 		dailyGoal: undefined as number | undefined,
 		weeklyGoal: undefined as number | undefined,
@@ -47,9 +49,6 @@
 			label: `${category.icon} ${category.name}`
 		}));
 	});
-
-	// Available icons for activity
-	const icons = ['⚡', '🏃‍♂️', '📚', '💻', '🎨', '🍽️', '🛠️', '🎵', '🧘‍♀️', '💼'];
 
 	async function handleCreateActivity() {
 		if (!activityForm.name.trim() || selectedCategoryIds.length === 0) return;
@@ -84,7 +83,7 @@
 	function resetForm() {
 		activityForm = {
 			name: '',
-			icon: '⚡',
+			icon: DEFAULT_ACTIVITY_EMOJI,
 			categoryId: 0,
 			dailyGoal: undefined,
 			weeklyGoal: undefined,
@@ -159,22 +158,7 @@
 
 				<div class="space-y-2">
 					<Label>Icon</Label>
-					<div class="flex flex-wrap gap-2">
-						{#each icons as icon (icon)}
-							<Button
-								variant="ghost"
-								size="icon"
-								class="h-10 w-10 rounded-lg border-2 text-lg transition-all hover:bg-gray-50 {activityForm.icon ===
-								icon
-									? 'border-gray-900'
-									: 'border-gray-300'}"
-								onclick={() => (activityForm.icon = icon)}
-								aria-label="Select icon {icon}"
-							>
-								{icon}
-							</Button>
-						{/each}
-					</div>
+					<IconPicker value={activityForm.icon} onSelect={(emoji) => (activityForm.icon = emoji)} />
 				</div>
 
 				<div class="space-y-2">
