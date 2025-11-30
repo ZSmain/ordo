@@ -6,20 +6,12 @@
 	interface Props {
 		category: CategoryWithActivities | null;
 		onActivitySelect?: (categoryName: string, activityName: string) => void;
-		onActivityUpdated?: () => void;
 		userId?: string;
 		currentCategory?: string;
 		currentActivity?: string;
 	}
 
-	let {
-		category,
-		onActivitySelect,
-		onActivityUpdated,
-		userId,
-		currentCategory,
-		currentActivity
-	}: Props = $props();
+	let { category, onActivitySelect, userId, currentCategory, currentActivity }: Props = $props();
 
 	// Filter out archived activities by default
 	let visibleActivities = $derived(
@@ -46,7 +38,6 @@
 						categoryColor={category.color}
 						categoryName={category.name}
 						{onActivitySelect}
-						{onActivityUpdated}
 						{userId}
 						{currentCategory}
 						{currentActivity}

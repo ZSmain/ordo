@@ -163,22 +163,6 @@
 		startTimer(foundActivity.id, categoryName, activityName);
 	}
 
-	// Handle category creation
-	function handleCategoryCreated() {
-		// Refresh the categories query
-		if (user?.id) {
-			categoriesQuery?.refresh();
-		}
-	}
-
-	// Handle activity creation
-	function handleActivityCreated() {
-		// Refresh the categories query to get updated activities
-		if (user?.id) {
-			categoriesQuery?.refresh();
-		}
-	}
-
 	// Restore timer session on mount
 	onMount(async () => {
 		if (!user?.id) return;
@@ -242,7 +226,6 @@
 		onCategoryChange={handleCategorySelection}
 		loading={categoriesQuery?.loading || false}
 		error={categoriesQuery?.error}
-		onCategoryUpdated={handleCategoryCreated}
 		userId={user?.id || ''}
 	/>
 
@@ -250,7 +233,6 @@
 	<ActivityList
 		category={selectedCategory}
 		onActivitySelect={handleActivitySelect}
-		onActivityUpdated={handleCategoryCreated}
 		userId={user?.id || ''}
 		currentCategory={timerStore.current.categoryName}
 		currentActivity={timerStore.current.activityName}
@@ -258,8 +240,4 @@
 </ScrollArea>
 
 <!-- Floating Add Button -->
-<FloatingAddButton
-	onCategoryCreated={handleCategoryCreated}
-	onActivityCreated={handleActivityCreated}
-	userId={user?.id || ''}
-/>
+<FloatingAddButton userId={user?.id || ''} />

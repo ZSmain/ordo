@@ -15,7 +15,6 @@
 		loading?: boolean;
 		error?: Error | null;
 		onCategoryChange?: (categoryId: string) => void;
-		onCategoryUpdated?: () => void;
 		userId?: string;
 	}
 
@@ -25,7 +24,6 @@
 		loading = false,
 		error = null,
 		onCategoryChange,
-		onCategoryUpdated,
 		userId = ''
 	}: Props = $props();
 
@@ -65,9 +63,6 @@
 			// Close dialog and reset state
 			deleteDialogOpen = false;
 			categoryToDelete = null;
-
-			// Notify parent component to refresh data
-			onCategoryUpdated?.();
 		} catch (error) {
 			console.error('Failed to delete category:', error);
 			// You could add a toast notification here instead of alert
@@ -79,7 +74,6 @@
 	function handleCategoryUpdated() {
 		editCategoryOpen = false;
 		categoryToEdit = null;
-		onCategoryUpdated?.();
 	}
 </script>
 

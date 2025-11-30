@@ -3,12 +3,10 @@
 	import { Button } from '$lib/components/ui/button';
 
 	interface Props {
-		onCategoryCreated?: () => void;
-		onActivityCreated?: () => void;
 		userId: string;
 	}
 
-	let { onCategoryCreated, onActivityCreated, userId }: Props = $props();
+	let { userId }: Props = $props();
 
 	let isExpanded = $state(false);
 	let showCategoryForm = $state(false);
@@ -29,15 +27,11 @@
 	function handleCategoryCreated() {
 		// Collapse the floating button after successful creation
 		isExpanded = false;
-		// Notify parent component
-		onCategoryCreated?.();
 	}
 
 	function handleActivityCreated() {
 		// Collapse the floating button after successful creation
 		isExpanded = false;
-		// Notify parent component
-		onActivityCreated?.();
 	}
 </script>
 

@@ -14,7 +14,6 @@
 		categoryColor: string;
 		categoryName: string;
 		onActivitySelect?: (categoryName: string, activityName: string) => void;
-		onActivityUpdated?: () => void;
 		userId?: string;
 		currentCategory?: string;
 		currentActivity?: string;
@@ -25,7 +24,6 @@
 		categoryColor,
 		categoryName,
 		onActivitySelect,
-		onActivityUpdated,
 		userId = '',
 		currentCategory,
 		currentActivity
@@ -70,7 +68,6 @@
 			});
 
 			archiveDialogOpen = false;
-			onActivityUpdated?.();
 		} catch (error) {
 			console.error('Failed to archive activity:', error);
 		}
@@ -87,7 +84,6 @@
 			});
 
 			deleteDialogOpen = false;
-			onActivityUpdated?.();
 		} catch (error) {
 			console.error('Failed to delete activity:', error);
 		}
@@ -96,7 +92,6 @@
 	// Handle activity updated
 	function handleActivityUpdated() {
 		editActivityOpen = false;
-		onActivityUpdated?.();
 	}
 </script>
 
