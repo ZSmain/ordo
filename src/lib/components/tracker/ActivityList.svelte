@@ -1,42 +1,54 @@
 <script lang="ts">
 	import { Separator } from '$lib/components/ui/separator';
-	import type { CategoryWithActivities } from '$lib/types';
+	import type { Activity } from '$lib/server/db/schema';
 	import ActivityCard from './ActivityCard.svelte';
 
+	interface ActivityWithContext {
+		activity: Activity;
+		categoryColor: string;
+		categoryName: string;
+	}
+
 	interface Props {
-		category: CategoryWithActivities | null;
+		activities: ActivityWithContext[];
 		onActivitySelect?: (categoryName: string, activityName: string) => void;
 		userId?: string;
 		currentCategory?: string;
 		currentActivity?: string;
 	}
 
-	let { category, onActivitySelect, userId, currentCategory, currentActivity }: Props = $props();
+	let {
+		activities,
+		onActivitySelect,
+		userId,
+		currentCategory,
+		currentActivity
+	}: Props = $props();
 
 	// Filter out archived activities by default
 	let visibleActivities = $derived(
-		category?.activities?.filter((activity) => !activity.archived) || []
+		activities?.filter((item) => !item.activity.archived) || []
 	);
 </script>
 
-{#if category}
+{#if activities && activities.length > 0}
 	<Separator class="my-4" />
 	<div class="mt-4 space-y-2">
 		<h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
-			Activities - {category.name}
+			Activities
 		</h2>
 
 		{#if !visibleActivities || visibleActivities.length === 0}
 			<div class="text-center text-xs text-slate-400 dark:text-slate-500">
-				No activities in this category yet
+				No active activities found
 			</div>
 		{:else}
 			<div class="grid grid-cols-2 gap-3">
-				{#each visibleActivities as activity, index (activity.id + '-' + index)}
+				{#each visibleActivities as item, index (item.activity.id + '-' + index)}
 					<ActivityCard
-						{activity}
-						categoryColor={category.color}
-						categoryName={category.name}
+						activity={item.activity}
+						categoryColor={item.categoryColor}
+						categoryName={item.categoryName}
 						{onActivitySelect}
 						{userId}
 						{currentCategory}

@@ -1,17 +1,22 @@
 <script lang="ts">
 	import { deleteCategory } from '$lib/api/data.remote';
 	import { Button } from '$lib/components/ui/button';
+	import { Card, CardContent } from '$lib/components/ui/card';
+	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as ContextMenu from '$lib/components/ui/context-menu';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import * as Field from '$lib/components/ui/field';
 	import { Label } from '$lib/components/ui/label';
-	import * as RadioGroup from '$lib/components/ui/radio-group';
+	import { Switch } from '$lib/components/ui/switch';
 	import type { Category } from '$lib/types';
 	import { PencilLine, Trash2 } from '@lucide/svelte';
 	import EditCategory from './EditCategory.svelte';
 
 	interface Props {
 		categories: Category[];
-		selectedCategoryId: string;
+		selectedCategoryIds: string[];
+		filterMode?: 'AND' | 'OR';
+		onFilterModeChange?: (mode: 'AND' | 'OR') => void;
 		loading?: boolean;
 		error?: Error | null;
 		onCategoryChange?: (categoryId: string) => void;
@@ -20,7 +25,9 @@
 
 	let {
 		categories,
-		selectedCategoryId = $bindable(),
+		selectedCategoryIds = $bindable([]),
+		filterMode = 'OR',
+		onFilterModeChange,
 		loading = false,
 		error = null,
 		onCategoryChange,
@@ -34,8 +41,12 @@
 
 	// Handle category selection
 	function handleCategoryChange(value: string) {
-		selectedCategoryId = value;
 		onCategoryChange?.(value);
+	}
+
+	// Check if a category is selected
+	function isSelected(categoryId: number): boolean {
+		return selectedCategoryIds.includes(String(categoryId));
 	}
 
 	// Handle modify category
@@ -78,8 +89,6 @@
 </script>
 
 <div class="mt-4 space-y-2">
-	<h2 class="text-lg font-semibold text-foreground">Categories</h2>
-
 	{#if error}
 		<div class="mt-4 text-center text-xs text-red-500">Failed to load categories</div>
 	{:else if loading}
@@ -87,48 +96,75 @@
 	{:else if !categories || categories.length === 0}
 		<div class="mt-4 text-center text-xs text-muted-foreground">No categories yet</div>
 	{:else}
-		<RadioGroup.Root
-			bind:value={selectedCategoryId}
-			onValueChange={handleCategoryChange}
-			class="flex flex-wrap justify-center gap-3"
-		>
-			{#each categories as category, index (category.id + '-' + index)}
-				<ContextMenu.Root>
-					<ContextMenu.Trigger>
-						<Label
-							class="flex cursor-pointer flex-col items-center gap-2 rounded-lg border p-3 has-[[data-state=checked]]:border-ring has-[[data-state=checked]]:bg-input/20"
-							style="background-color: {category.color}20"
-						>
-							<RadioGroup.Item
-								value={String(category.id)}
-								id={String(category.id)}
-								class="sr-only data-[state=checked]:border-primary"
-							/>
-							<div class="flex flex-col items-center gap-1 font-normal">
-								<div class="text-lg leading-snug">
-									{category.icon}
-								</div>
-								<div class="text-center font-medium">{category.name}</div>
+		<Card class="py-4 shadow-none">
+			<CardContent class="px-4">
+				<form>
+					<Field.Group>
+						<Field.Set class="gap-4">
+							<div class="flex items-center justify-between">
+								<Field.Legend>Categories</Field.Legend>
+								{#if selectedCategoryIds.length > 1}
+									<div class="flex items-center gap-2">
+										<Label for="filter-mode" class="text-xs text-muted-foreground">
+											Match all
+										</Label>
+										<Switch
+											id="filter-mode"
+											checked={filterMode === 'AND'}
+											onCheckedChange={(checked) =>
+												onFilterModeChange?.(checked ? 'AND' : 'OR')}
+										/>
+									</div>
+								{/if}
 							</div>
-						</Label>
-					</ContextMenu.Trigger>
-					<ContextMenu.Content>
-						<ContextMenu.Item onclick={() => handleModifyCategory(category)}>
-							<PencilLine class="mr-2 h-4 w-4" />
-							Modify
-						</ContextMenu.Item>
-						<ContextMenu.Separator />
-						<ContextMenu.Item
-							onclick={() => handleDeleteCategory(category)}
-							class="text-red-600 focus:text-red-600"
-						>
-							<Trash2 class="mr-2 h-4 w-4" />
-							Delete
-						</ContextMenu.Item>
-					</ContextMenu.Content>
-				</ContextMenu.Root>
-			{/each}
-		</RadioGroup.Root>
+							<Field.Group class="flex flex-row flex-wrap gap-2 [--radius:9999rem]">
+								{#each categories as category, index (category.id + '-' + index)}
+									<ContextMenu.Root>
+										<ContextMenu.Trigger>
+											<Field.Label for={String(category.id)} class="w-fit! cursor-pointer">
+												<Field.Field
+													orientation="horizontal"
+													class="group-has-data-[state=checked]/field-label:px-2! gap-1.5 overflow-hidden rounded-full px-3! py-1.5! transition-all duration-100 ease-linear"
+													style="background-color: {isSelected(category.id)
+														? category.color + '40'
+														: category.color + '10'}"
+												>
+													<Checkbox
+														value={String(category.id)}
+														id={String(category.id)}
+														checked={isSelected(category.id)}
+														onCheckedChange={() => handleCategoryChange(String(category.id))}
+														class="-ms-6 -translate-x-1 rounded-full transition-all duration-100 ease-linear data-[state=checked]:ms-0 data-[state=checked]:translate-x-0"
+													/>
+													<div class="flex items-center gap-1.5">
+														<span class="text-sm">{category.icon}</span>
+														<Field.Title class="text-nowrap">{category.name}</Field.Title>
+													</div>
+												</Field.Field>
+											</Field.Label>
+										</ContextMenu.Trigger>
+										<ContextMenu.Content>
+											<ContextMenu.Item onclick={() => handleModifyCategory(category)}>
+												<PencilLine class="mr-2 h-4 w-4" />
+												Modify
+											</ContextMenu.Item>
+											<ContextMenu.Separator />
+											<ContextMenu.Item
+												onclick={() => handleDeleteCategory(category)}
+												class="text-red-600 focus:text-red-600"
+											>
+												<Trash2 class="mr-2 h-4 w-4" />
+												Delete
+											</ContextMenu.Item>
+										</ContextMenu.Content>
+									</ContextMenu.Root>
+								{/each}
+							</Field.Group>
+						</Field.Set>
+					</Field.Group>
+				</form>
+			</CardContent>
+		</Card>
 	{/if}
 </div>
 

@@ -27,28 +27,82 @@
 		return getCategoriesWithActivities(user.id);
 	});
 
-	// Computed: selected category with activities
-	const selectedCategory = $derived.by(() => {
-		// Don't process if no category is selected or data isn't loaded
-		if (!$selectionStore.selectedCategoryId || !categoriesQuery?.current) {
-			return null;
+	// Computed: selected activities from multiple categories
+	const selectedActivities = $derived.by(() => {
+		// Don't process if no categories are selected or data isn't loaded
+		const selectedIds = $selectionStore.selectedCategoryIds || [];
+		if (selectedIds.length === 0 || !categoriesQuery?.current) {
+			return [];
 		}
 
-		const categoryId = parseInt($selectionStore.selectedCategoryId);
-		const category = categoriesQuery.current.find((cat) => cat.id === categoryId);
+		const filterMode = $selectionStore.filterMode || 'OR';
 
-		// Return the category with activities (or empty array if no activities property)
-		return category
-			? {
-					...category,
-					activities: category.activities || []
+		if (filterMode === 'AND' && selectedIds.length > 1) {
+			// AND Logic: Intersection
+			// Get activities for each selected category
+			const activitiesPerCategory = selectedIds
+				.map((idStr) => {
+					const cat = categoriesQuery.current?.find((c) => c.id === parseInt(idStr));
+					return cat ? { category: cat, activities: cat.activities || [] } : null;
+				})
+				.filter((item) => item !== null);
+
+			if (activitiesPerCategory.length === 0) return [];
+
+			// Start with the first category's activities
+			let intersection = activitiesPerCategory[0]!.activities;
+
+			// Filter to keep only those present in all other selected categories
+			for (let i = 1; i < activitiesPerCategory.length; i++) {
+				const currentIds = new Set(activitiesPerCategory[i]!.activities.map((a) => a.id));
+				intersection = intersection.filter((a) => currentIds.has(a.id));
+			}
+
+			// Map to result format
+			return intersection.map((activity) => {
+				// Use the first selected category as context (or any valid one)
+				const contextCategory = activitiesPerCategory[0]!.category;
+				return {
+					activity,
+					categoryColor: contextCategory.color,
+					categoryName: contextCategory.name
+				};
+			});
+		} else {
+			// OR Logic: Union (Deduplicated)
+			const activitiesMap = new Map();
+
+			// Iterate through all selected categories
+			for (const categoryIdStr of selectedIds) {
+				const categoryId = parseInt(categoryIdStr);
+				const category = categoriesQuery.current.find((cat) => cat.id === categoryId);
+
+				if (category && category.activities) {
+					for (const activity of category.activities) {
+						// Use activity ID as key to deduplicate
+						if (!activitiesMap.has(activity.id)) {
+							activitiesMap.set(activity.id, {
+								activity,
+								categoryColor: category.color,
+								categoryName: category.name
+							});
+						}
+					}
 				}
-			: null;
+			}
+
+			return Array.from(activitiesMap.values());
+		}
 	});
 
 	// Handle category selection changes
 	function handleCategorySelection(categoryId: string) {
-		selectionStore.setSelectedCategory(categoryId);
+		selectionStore.toggleCategory(categoryId);
+	}
+
+	// Handle filter mode changes
+	function handleFilterModeChange(mode: 'AND' | 'OR') {
+		selectionStore.setFilterMode(mode);
 	}
 
 	// Start timer function with optimistic update
@@ -147,20 +201,44 @@
 			return;
 		}
 
-		const foundCategory = categoriesData.find((cat) => cat.name === categoryName);
-		if (!foundCategory) {
-			console.error('Category not found:', categoryName);
-			return;
+		// We need to find the activity ID. Since we have multiple categories selected,
+		// we can search through the selectedActivities derived store or the raw categories.
+		// Searching raw categories is safer as it covers all possibilities.
+		
+		let foundActivityId = -1;
+		
+		// Find the activity in the categories
+		for (const cat of categoriesData) {
+			if (cat.name === categoryName) {
+				const act = cat.activities.find(a => a.name === activityName);
+				if (act) {
+					foundActivityId = act.id;
+					break;
+				}
+			}
 		}
 
-		const foundActivity = foundCategory.activities.find((act) => act.name === activityName);
-		if (!foundActivity) {
+		if (foundActivityId === -1) {
+			// Fallback: try to find by name across all categories if category name match failed
+			// This handles edge cases where category name might be ambiguous or display-only
+			for (const cat of categoriesData) {
+				const act = cat.activities.find(a => a.name === activityName);
+				if (act) {
+					foundActivityId = act.id;
+					// Update category name to the one where we found it
+					categoryName = cat.name; 
+					break;
+				}
+			}
+		}
+
+		if (foundActivityId === -1) {
 			console.error('Activity not found:', activityName);
 			return;
 		}
 
 		// Start timer with the found activity
-		startTimer(foundActivity.id, categoryName, activityName);
+		startTimer(foundActivityId, categoryName, activityName);
 	}
 
 	// Restore timer session on mount
@@ -222,16 +300,18 @@
 	<!-- Categories -->
 	<CategorySelector
 		categories={categoriesQuery?.current || []}
-		selectedCategoryId={$selectionStore.selectedCategoryId}
+		selectedCategoryIds={$selectionStore.selectedCategoryIds || []}
+		filterMode={$selectionStore.filterMode || 'OR'}
+		onFilterModeChange={handleFilterModeChange}
 		onCategoryChange={handleCategorySelection}
 		loading={categoriesQuery?.loading || false}
 		error={categoriesQuery?.error}
 		userId={user?.id || ''}
 	/>
 
-	<!-- Activities for Selected Category -->
+	<!-- Activities for Selected Categories -->
 	<ActivityList
-		category={selectedCategory}
+		activities={selectedActivities}
 		onActivitySelect={handleActivitySelect}
 		userId={user?.id || ''}
 		currentCategory={timerStore.current.categoryName}
