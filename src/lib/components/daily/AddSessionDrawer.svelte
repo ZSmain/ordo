@@ -219,8 +219,8 @@
 </script>
 
 <Drawer.Root {open} {onOpenChange}>
-	<Drawer.Content class="max-h-[90vh]">
-		<div class="mx-auto flex h-full w-full max-w-md flex-col">
+	<Drawer.Content class="flex max-h-[90vh] flex-col">
+		<div class="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col overflow-hidden">
 			<Drawer.Header>
 				<Drawer.Title class="text-center">
 					<div class="mb-2 flex items-center justify-center gap-2">
@@ -247,9 +247,9 @@
 				</div>
 			</div>
 
-			<div class="flex-1 overflow-hidden">
-				<ScrollArea class="h-full">
-					<div class="space-y-6 px-4 pb-4">
+			<div class="min-h-0 flex-1 overflow-hidden">
+			<ScrollArea class="h-full">
+				<div class="space-y-6 px-4 pb-8">
 						{#if error}
 							<div class="rounded-md bg-destructive/10 p-3">
 								<p class="text-sm text-destructive">{error}</p>
@@ -512,13 +512,13 @@
 					</div>
 				</ScrollArea>
 			</div>
-
-			<Drawer.Footer>
-				<Button onclick={handleSave} disabled={loading || !selectedActivityId}>
-					{loading ? 'Adding...' : 'Add Session'}
-				</Button>
-				<Button variant="outline" onclick={handleCancel} disabled={loading}>Cancel</Button>
-			</Drawer.Footer>
 		</div>
+
+		<Drawer.Footer class="shrink-0">
+			<Button onclick={handleSave} disabled={loading || !selectedActivityId}>
+				{loading ? 'Adding...' : 'Add Session'}
+			</Button>
+			<Button variant="outline" onclick={handleCancel} disabled={loading}>Cancel</Button>
+		</Drawer.Footer>
 	</Drawer.Content>
 </Drawer.Root>

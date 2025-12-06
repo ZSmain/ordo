@@ -3,7 +3,6 @@
 	import * as Chart from '$lib/components/ui/chart/index.js';
 	import * as Drawer from '$lib/components/ui/drawer';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import { ScrollArea } from '$lib/components/ui/scroll-area';
 	import { Calendar, ChartBar, ChevronDown, Clock, Hash, Timer } from '@lucide/svelte';
 	import { scaleBand } from 'd3-scale';
 	import { BarChart, type ChartContextValue } from 'layerchart';
@@ -195,8 +194,8 @@
 </script>
 
 <Drawer.Root {open} {onOpenChange}>
-	<Drawer.Content class="max-h-[90vh]">
-		<div class="mx-auto flex h-full w-full max-w-lg flex-col">
+	<Drawer.Content class="flex max-h-[90vh] flex-col">
+		<div class="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-hidden">
 			<Drawer.Header class="pb-2">
 				<Drawer.Title class="text-center">
 					<div class="mb-1 flex items-center justify-center gap-2">
@@ -255,180 +254,178 @@
 			</div>
 
 			<!-- Content -->
-			<div class="flex-1 overflow-hidden">
-				<ScrollArea class="h-full">
-					<div class="space-y-4 px-4 pb-4">
-						{#if statisticsQuery}
-							{#if statisticsQuery.loading}
+			<div class="min-h-0 flex-1 overflow-y-auto">
+				<div class="space-y-4 px-4 pb-8">
+					{#if statisticsQuery}
+						{#if statisticsQuery.loading}
+							<div class="py-8 text-center">
+								<p class="text-muted-foreground">Loading statistics...</p>
+							</div>
+						{:else if statisticsQuery.error}
+							<div class="py-8 text-center">
+								<p class="text-red-500">Failed to load statistics</p>
+							</div>
+						{:else}
+							{@const statistics = statisticsQuery.current}
+							{#if statistics && statistics.totalSessions === 0}
 								<div class="py-8 text-center">
-									<p class="text-muted-foreground">Loading statistics...</p>
+									<p class="text-muted-foreground">No data recorded for this period.</p>
 								</div>
-							{:else if statisticsQuery.error}
-								<div class="py-8 text-center">
-									<p class="text-red-500">Failed to load statistics</p>
-								</div>
-							{:else}
-								{@const statistics = statisticsQuery.current}
-								{#if statistics && statistics.totalSessions === 0}
-									<div class="py-8 text-center">
-										<p class="text-muted-foreground">No data recorded for this period.</p>
-									</div>
-								{:else if statistics}
-									{@const chartDataInHours = statistics.chartData.map((d) => ({
-										label: d.label,
-										duration: d.duration / 3600
-									}))}
+							{:else if statistics}
+								{@const chartDataInHours = statistics.chartData.map((d) => ({
+									label: d.label,
+									duration: d.duration / 3600
+								}))}
 
-									<!-- Bar Chart -->
-									{#if chartDataInHours.length > 0}
-										<div class="rounded-lg border bg-card p-4">
-											<h3 class="mb-3 text-sm font-medium text-muted-foreground">
-												Time Distribution
-											</h3>
-											<Chart.Container config={chartConfig} class="h-[180px] w-full">
-												<BarChart
-													bind:context={chartContext}
-													data={chartDataInHours}
-													xScale={scaleBand().padding(0.3)}
-													x="label"
-													axis="x"
-													series={[
-														{ key: 'duration', label: 'Hours', color: chartConfig.duration.color }
-													]}
-													props={{
-														bars: {
-															stroke: 'none',
-															rounded: 'all',
-															radius: 4,
-															initialY: chartContext?.height,
-															initialHeight: 0,
-															motion: {
-																x: { type: 'tween', duration: 400, easing: cubicInOut },
-																width: { type: 'tween', duration: 400, easing: cubicInOut },
-																height: { type: 'tween', duration: 400, easing: cubicInOut },
-																y: { type: 'tween', duration: 400, easing: cubicInOut }
-															}
-														},
-														highlight: { area: { fill: 'none' } },
-														xAxis: { format: (d: string) => d }
-													}}
-												>
-													{#snippet tooltip()}
-														<Chart.Tooltip />
-													{/snippet}
-												</BarChart>
-											</Chart.Container>
-										</div>
-									{/if}
-
-									<!-- Total Stats -->
+								<!-- Bar Chart -->
+								{#if chartDataInHours.length > 0}
 									<div class="rounded-lg border bg-card p-4">
-										<h3 class="mb-3 text-sm font-medium text-muted-foreground">Overview</h3>
-										<div class="grid grid-cols-2 gap-4">
-											<div class="flex items-center gap-3">
-												<div
-													class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"
-												>
-													<Clock class="h-5 w-5 text-primary" />
-												</div>
-												<div>
-													<p class="text-xl font-bold">
-														{formatDuration(statistics.totalDuration)}
-													</p>
-													<p class="text-xs text-muted-foreground">Total Time</p>
-												</div>
-											</div>
-											<div class="flex items-center gap-3">
-												<div
-													class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"
-												>
-													<Hash class="h-5 w-5 text-primary" />
-												</div>
-												<div>
-													<p class="text-xl font-bold">{statistics.totalSessions}</p>
-													<p class="text-xs text-muted-foreground">Total Records</p>
-												</div>
-											</div>
-										</div>
-									</div>
-
-									<!-- Record Length -->
-									<div class="rounded-lg border bg-card p-4">
-										<h3 class="mb-3 text-sm font-medium text-muted-foreground">Record Length</h3>
-										<div class="grid grid-cols-3 gap-3">
-											<div class="rounded-lg bg-muted/50 p-3 text-center">
-												<p class="text-lg font-semibold">
-													{formatDuration(statistics.shortestSession)}
-												</p>
-												<p class="text-xs text-muted-foreground">Shortest</p>
-											</div>
-											<div class="rounded-lg bg-muted/50 p-3 text-center">
-												<p class="text-lg font-semibold">
-													{formatDuration(statistics.averageSession)}
-												</p>
-												<p class="text-xs text-muted-foreground">Average</p>
-											</div>
-											<div class="rounded-lg bg-muted/50 p-3 text-center">
-												<p class="text-lg font-semibold">
-													{formatDuration(statistics.longestSession)}
-												</p>
-												<p class="text-xs text-muted-foreground">Longest</p>
-											</div>
-										</div>
-									</div>
-
-									<!-- Record Time -->
-									<div class="rounded-lg border bg-card p-4">
-										<h3 class="mb-3 text-sm font-medium text-muted-foreground">Record Time</h3>
-										<div class="grid grid-cols-2 gap-3">
-											<div class="flex items-center gap-3">
-												<div
-													class="flex h-9 w-9 items-center justify-center rounded-lg bg-green-500/10"
-												>
-													<Timer class="h-4 w-4 text-green-600" />
-												</div>
-												<div>
-													<p class="text-sm font-medium">
-														{formatDateTime(statistics.firstSession)}
-													</p>
-													<p class="text-xs text-muted-foreground">First Record</p>
-												</div>
-											</div>
-											<div class="flex items-center gap-3">
-												<div
-													class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10"
-												>
-													<Timer class="h-4 w-4 text-blue-600" />
-												</div>
-												<div>
-													<p class="text-sm font-medium">
-														{formatDateTime(statistics.lastSession)}
-													</p>
-													<p class="text-xs text-muted-foreground">Last Record</p>
-												</div>
-											</div>
-										</div>
+										<h3 class="mb-3 text-sm font-medium text-muted-foreground">
+											Time Distribution
+										</h3>
+										<Chart.Container config={chartConfig} class="h-[180px] w-full">
+											<BarChart
+												bind:context={chartContext}
+												data={chartDataInHours}
+												xScale={scaleBand().padding(0.3)}
+												x="label"
+												axis="x"
+												series={[
+													{ key: 'duration', label: 'Hours', color: chartConfig.duration.color }
+												]}
+												props={{
+													bars: {
+														stroke: 'none',
+														rounded: 'all',
+														radius: 4,
+														initialY: chartContext?.height,
+														initialHeight: 0,
+														motion: {
+															x: { type: 'tween', duration: 400, easing: cubicInOut },
+															width: { type: 'tween', duration: 400, easing: cubicInOut },
+															height: { type: 'tween', duration: 400, easing: cubicInOut },
+															y: { type: 'tween', duration: 400, easing: cubicInOut }
+														}
+													},
+													highlight: { area: { fill: 'none' } },
+													xAxis: { format: (d: string) => d }
+												}}
+											>
+												{#snippet tooltip()}
+													<Chart.Tooltip />
+												{/snippet}
+											</BarChart>
+										</Chart.Container>
 									</div>
 								{/if}
-							{/if}
-						{:else}
-							<div class="py-8 text-center">
-								<p class="text-muted-foreground">Select an activity to view statistics.</p>
-							</div>
-						{/if}
-					</div>
-				</ScrollArea>
-			</div>
 
-			<Drawer.Footer>
-				<Drawer.Close class="w-full">
-					<button
-						class="w-full rounded-md border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
-					>
-						Close
-					</button>
-				</Drawer.Close>
-			</Drawer.Footer>
+								<!-- Total Stats -->
+								<div class="rounded-lg border bg-card p-4">
+									<h3 class="mb-3 text-sm font-medium text-muted-foreground">Overview</h3>
+									<div class="grid grid-cols-2 gap-4">
+										<div class="flex items-center gap-3">
+											<div
+												class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"
+											>
+												<Clock class="h-5 w-5 text-primary" />
+											</div>
+											<div>
+												<p class="text-xl font-bold">
+													{formatDuration(statistics.totalDuration)}
+												</p>
+												<p class="text-xs text-muted-foreground">Total Time</p>
+											</div>
+										</div>
+										<div class="flex items-center gap-3">
+											<div
+												class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"
+											>
+												<Hash class="h-5 w-5 text-primary" />
+											</div>
+											<div>
+												<p class="text-xl font-bold">{statistics.totalSessions}</p>
+												<p class="text-xs text-muted-foreground">Total Records</p>
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<!-- Record Length -->
+								<div class="rounded-lg border bg-card p-4">
+									<h3 class="mb-3 text-sm font-medium text-muted-foreground">Record Length</h3>
+									<div class="grid grid-cols-3 gap-3">
+										<div class="rounded-lg bg-muted/50 p-3 text-center">
+											<p class="text-lg font-semibold">
+												{formatDuration(statistics.shortestSession)}
+											</p>
+											<p class="text-xs text-muted-foreground">Shortest</p>
+										</div>
+										<div class="rounded-lg bg-muted/50 p-3 text-center">
+											<p class="text-lg font-semibold">
+												{formatDuration(statistics.averageSession)}
+											</p>
+											<p class="text-xs text-muted-foreground">Average</p>
+										</div>
+										<div class="rounded-lg bg-muted/50 p-3 text-center">
+											<p class="text-lg font-semibold">
+												{formatDuration(statistics.longestSession)}
+											</p>
+											<p class="text-xs text-muted-foreground">Longest</p>
+										</div>
+									</div>
+								</div>
+
+								<!-- Record Time -->
+								<div class="rounded-lg border bg-card p-4">
+									<h3 class="mb-3 text-sm font-medium text-muted-foreground">Record Time</h3>
+									<div class="grid grid-cols-2 gap-3">
+										<div class="flex items-center gap-3">
+											<div
+												class="flex h-9 w-9 items-center justify-center rounded-lg bg-green-500/10"
+											>
+												<Timer class="h-4 w-4 text-green-600" />
+											</div>
+											<div>
+												<p class="text-sm font-medium">
+													{formatDateTime(statistics.firstSession)}
+												</p>
+												<p class="text-xs text-muted-foreground">First Record</p>
+											</div>
+										</div>
+										<div class="flex items-center gap-3">
+											<div
+												class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10"
+											>
+												<Timer class="h-4 w-4 text-blue-600" />
+											</div>
+											<div>
+												<p class="text-sm font-medium">
+													{formatDateTime(statistics.lastSession)}
+												</p>
+												<p class="text-xs text-muted-foreground">Last Record</p>
+											</div>
+										</div>
+									</div>
+								</div>
+							{/if}
+						{/if}
+					{:else}
+						<div class="py-8 text-center">
+							<p class="text-muted-foreground">Select an activity to view statistics.</p>
+						</div>
+					{/if}
+				</div>
+			</div>
 		</div>
+
+		<Drawer.Footer class="shrink-0">
+			<Drawer.Close class="w-full">
+				<button
+					class="w-full rounded-md border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+				>
+					Close
+				</button>
+			</Drawer.Close>
+		</Drawer.Footer>
 	</Drawer.Content>
 </Drawer.Root>
