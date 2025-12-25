@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import favicon from '$lib/assets/favicon.svg';
 	import { Toaster } from '$lib/components/ui/sonner';
@@ -24,7 +25,7 @@
 	<nav class="shrink-0 border-t border-border bg-background">
 		<div class="flex items-center justify-around py-3">
 			<a
-				href="/"
+				href={resolve('/')}
 				class="flex flex-col items-center gap-1 transition-colors"
 				class:text-primary={page.url.pathname === '/'}
 				class:text-muted-foreground={page.url.pathname !== '/'}
@@ -34,7 +35,7 @@
 			</a>
 
 			<a
-				href="/daily"
+				href={resolve('/daily')}
 				class="flex flex-col items-center gap-1 transition-colors"
 				class:text-primary={page.url.pathname === '/daily'}
 				class:text-muted-foreground={page.url.pathname !== '/daily'}
@@ -44,7 +45,7 @@
 			</a>
 
 			<a
-				href="/stats"
+				href={resolve('/stats')}
 				class="flex flex-col items-center gap-1 transition-colors"
 				class:text-primary={page.url.pathname === '/stats'}
 				class:text-muted-foreground={page.url.pathname !== '/stats'}
@@ -54,7 +55,7 @@
 			</a>
 
 			<a
-				href="/settings"
+				href={resolve('/settings')}
 				class="flex flex-col items-center gap-1 transition-colors"
 				class:text-primary={page.url.pathname === '/settings'}
 				class:text-muted-foreground={page.url.pathname !== '/settings'}
