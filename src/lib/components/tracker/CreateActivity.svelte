@@ -39,7 +39,7 @@
 	let selectedCategoryIds = $state<string[]>([]);
 
 	// Get categories for selection
-	const categoriesQuery = getCategoriesWithActivities(userId);
+	const categoriesQuery = $derived.by(() => getCategoriesWithActivities(userId));
 
 	// Convert categories to Select format
 	let selectCategories = $derived.by(() => {
