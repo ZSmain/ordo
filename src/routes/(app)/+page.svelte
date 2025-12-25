@@ -21,17 +21,24 @@
 	// Get user from page data
 	const user = $derived(page.data?.user);
 
-	// Get categories with activities query - only if user is available
-	const categoriesQuery = $derived.by(() => {
-		if (!user?.id) return null;
-		return getCategoriesWithActivities(user.id);
+	// Get categories with activities query - persisted across re-mounts
+	let categoriesQuery = $state<ReturnType<typeof getCategoriesWithActivities> | null>(null);
+
+	$effect(() => {
+		if (user?.id) {
+			// Query system caches by arguments, so same user.id returns cached instance
+			categoriesQuery = getCategoriesWithActivities(user.id);
+		} else {
+			categoriesQuery = null;
+		}
 	});
 
 	// Computed: selected activities from multiple categories
 	const selectedActivities = $derived.by(() => {
 		// Don't process if no categories are selected or data isn't loaded
 		const selectedIds = $selectionStore.selectedCategoryIds || [];
-		if (selectedIds.length === 0 || !categoriesQuery?.current) {
+		const currentCategories = categoriesQuery?.current;
+		if (selectedIds.length === 0 || !currentCategories) {
 			return [];
 		}
 
@@ -42,7 +49,7 @@
 			// Get activities for each selected category
 			const activitiesPerCategory = selectedIds
 				.map((idStr) => {
-					const cat = categoriesQuery.current?.find((c) => c.id === parseInt(idStr));
+					const cat = currentCategories.find((c) => c.id === parseInt(idStr));
 					return cat ? { category: cat, activities: cat.activities || [] } : null;
 				})
 				.filter((item) => item !== null);
@@ -70,28 +77,35 @@
 			});
 		} else {
 			// OR Logic: Union (Deduplicated)
-			const activitiesMap = new Map();
+			const activitiesMap: Record<
+				number,
+				{
+					activity: (typeof currentCategories)[0]['activities'][0];
+					categoryColor: string;
+					categoryName: string;
+				}
+			> = {};
 
 			// Iterate through all selected categories
 			for (const categoryIdStr of selectedIds) {
 				const categoryId = parseInt(categoryIdStr);
-				const category = categoriesQuery.current.find((cat) => cat.id === categoryId);
+				const category = currentCategories.find((cat) => cat.id === categoryId);
 
 				if (category && category.activities) {
 					for (const activity of category.activities) {
 						// Use activity ID as key to deduplicate
-						if (!activitiesMap.has(activity.id)) {
-							activitiesMap.set(activity.id, {
+						if (!activitiesMap[activity.id]) {
+							activitiesMap[activity.id] = {
 								activity,
 								categoryColor: category.color,
 								categoryName: category.name
-							});
+							};
 						}
 					}
 				}
 			}
 
-			return Array.from(activitiesMap.values());
+			return Object.values(activitiesMap);
 		}
 	});
 
@@ -204,13 +218,13 @@
 		// We need to find the activity ID. Since we have multiple categories selected,
 		// we can search through the selectedActivities derived store or the raw categories.
 		// Searching raw categories is safer as it covers all possibilities.
-		
+
 		let foundActivityId = -1;
-		
+
 		// Find the activity in the categories
 		for (const cat of categoriesData) {
 			if (cat.name === categoryName) {
-				const act = cat.activities.find(a => a.name === activityName);
+				const act = cat.activities.find((a) => a.name === activityName);
 				if (act) {
 					foundActivityId = act.id;
 					break;
@@ -222,11 +236,11 @@
 			// Fallback: try to find by name across all categories if category name match failed
 			// This handles edge cases where category name might be ambiguous or display-only
 			for (const cat of categoriesData) {
-				const act = cat.activities.find(a => a.name === activityName);
+				const act = cat.activities.find((a) => a.name === activityName);
 				if (act) {
 					foundActivityId = act.id;
 					// Update category name to the one where we found it
-					categoryName = cat.name; 
+					categoryName = cat.name;
 					break;
 				}
 			}
