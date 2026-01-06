@@ -124,7 +124,7 @@
 				<div class="space-y-2">
 					<Label>Color</Label>
 					<div class="flex flex-wrap gap-2">
-						{#each colors as color}
+						{#each colors as color (color)}
 							<button
 								type="button"
 								class="h-8 w-8 rounded-full border-2 transition-all hover:scale-110 {categoryForm.color ===

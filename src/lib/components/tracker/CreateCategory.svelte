@@ -111,7 +111,7 @@
 				<div class="space-y-2">
 					<Label>Color</Label>
 					<div class="flex flex-wrap gap-2">
-						{#each colors as color}
+						{#each colors as color (color)}
 							<Button
 								variant="ghost"
 								size="icon"

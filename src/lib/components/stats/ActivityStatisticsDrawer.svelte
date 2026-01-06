@@ -283,7 +283,7 @@
 										<h3 class="mb-3 text-sm font-medium text-muted-foreground">
 											Time Distribution
 										</h3>
-										<Chart.Container config={chartConfig} class="h-[180px] w-full">
+										<Chart.Container config={chartConfig} class="h-45 w-full">
 											<BarChart
 												bind:context={chartContext}
 												data={chartDataInHours}
