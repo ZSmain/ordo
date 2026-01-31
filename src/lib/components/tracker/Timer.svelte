@@ -1,30 +1,35 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import { calculateElapsedTime, timerStore } from '$lib/stores';
 	import { formatTime } from '$lib/time';
 	import { Square } from '@lucide/svelte';
 
 	interface Props {
+		categoryName: string;
+		activityName: string;
+		startTime: number | null;
 		onStop: () => void;
 	}
 
-	let { onStop }: Props = $props();
+	let { categoryName, activityName, startTime, onStop }: Props = $props();
 
 	// Current elapsed time
 	let elapsedSeconds = $state(0);
 
-	// Get timer state directly from the store (reactive)
-	const timerState = $derived(timerStore.current);
+	// Calculate elapsed time from start time
+	function calculateElapsed(): number {
+		if (!startTime) return 0;
+		return Math.floor((Date.now() - startTime) / 1000);
+	}
 
 	// Control the interval based on timer state
 	$effect(() => {
-		if (timerState.isActive) {
+		if (startTime) {
 			// Update immediately when timer becomes active
-			elapsedSeconds = calculateElapsedTime(timerState);
+			elapsedSeconds = calculateElapsed();
 
 			// Start the interval for continuous updates
 			const interval = setInterval(() => {
-				elapsedSeconds = calculateElapsedTime(timerState);
+				elapsedSeconds = calculateElapsed();
 			}, 1000);
 
 			return () => clearInterval(interval);
@@ -38,7 +43,7 @@
 	<div class="flex items-center justify-between">
 		<div>
 			<div class="mb-1 text-sm opacity-80">
-				{timerState.categoryName} / {timerState.activityName}
+				{categoryName} / {activityName}
 			</div>
 			<div class="font-mono text-2xl font-bold">{formatTime(elapsedSeconds)}</div>
 		</div>

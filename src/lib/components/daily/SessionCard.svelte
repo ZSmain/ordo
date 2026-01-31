@@ -7,18 +7,18 @@
 
 	interface Props {
 		session: {
-			id: number;
+			id: string;
 			startedAt: Date;
 			stoppedAt: Date | null;
 			duration: number | null;
 			notes: string | null;
 			activity: {
-				id: number;
+				id: string;
 				name: string;
 				icon: string;
 			};
 			categories: Array<{
-				id: number;
+				id: string;
 				name: string;
 				color: string;
 				icon: string;

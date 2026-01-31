@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { getCategoriesWithActivities, updateActivity } from '$lib/api/data.remote';
 	import { IconPicker } from '$lib/components/icon-picker';
 	import { Button } from '$lib/components/ui/button';
 	import {
@@ -14,11 +13,31 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
-	import type { ActivityWithOptionalCategories, Category } from '$lib/types';
+
+	import { useLiveStore, categoriesForUser$, activityActions } from '$lib/livestore';
+
+	const store = useLiveStore();
+
+	interface CategoryData {
+		id: string;
+		name: string;
+		color: string;
+		icon: string;
+	}
+
+	interface ActivityData {
+		id: string;
+		name: string;
+		icon: string;
+		dailyGoal?: number | null;
+		weeklyGoal?: number | null;
+		monthlyGoal?: number | null;
+		categories?: CategoryData[];
+	}
 
 	interface Props {
 		open: boolean;
-		activity: ActivityWithOptionalCategories | null;
+		activity: ActivityData | null;
 		onOpenChange?: (open: boolean) => void;
 		onActivityUpdated?: () => void;
 		userId: string;
@@ -37,14 +56,13 @@
 	// Category selection using Select component
 	let selectedCategoryIds = $state<string[]>([]);
 
-	// Get categories for selection
-	const categoriesQuery = $derived.by(() => getCategoriesWithActivities(userId));
+	// Get categories for selection using LiveStore
+	const categories = $derived(userId ? store.query(categoriesForUser$(userId)) : []);
 
 	// Convert categories to Select format
 	let selectCategories = $derived.by(() => {
-		if (!categoriesQuery.current) return [];
-		return categoriesQuery.current.map((category) => ({
-			value: category.id.toString(),
+		return categories.map((category) => ({
+			value: category.id,
 			label: `${category.icon} ${category.name}`
 		}));
 	});
@@ -59,27 +77,27 @@
 			activityForm.monthlyGoal = activity.monthlyGoal || undefined;
 
 			// Initialize selected categories from the activity's categories
-			selectedCategoryIds = activity.categories?.map((cat: Category) => cat.id.toString()) || [];
+			selectedCategoryIds = activity.categories?.map((cat) => cat.id) || [];
 		} else {
 			// Reset form when activity is null
 			resetForm();
 		}
 	});
 
-	async function handleUpdateActivity() {
+	function handleUpdateActivity() {
 		if (!activityForm.name.trim() || !activity || selectedCategoryIds.length === 0) return;
 
 		try {
-			await updateActivity({
-				id: activity.id,
+			activityActions.update(store, activity.id, {
 				name: activityForm.name.trim(),
 				icon: activityForm.icon,
-				dailyGoal: activityForm.dailyGoal,
-				weeklyGoal: activityForm.weeklyGoal,
-				monthlyGoal: activityForm.monthlyGoal,
-				userId,
-				categoryIds: selectedCategoryIds.map((id) => parseInt(id))
+				dailyGoal: activityForm.dailyGoal ?? null,
+				weeklyGoal: activityForm.weeklyGoal ?? null,
+				monthlyGoal: activityForm.monthlyGoal ?? null
 			});
+
+			// Update category links
+			activityActions.updateCategories(store, activity.id, selectedCategoryIds);
 
 			// Close drawer
 			open = false;
@@ -148,18 +166,14 @@
 							{:else}
 								<div class="flex flex-wrap gap-1">
 									{#each selectedCategoryIds as categoryId (categoryId)}
-										{#if categoriesQuery.current}
-											{@const category = categoriesQuery.current.find(
-												(c) => c.id.toString() === categoryId
-											)}
-											{#if category}
-												<span
-													class="inline-flex items-center gap-1 rounded bg-secondary px-2 py-1 text-xs"
-												>
-													{category.icon}
-													{category.name}
-												</span>
-											{/if}
+										{@const category = categories.find((c) => c.id === categoryId)}
+										{#if category}
+											<span
+												class="inline-flex items-center gap-1 rounded bg-secondary px-2 py-1 text-xs"
+											>
+												{category.icon}
+												{category.name}
+											</span>
 										{/if}
 									{/each}
 								</div>

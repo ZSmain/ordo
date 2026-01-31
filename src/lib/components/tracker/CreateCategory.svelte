@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { createCategory } from '$lib/api/data.remote';
+	import { useLiveStore, categoryActions } from '$lib/livestore';
+
+	const store = useLiveStore();
 	import { IconPicker } from '$lib/components/icon-picker';
 	import { Button } from '$lib/components/ui/button';
 	import {
@@ -14,7 +16,6 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { DEFAULT_CATEGORY_EMOJI } from '$lib/constants/emojis';
-	import type { InsertCategory } from '$lib/server/db/schema';
 
 	interface Props {
 		open: boolean;
@@ -45,18 +46,16 @@
 		'#6B7280' // gray
 	];
 
-	async function handleCreateCategory() {
-		if (!categoryForm.name.trim()) return;
+	function handleCreateCategory() {
+		if (!categoryForm.name.trim() || !userId) return;
 
 		try {
-			const categoryData: InsertCategory = {
+			categoryActions.create(store, {
 				name: categoryForm.name.trim(),
 				color: categoryForm.color,
 				icon: categoryForm.icon,
 				userId
-			};
-
-			await createCategory(categoryData);
+			});
 
 			// Reset form
 			resetForm();

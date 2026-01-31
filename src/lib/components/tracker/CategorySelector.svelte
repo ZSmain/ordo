@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { deleteCategory } from '$lib/api/data.remote';
+	import { useLiveStore, categoryActions } from '$lib/livestore';
+
+	const store = useLiveStore();
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent } from '$lib/components/ui/card';
 	import { Checkbox } from '$lib/components/ui/checkbox';
@@ -8,12 +10,18 @@
 	import * as Field from '$lib/components/ui/field';
 	import { Label } from '$lib/components/ui/label';
 	import { Switch } from '$lib/components/ui/switch';
-	import type { Category } from '$lib/types';
 	import { PencilLine, Trash2 } from '@lucide/svelte';
 	import EditCategory from './EditCategory.svelte';
 
+	interface CategoryData {
+		id: string;
+		name: string;
+		color: string;
+		icon: string;
+	}
+
 	interface Props {
-		categories: Category[];
+		categories: CategoryData[];
 		selectedCategoryIds: string[];
 		filterMode?: 'AND' | 'OR';
 		onFilterModeChange?: (mode: 'AND' | 'OR') => void;
@@ -35,9 +43,9 @@
 	}: Props = $props();
 
 	let editCategoryOpen = $state(false);
-	let categoryToEdit = $state<Category | null>(null);
+	let categoryToEdit = $state<CategoryData | null>(null);
 	let deleteDialogOpen = $state(false);
-	let categoryToDelete = $state<Category | null>(null);
+	let categoryToDelete = $state<CategoryData | null>(null);
 
 	// Handle category selection
 	function handleCategoryChange(value: string) {
@@ -45,38 +53,32 @@
 	}
 
 	// Check if a category is selected
-	function isSelected(categoryId: number): boolean {
-		return selectedCategoryIds.includes(String(categoryId));
+	function isSelected(categoryId: string): boolean {
+		return selectedCategoryIds.includes(categoryId);
 	}
 
 	// Handle modify category
-	function handleModifyCategory(category: Category) {
+	function handleModifyCategory(category: CategoryData) {
 		categoryToEdit = category;
 		editCategoryOpen = true;
 	}
 
 	// Handle delete category
-	function handleDeleteCategory(category: Category) {
+	function handleDeleteCategory(category: CategoryData) {
 		categoryToDelete = category;
 		deleteDialogOpen = true;
 	}
 
-	// Confirm delete category
-	async function confirmDeleteCategory() {
-		if (!userId || !categoryToDelete) return;
+	// Confirm delete category using LiveStore
+	function confirmDeleteCategory() {
+		if (!categoryToDelete) return;
 
 		try {
-			await deleteCategory({
-				id: categoryToDelete.id,
-				userId
-			});
-
-			// Close dialog and reset state
+			categoryActions.delete(store, categoryToDelete.id);
 			deleteDialogOpen = false;
 			categoryToDelete = null;
 		} catch (error) {
 			console.error('Failed to delete category:', error);
-			// You could add a toast notification here instead of alert
 			alert('Failed to delete category. Please try again.');
 		}
 	}

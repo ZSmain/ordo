@@ -1,13 +1,16 @@
 <script lang="ts">
-	import { deleteSession } from '$lib/api/daily.remote';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Trash2 } from '@lucide/svelte';
 
+	import { useLiveStore, timeSessionActions } from '$lib/livestore';
+
+	const store = useLiveStore();
+
 	interface Props {
 		open: boolean;
 		session: {
-			id: number;
+			id: string;
 			startedAt: Date;
 			stoppedAt: Date | null;
 			duration: number | null;
@@ -68,15 +71,12 @@
 		return `${minutes}m ${remainingSeconds}s`;
 	}
 
-	async function handleDelete() {
+	function handleDelete() {
 		try {
 			loading = true;
 			error = null;
 
-			await deleteSession({
-				sessionId: session.id,
-				userId
-			});
+			timeSessionActions.delete(store, session.id);
 
 			// Notify parent component
 			onSessionDeleted();

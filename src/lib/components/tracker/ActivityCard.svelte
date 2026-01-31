@@ -1,16 +1,36 @@
 <script lang="ts">
-	import { archiveActivity, deleteActivity } from '$lib/api/data.remote';
 	import { ActivityStatisticsDrawer } from '$lib/components/stats';
 	import { Button } from '$lib/components/ui/button';
 	import * as ContextMenu from '$lib/components/ui/context-menu';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Label } from '$lib/components/ui/label';
-	import type { ActivityWithOptionalCategories } from '$lib/types';
 	import { Archive, ChartBar, Pause, PencilLine, Play, Trash2 } from '@lucide/svelte';
 	import EditActivity from './EditActivity.svelte';
 
+	import { useLiveStore, activityActions } from '$lib/livestore';
+
+	const store = useLiveStore();
+
+	interface CategoryData {
+		id: string;
+		name: string;
+		color: string;
+		icon: string;
+	}
+
+	interface ActivityData {
+		id: string;
+		name: string;
+		icon: string;
+		archived?: boolean;
+		dailyGoal?: number | null;
+		weeklyGoal?: number | null;
+		monthlyGoal?: number | null;
+		categories?: CategoryData[];
+	}
+
 	interface Props {
-		activity: ActivityWithOptionalCategories;
+		activity: ActivityData;
 		categoryColor: string;
 		categoryName: string;
 		onActivitySelect?: (categoryName: string, activityName: string) => void;
@@ -57,15 +77,15 @@
 	}
 
 	// Confirm archive
-	async function confirmArchive() {
+	function confirmArchive() {
 		if (!userId) return;
 
 		try {
-			await archiveActivity({
-				id: activity.id,
-				archived: !activity.archived,
-				userId
-			});
+			if (activity.archived) {
+				activityActions.unarchive(store, activity.id);
+			} else {
+				activityActions.archive(store, activity.id);
+			}
 
 			archiveDialogOpen = false;
 		} catch (error) {
@@ -74,14 +94,11 @@
 	}
 
 	// Confirm delete
-	async function confirmDelete() {
+	function confirmDelete() {
 		if (!userId) return;
 
 		try {
-			await deleteActivity({
-				id: activity.id,
-				userId
-			});
+			activityActions.delete(store, activity.id);
 
 			deleteDialogOpen = false;
 		} catch (error) {

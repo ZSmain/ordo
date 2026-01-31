@@ -7,12 +7,34 @@
 	"name": "ordo",
 	"compatibility_date": "2025-09-27",
 	"compatibility_flags": [
-		"nodejs_als", "nodejs_compat"
+		"nodejs_als",
+		"nodejs_compat",
+		"enable_request_signal"
 	],
 	"pages_build_output_dir": ".svelte-kit/cloudflare",
 	"observability": {
 		"enabled": true
 	},
+	/**
+	 * LiveStore Sync Backend Durable Object
+	 * https://dev.docs.livestore.dev/sync-providers/cloudflare/
+	 */
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "SYNC_BACKEND_DO",
+				"class_name": "SyncBackendDO"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": [
+				"SyncBackendDO"
+			]
+		}
+	],
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { createManualSession, getActivitiesForUser } from '$lib/api/daily.remote';
 	import { Button } from '$lib/components/ui/button';
 	import { Calendar } from '$lib/components/ui/calendar';
 	import * as Drawer from '$lib/components/ui/drawer';
@@ -12,17 +11,15 @@
 	import { ChevronDown, Clock, Plus } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 
-	interface Activity {
-		id: number;
-		name: string;
-		icon: string;
-		categories: Array<{
-			id: number;
-			name: string;
-			color: string;
-			icon: string;
-		}>;
-	}
+	import {
+		useLiveStore,
+		activitiesForUser$,
+		activityCategoryLinks$,
+		categoriesForUser$,
+		timeSessionActions
+	} from '$lib/livestore';
+
+	const store = useLiveStore();
 
 	interface Props {
 		open: boolean;
@@ -52,10 +49,33 @@
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 
-	// Fetch activities
-	const activitiesQuery = $derived.by(() => {
-		if (!open || !userId) return null;
-		return getActivitiesForUser({ userId });
+	// Fetch activities from LiveStore
+	const activities = $derived(userId ? store.query(activitiesForUser$(userId)) : []);
+	const categories = $derived(userId ? store.query(categoriesForUser$(userId)) : []);
+	const activityCategoryLinks = $derived(store.query(activityCategoryLinks$));
+
+	// Build activities with categories
+	const activitiesWithCategories = $derived.by(() => {
+		return activities.map((act) => {
+			const categoryLinksForActivity = activityCategoryLinks.filter(
+				(link) => link.activityId === act.id
+			);
+			const activityCategories = categoryLinksForActivity
+				.map((link) => categories.find((c) => c.id === link.categoryId))
+				.filter(Boolean);
+
+			return {
+				id: act.id,
+				name: act.name,
+				icon: act.icon,
+				categories: activityCategories.map((cat) => ({
+					id: cat!.id,
+					name: cat!.name,
+					color: cat!.color,
+					icon: cat!.icon
+				}))
+			};
+		});
 	});
 
 	// Initialize form when drawer opens
@@ -111,7 +131,7 @@
 		}
 	}
 
-	async function handleSave() {
+	function handleSave() {
 		if (!selectedActivityId) {
 			error = 'Please select an activity';
 			return;
@@ -131,20 +151,22 @@
 
 			if (endDateTime <= startDateTime) {
 				error = 'End time must be after start time';
+				loading = false;
 				return;
 			}
 
 			if (startDateTime > new Date()) {
 				error = 'Start time cannot be in the future';
+				loading = false;
 				return;
 			}
 
-			await createManualSession({
-				activityId: parseInt(selectedActivityId),
+			timeSessionActions.create(store, {
+				activityId: selectedActivityId,
 				userId,
-				startedAt: startDateTime.toISOString(),
-				stoppedAt: endDateTime.toISOString(),
-				notes: notes.trim() || undefined
+				startedAt: startDateTime,
+				stoppedAt: endDateTime,
+				notes: notes.trim() || null
 			});
 
 			toast.success('Session added successfully');
@@ -211,10 +233,8 @@
 
 	// Get the selected activity for display
 	let selectedActivity = $derived.by(() => {
-		if (!selectedActivityId || !activitiesQuery?.current) return null;
-		return (activitiesQuery.current as Activity[]).find(
-			(a) => a.id === parseInt(selectedActivityId)
-		);
+		if (!selectedActivityId) return null;
+		return activitiesWithCategories.find((a) => a.id === selectedActivityId);
 	});
 </script>
 
@@ -259,11 +279,7 @@
 						<!-- Activity Selection -->
 						<div class="space-y-2">
 							<Label class="text-sm font-medium">Activity</Label>
-							{#if activitiesQuery?.loading}
-								<div class="rounded-md border p-3 text-center text-sm text-muted-foreground">
-									Loading activities...
-								</div>
-							{:else if activitiesQuery?.current && activitiesQuery.current.length > 0}
+							{#if activitiesWithCategories.length > 0}
 								<Select.Root type="single" bind:value={selectedActivityId}>
 									<Select.Trigger class="w-full">
 										{#if selectedActivity}
@@ -276,8 +292,8 @@
 										{/if}
 									</Select.Trigger>
 									<Select.Content>
-										{#each activitiesQuery.current as act (act.id)}
-											<Select.Item value={String(act.id)}>
+										{#each activitiesWithCategories as act (act.id)}
+											<Select.Item value={act.id}>
 												<span class="flex items-center gap-2">
 													<span>{act.icon}</span>
 													<span>{act.name}</span>

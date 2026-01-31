@@ -10,7 +10,7 @@
 	import { getActivityStatistics } from '../../../routes/(app)/stats/stats.remote';
 
 	interface ActivityInfo {
-		id: number;
+		id: string | number;
 		name: string;
 		icon: string;
 	}

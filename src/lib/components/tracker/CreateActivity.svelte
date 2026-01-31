@@ -15,7 +15,9 @@
 	import * as Select from '$lib/components/ui/select';
 	import { DEFAULT_ACTIVITY_EMOJI } from '$lib/constants/emojis';
 
-	import { createActivity, getCategoriesWithActivities } from '$lib/api/data.remote';
+	import { useLiveStore, categoriesForUser$, activityActions } from '$lib/livestore';
+
+	const store = useLiveStore();
 
 	interface Props {
 		open: boolean;
@@ -38,33 +40,30 @@
 	// Category selection using Select component
 	let selectedCategoryIds = $state<string[]>([]);
 
-	// Get categories for selection
-	const categoriesQuery = $derived.by(() => getCategoriesWithActivities(userId));
+	// Get categories for selection using LiveStore
+	const categories = $derived(userId ? store.query(categoriesForUser$(userId)) : []);
 
 	// Convert categories to Select format
 	let selectCategories = $derived.by(() => {
-		if (!categoriesQuery.current) return [];
-		return categoriesQuery.current.map((category) => ({
-			value: category.id.toString(),
+		return categories.map((category) => ({
+			value: category.id,
 			label: `${category.icon} ${category.name}`
 		}));
 	});
 
-	async function handleCreateActivity() {
-		if (!activityForm.name.trim() || selectedCategoryIds.length === 0) return;
+	function handleCreateActivity() {
+		if (!activityForm.name.trim() || selectedCategoryIds.length === 0 || !userId) return;
 
 		try {
-			const activityData = {
+			activityActions.create(store, {
 				name: activityForm.name.trim(),
 				icon: activityForm.icon,
 				userId,
-				...(activityForm.dailyGoal && { dailyGoal: activityForm.dailyGoal }),
-				...(activityForm.weeklyGoal && { weeklyGoal: activityForm.weeklyGoal }),
-				...(activityForm.monthlyGoal && { monthlyGoal: activityForm.monthlyGoal }),
-				categoryIds: selectedCategoryIds.map((id) => parseInt(id))
-			};
-
-			await createActivity(activityData);
+				categoryIds: selectedCategoryIds,
+				dailyGoal: activityForm.dailyGoal ?? null,
+				weeklyGoal: activityForm.weeklyGoal ?? null,
+				monthlyGoal: activityForm.monthlyGoal ?? null
+			});
 
 			// Reset form
 			resetForm();
@@ -129,18 +128,14 @@
 							{:else}
 								<div class="flex flex-wrap gap-1">
 									{#each selectedCategoryIds as categoryId (categoryId)}
-										{#if categoriesQuery.current}
-											{@const category = categoriesQuery.current.find(
-												(c) => c.id.toString() === categoryId
-											)}
-											{#if category}
-												<span
-													class="inline-flex items-center gap-1 rounded bg-secondary px-2 py-1 text-xs"
-												>
-													{category.icon}
-													{category.name}
-												</span>
-											{/if}
+										{@const category = categories.find((c) => c.id === categoryId)}
+										{#if category}
+											<span
+												class="inline-flex items-center gap-1 rounded bg-secondary px-2 py-1 text-xs"
+											>
+												{category.icon}
+												{category.name}
+											</span>
 										{/if}
 									{/each}
 								</div>

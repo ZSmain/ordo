@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { updateSession } from '$lib/api/daily.remote';
 	import { Button } from '$lib/components/ui/button';
 	import { Calendar } from '$lib/components/ui/calendar';
 	import * as Drawer from '$lib/components/ui/drawer';
@@ -9,10 +8,14 @@
 	import { CalendarDate, getLocalTimeZone } from '@internationalized/date';
 	import { ChevronDown, Clock } from '@lucide/svelte';
 
+	import { useLiveStore, timeSessionActions } from '$lib/livestore';
+
+	const store = useLiveStore();
+
 	interface Props {
 		open: boolean;
 		session: {
-			id: number;
+			id: string;
 			startedAt: Date;
 			stoppedAt: Date | null;
 			activity: {
@@ -91,13 +94,14 @@
 		}
 	}
 
-	async function handleSave() {
+	function handleSave() {
 		try {
 			loading = true;
 			error = null;
 
 			if (!startDateValue || !endDateValue) {
 				error = 'Please select both start and end dates';
+				loading = false;
 				return;
 			}
 
@@ -108,15 +112,14 @@
 			// Validate times
 			if (endDateTime <= startDateTime) {
 				error = 'End time must be after start time';
+				loading = false;
 				return;
 			}
 
 			// Update the session
-			await updateSession({
-				sessionId: session.id,
-				userId,
-				startedAt: startDateTime.toISOString(),
-				stoppedAt: endDateTime.toISOString()
+			timeSessionActions.update(store, session.id, {
+				startedAt: startDateTime,
+				stoppedAt: endDateTime
 			});
 
 			// Notify parent component

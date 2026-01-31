@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { updateCategory } from '$lib/api/data.remote';
+	import { useLiveStore, categoryActions } from '$lib/livestore';
+
+	const store = useLiveStore();
 	import { IconPicker } from '$lib/components/icon-picker';
 	import { Button } from '$lib/components/ui/button';
 	import {
@@ -13,11 +15,17 @@
 	} from '$lib/components/ui/drawer';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import type { Category } from '$lib/types';
+
+	interface CategoryData {
+		id: string;
+		name: string;
+		color: string;
+		icon: string;
+	}
 
 	interface Props {
 		open: boolean;
-		category: Category | null;
+		category: CategoryData | null;
 		onOpenChange?: (open: boolean) => void;
 		onCategoryUpdated?: () => void;
 		userId: string;
@@ -54,16 +62,14 @@
 		}
 	});
 
-	async function handleUpdateCategory() {
+	function handleUpdateCategory() {
 		if (!categoryForm.name.trim() || !category) return;
 
 		try {
-			await updateCategory({
-				id: category.id,
+			categoryActions.update(store, category.id, {
 				name: categoryForm.name.trim(),
 				color: categoryForm.color,
-				icon: categoryForm.icon,
-				userId
+				icon: categoryForm.icon
 			});
 
 			// Close drawer
