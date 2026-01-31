@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { Separator } from '$lib/components/ui/separator';
-	import type { Activity } from '$lib/server/db/schema';
+	import type { SelectActivity } from '$lib/server/db/schema';
 	import ActivityCard from './ActivityCard.svelte';
 
 	interface ActivityWithContext {
-		activity: Activity;
+		activity: SelectActivity;
 		categoryColor: string;
 		categoryName: string;
 	}
