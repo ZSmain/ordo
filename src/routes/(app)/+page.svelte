@@ -255,40 +255,84 @@
 		startTimer(foundActivityId, categoryName, activityName);
 	}
 
-	// Restore timer session on mount
-	onMount(async () => {
+	// Sync timer state with database
+	async function syncTimerWithDatabase() {
 		if (!user?.id) return;
 
 		try {
-			// Check the database for any active session
 			const activeSession = await getActiveSession(user.id);
 
 			if (activeSession) {
-				// Check if the persisted timer state matches the database session
 				const dbTimerState = restoreTimerFromDatabase(activeSession);
 
-				// Only update if the database session is different from persisted state
-				// This handles cases where the session was stopped on another device
+				// Update if different
 				if (
 					!timerStore.current.isActive ||
-					timerStore.current.sessionId !== dbTimerState.sessionId ||
-					timerStore.current.activityId !== dbTimerState.activityId
+					timerStore.current.sessionId !== dbTimerState.sessionId
 				) {
 					timerStore.set(dbTimerState);
-					console.log('Synced timer with database:', dbTimerState);
-				} else {
-					console.log('Timer state already in sync with database');
+					console.log('Tab sync: Timer updated from database');
 				}
-			} else {
-				// No active session in database, clear any persisted timer state
-				if (timerStore.current.isActive) {
-					timerStore.stopTimer();
-					console.log('Cleared stale timer state - no active session in database');
-				}
+			} else if (timerStore.current.isActive) {
+				// Timer running locally but not in database - was stopped elsewhere
+				timerStore.stopTimer();
+				console.log('Tab sync: Timer stopped - session ended elsewhere');
 			}
 		} catch (error) {
-			console.error('Failed to restore timer session:', error);
+			console.error('Failed to sync timer:', error);
 		}
+	}
+
+	// Restore timer session on mount
+	onMount(() => {
+		// Initial timer sync
+		(async () => {
+			if (!user?.id) return;
+
+			try {
+				// Check the database for any active session
+				const activeSession = await getActiveSession(user.id);
+
+				if (activeSession) {
+					// Check if the persisted timer state matches the database session
+					const dbTimerState = restoreTimerFromDatabase(activeSession);
+
+					// Only update if the database session is different from persisted state
+					// This handles cases where the session was stopped on another device
+					if (
+						!timerStore.current.isActive ||
+						timerStore.current.sessionId !== dbTimerState.sessionId ||
+						timerStore.current.activityId !== dbTimerState.activityId
+					) {
+						timerStore.set(dbTimerState);
+						console.log('Synced timer with database:', dbTimerState);
+					} else {
+						console.log('Timer state already in sync with database');
+					}
+				} else {
+					// No active session in database, clear any persisted timer state
+					if (timerStore.current.isActive) {
+						timerStore.stopTimer();
+						console.log('Cleared stale timer state - no active session in database');
+					}
+				}
+			} catch (error) {
+				console.error('Failed to restore timer session:', error);
+			}
+		})();
+
+		// Sync timer when tab becomes visible (handles multi-tab/device scenarios)
+		function handleVisibilityChange() {
+			if (document.visibilityState === 'visible' && user?.id) {
+				syncTimerWithDatabase();
+			}
+		}
+
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+
+		return () => {
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
+		};
 	});
 </script>
 

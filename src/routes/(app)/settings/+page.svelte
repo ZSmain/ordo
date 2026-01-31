@@ -12,9 +12,12 @@
 	const session = authClient.useSession();
 	let isDeleteDialogOpen = $state(false);
 	let isDeleting = $state(false);
+	let isSigningOut = $state(false);
 	let deleteError = $state('');
 
 	async function handleSignOut() {
+		if (isSigningOut) return;
+		isSigningOut = true;
 		try {
 			const result = await logout();
 			if (result.success) {
@@ -22,6 +25,8 @@
 			}
 		} catch (error) {
 			console.error('Sign out error:', error);
+		} finally {
+			isSigningOut = false;
 		}
 	}
 
@@ -60,14 +65,14 @@
 	<div class="mx-auto max-w-2xl space-y-6">
 		<!-- Page Header -->
 		<div>
-			<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
-			<p class="text-sm text-gray-600 dark:text-gray-400">Manage your account and preferences</p>
+			<h1 class="text-2xl font-bold text-foreground">Settings</h1>
+			<p class="text-sm text-muted-foreground">Manage your account and preferences</p>
 		</div>
 
 		<!-- User Profile Section -->
 		{#if $session.data?.user}
 			<div
-				class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950"
+				class="rounded-lg border border-border bg-card p-4"
 			>
 				<div class="flex items-center gap-4">
 					<div
@@ -76,11 +81,11 @@
 						<User class="h-6 w-6" />
 					</div>
 					<div>
-						<h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+						<h2 class="text-lg font-semibold text-foreground">
 							{$session.data.user.name || 'User'}
 						</h2>
-						<p class="text-sm text-gray-600 dark:text-gray-400">{$session.data.user.email}</p>
-						<p class="text-xs text-gray-500 dark:text-gray-500">
+						<p class="text-sm text-muted-foreground">{$session.data.user.email}</p>
+						<p class="text-xs text-muted-foreground">
 							Member since {new Date($session.data.user.createdAt).toLocaleDateString()}
 						</p>
 					</div>
@@ -92,13 +97,13 @@
 
 		<!-- Appearance Section -->
 		<div class="space-y-3">
-			<h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Appearance</h3>
+			<h3 class="text-lg font-medium text-foreground">Appearance</h3>
 			<div
-				class="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950"
+				class="flex items-center justify-between rounded-lg border border-border bg-card p-4"
 			>
 				<div class="space-y-0.5">
-					<div class="text-sm font-medium text-gray-900 dark:text-gray-100">Theme</div>
-					<div class="text-xs text-gray-500 dark:text-gray-400">
+					<div class="text-sm font-medium text-foreground">Theme</div>
+					<div class="text-xs text-muted-foreground">
 						Customize the look and feel of the app
 					</div>
 				</div>
@@ -113,10 +118,11 @@
 			<Button
 				variant="outline"
 				onclick={handleSignOut}
+				disabled={isSigningOut}
 				class="flex h-9 w-full items-center justify-center gap-2"
 			>
 				<LogOut class="h-4 w-4" />
-				Sign Out
+				{isSigningOut ? 'Signing out...' : 'Sign Out'}
 			</Button>
 
 			<Dialog.Root bind:open={isDeleteDialogOpen}>

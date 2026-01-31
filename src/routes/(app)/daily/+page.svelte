@@ -221,6 +221,7 @@
 		size="lg"
 		class="h-14 w-14 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl"
 		onclick={() => (addSessionOpen = true)}
+		aria-label="Add session"
 	>
 		<Plus class="h-6 w-6" />
 	</Button>

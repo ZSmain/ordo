@@ -14,6 +14,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
 	import { DEFAULT_ACTIVITY_EMOJI } from '$lib/constants/emojis';
+	import { toast } from 'svelte-sonner';
 
 	import { createActivity, getCategoriesWithActivities } from '$lib/api/data.remote';
 
@@ -38,6 +39,8 @@
 	// Category selection using Select component
 	let selectedCategoryIds = $state<string[]>([]);
 
+	let isPending = $state(false);
+
 	// Get categories for selection
 	const categoriesQuery = $derived.by(() => getCategoriesWithActivities(userId));
 
@@ -51,8 +54,9 @@
 	});
 
 	async function handleCreateActivity() {
-		if (!activityForm.name.trim() || selectedCategoryIds.length === 0) return;
+		if (!activityForm.name.trim() || selectedCategoryIds.length === 0 || isPending) return;
 
+		isPending = true;
 		try {
 			const activityData = {
 				name: activityForm.name.trim(),
@@ -77,6 +81,9 @@
 			onActivityCreated?.();
 		} catch (error) {
 			console.error('Failed to create activity:', error);
+			toast.error('Failed to create activity. Please try again.');
+		} finally {
+			isPending = false;
 		}
 	}
 
@@ -203,15 +210,15 @@
 
 			<DrawerFooter>
 				<div class="flex gap-2">
-					<DrawerClose>
-						<Button variant="outline" class="flex-1">Cancel</Button>
+					<DrawerClose class="flex-1">
+						<Button variant="outline" class="w-full" disabled={isPending}>Cancel</Button>
 					</DrawerClose>
 					<Button
 						onclick={handleCreateActivity}
-						disabled={!activityForm.name.trim() || selectedCategoryIds.length === 0}
+						disabled={!activityForm.name.trim() || selectedCategoryIds.length === 0 || isPending}
 						class="flex-1"
 					>
-						Create
+						{isPending ? 'Creating...' : 'Create'}
 					</Button>
 				</div>
 			</DrawerFooter>

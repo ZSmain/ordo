@@ -68,6 +68,8 @@
 			? 'rotate-45'
 			: ''}"
 		onclick={toggleExpanded}
+		aria-label={isExpanded ? 'Close menu' : 'Add new category or activity'}
+		aria-expanded={isExpanded}
 	>
 		<svg
 			xmlns="http://www.w3.org/2000/svg"

@@ -29,6 +29,7 @@
 				class="flex flex-col items-center gap-1 transition-colors"
 				class:text-primary={page.url.pathname === '/'}
 				class:text-muted-foreground={page.url.pathname !== '/'}
+				aria-current={page.url.pathname === '/' ? 'page' : undefined}
 			>
 				<Timer class="h-6 w-6" />
 				<span class="text-xs font-medium">Timer</span>
@@ -39,6 +40,7 @@
 				class="flex flex-col items-center gap-1 transition-colors"
 				class:text-primary={page.url.pathname === '/daily'}
 				class:text-muted-foreground={page.url.pathname !== '/daily'}
+				aria-current={page.url.pathname === '/daily' ? 'page' : undefined}
 			>
 				<Calendar class="h-6 w-6" />
 				<span class="text-xs font-medium">Daily</span>
@@ -49,6 +51,7 @@
 				class="flex flex-col items-center gap-1 transition-colors"
 				class:text-primary={page.url.pathname === '/stats'}
 				class:text-muted-foreground={page.url.pathname !== '/stats'}
+				aria-current={page.url.pathname === '/stats' ? 'page' : undefined}
 			>
 				<ChartColumn class="h-6 w-6" />
 				<span class="text-xs font-medium">Stats</span>
@@ -59,6 +62,7 @@
 				class="flex flex-col items-center gap-1 transition-colors"
 				class:text-primary={page.url.pathname === '/settings'}
 				class:text-muted-foreground={page.url.pathname !== '/settings'}
+				aria-current={page.url.pathname === '/settings' ? 'page' : undefined}
 			>
 				<Settings class="h-6 w-6" />
 				<span class="text-xs font-medium">Settings</span>

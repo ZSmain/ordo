@@ -15,6 +15,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
 	import type { ActivityWithOptionalCategories, Category } from '$lib/types';
+	import { toast } from 'svelte-sonner';
 
 	interface Props {
 		open: boolean;
@@ -36,6 +37,8 @@
 
 	// Category selection using Select component
 	let selectedCategoryIds = $state<string[]>([]);
+
+	let isPending = $state(false);
 
 	// Get categories for selection
 	const categoriesQuery = $derived.by(() => getCategoriesWithActivities(userId));
@@ -67,8 +70,9 @@
 	});
 
 	async function handleUpdateActivity() {
-		if (!activityForm.name.trim() || !activity || selectedCategoryIds.length === 0) return;
+		if (!activityForm.name.trim() || !activity || selectedCategoryIds.length === 0 || isPending) return;
 
+		isPending = true;
 		try {
 			await updateActivity({
 				id: activity.id,
@@ -89,6 +93,9 @@
 			onActivityUpdated?.();
 		} catch (error) {
 			console.error('Failed to update activity:', error);
+			toast.error('Failed to update activity. Please try again.');
+		} finally {
+			isPending = false;
 		}
 	}
 
@@ -216,14 +223,14 @@
 			<DrawerFooter>
 				<div class="flex gap-2">
 					<DrawerClose class="flex-1">
-						<Button variant="outline" class="w-full">Cancel</Button>
+						<Button variant="outline" class="w-full" disabled={isPending}>Cancel</Button>
 					</DrawerClose>
 					<Button
 						onclick={handleUpdateActivity}
-						disabled={!activityForm.name.trim() || selectedCategoryIds.length === 0}
+						disabled={!activityForm.name.trim() || selectedCategoryIds.length === 0 || isPending}
 						class="flex-1"
 					>
-						Update
+						{isPending ? 'Updating...' : 'Update'}
 					</Button>
 				</div>
 			</DrawerFooter>
