@@ -156,7 +156,7 @@
 						<div class="py-8 text-center">
 							<p class="text-muted-foreground">No data recorded for this period.</p>
 							<p class="mt-2 text-sm text-muted-foreground">
-								Start tracking activities to see statistics here!
+								<a href="/" class="text-primary underline-offset-4 hover:underline">Start tracking activities</a> to see statistics here!
 							</p>
 						</div>
 					{:else}

@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { Separator } from '$lib/components/ui/separator';
-	import type { Activity } from '$lib/server/db/schema';
+	import type { SelectActivity } from '$lib/server/db/schema';
 	import ActivityCard from './ActivityCard.svelte';
 
 	interface ActivityWithContext {
-		activity: Activity;
+		activity: SelectActivity;
 		categoryColor: string;
 		categoryName: string;
 	}
@@ -34,12 +34,12 @@
 {#if activities && activities.length > 0}
 	<Separator class="my-4" />
 	<div class="mt-4 space-y-2">
-		<h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
+		<h2 class="text-lg font-semibold text-foreground">
 			Activities
 		</h2>
 
 		{#if !visibleActivities || visibleActivities.length === 0}
-			<div class="text-center text-xs text-slate-400 dark:text-slate-500">
+			<div class="text-center text-xs text-muted-foreground">
 				No active activities found
 			</div>
 		{:else}
@@ -57,5 +57,10 @@
 				{/each}
 			</div>
 		{/if}
+	</div>
+{:else}
+	<Separator class="my-4" />
+	<div class="mt-4 py-8 text-center">
+		<p class="text-muted-foreground">Select a category to view activities</p>
 	</div>
 {/if}
