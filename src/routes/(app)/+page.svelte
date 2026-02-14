@@ -9,6 +9,9 @@
 	import {
 		ActivityList,
 		CategorySelector,
+		CreateActivity,
+		CreateCategory,
+		EmptyState,
 		FloatingAddButton,
 		Timer
 	} from '$lib/components/tracker';
@@ -18,20 +21,15 @@
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 
+	// State for create dialogs triggered from empty states
+	let showCreateCategory = $state(false);
+	let showCreateActivity = $state(false);
+
 	// Get user from page data
 	const user = $derived(page.data?.user);
 
-	// Get categories with activities query - persisted across re-mounts
-	let categoriesQuery = $state<ReturnType<typeof getCategoriesWithActivities> | null>(null);
-
-	$effect(() => {
-		if (user?.id) {
-			// Query system caches by arguments, so same user.id returns cached instance
-			categoriesQuery = getCategoriesWithActivities(user.id);
-		} else {
-			categoriesQuery = null;
-		}
-	});
+	// Query system caches by arguments, so same user.id returns cached instance
+	const categoriesQuery = $derived(user?.id ? getCategoriesWithActivities(user.id) : null);
 
 	// Computed: selected activities from multiple categories
 	const selectedActivities = $derived.by(() => {
@@ -334,6 +332,11 @@
 			document.removeEventListener('visibilitychange', handleVisibilityChange);
 		};
 	});
+
+	// Check if there are any non-archived activities in selected categories
+	const hasActivitiesInSelection = $derived(
+		selectedActivities.some((item) => !item.activity.archived)
+	);
 </script>
 
 <svelte:head>
@@ -343,39 +346,71 @@
 <ScrollArea class="p-4">
 	{#if timerStore.current.isActive}
 		<Timer onStop={stopTimer} />
-	{:else}
-		<!-- Instructions when no timer is active -->
+	{:else if (categoriesQuery?.current?.length ?? 0) > 0}
+		<!-- Instructions when no timer is active but categories exist -->
 		<div class="px-4 py-8 text-center">
 			<div class="mb-2 text-xl font-semibold text-foreground">
 				Click on activity to start tracking
 			</div>
-			<div class="text-sm text-muted-foreground">Long click to edit</div>
+			<div class="text-sm text-muted-foreground">Right-click or long-press to edit or delete</div>
 		</div>
 	{/if}
 
-	<Separator />
+	{#if !categoriesQuery?.loading && (categoriesQuery?.current?.length ?? 0) === 0}
+		<!-- Empty state for new users with no categories -->
+		<EmptyState
+			type="no-categories"
+			onCreateCategory={() => (showCreateCategory = true)}
+		/>
+	{:else}
+		<Separator />
 
-	<!-- Categories -->
-	<CategorySelector
-		categories={categoriesQuery?.current || []}
-		selectedCategoryIds={$selectionStore.selectedCategoryIds || []}
-		filterMode={$selectionStore.filterMode || 'OR'}
-		onFilterModeChange={handleFilterModeChange}
-		onCategoryChange={handleCategorySelection}
-		loading={categoriesQuery?.loading || false}
-		error={categoriesQuery?.error}
-		userId={user?.id || ''}
-	/>
+		<!-- Categories -->
+		<CategorySelector
+			categories={categoriesQuery?.current || []}
+			selectedCategoryIds={$selectionStore.selectedCategoryIds || []}
+			filterMode={$selectionStore.filterMode || 'OR'}
+			onFilterModeChange={handleFilterModeChange}
+			onCategoryChange={handleCategorySelection}
+			loading={categoriesQuery?.loading || false}
+			error={categoriesQuery?.error}
+			userId={user?.id || ''}
+		/>
 
-	<!-- Activities for Selected Categories -->
-	<ActivityList
-		activities={selectedActivities}
-		onActivitySelect={handleActivitySelect}
-		userId={user?.id || ''}
-		currentCategory={timerStore.current.categoryName}
-		currentActivity={timerStore.current.activityName}
-	/>
+		<!-- Activities for Selected Categories -->
+		{#if $selectionStore.selectedCategoryIds.length === 0}
+			<Separator class="my-4" />
+			<EmptyState type="no-selection" />
+		{:else if !hasActivitiesInSelection}
+			<Separator class="my-4" />
+			<EmptyState
+				type="no-activities"
+				onCreateActivity={() => (showCreateActivity = true)}
+			/>
+		{:else}
+			<ActivityList
+				activities={selectedActivities}
+				onActivitySelect={handleActivitySelect}
+				userId={user?.id || ''}
+				currentCategory={timerStore.current.categoryName}
+				currentActivity={timerStore.current.activityName}
+			/>
+		{/if}
+	{/if}
 </ScrollArea>
 
 <!-- Floating Add Button -->
 <FloatingAddButton userId={user?.id || ''} />
+
+<!-- Create dialogs triggered from empty states -->
+<CreateCategory
+	bind:open={showCreateCategory}
+	userId={user?.id || ''}
+	onCategoryCreated={() => (showCreateCategory = false)}
+/>
+
+<CreateActivity
+	bind:open={showCreateActivity}
+	userId={user?.id || ''}
+	onActivityCreated={() => (showCreateActivity = false)}
+/>

@@ -8,6 +8,7 @@
 	import * as Popover from '$lib/components/ui/popover';
 	import { CalendarDate, getLocalTimeZone } from '@internationalized/date';
 	import { ChevronDown, Clock } from '@lucide/svelte';
+	import { toast } from 'svelte-sonner';
 
 	interface Props {
 		open: boolean;
@@ -119,11 +120,13 @@
 				stoppedAt: endDateTime.toISOString()
 			});
 
+			toast.success('Session updated');
 			// Notify parent component
 			onSessionUpdated();
 			onOpenChange(false);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to update session';
+			toast.error('Failed to update session');
 		} finally {
 			loading = false;
 		}
