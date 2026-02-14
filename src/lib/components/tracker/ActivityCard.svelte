@@ -7,6 +7,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import type { ActivityWithOptionalCategories } from '$lib/types';
 	import { Archive, ChartBar, Pause, PencilLine, Play, Trash2 } from '@lucide/svelte';
+	import { toast } from 'svelte-sonner';
 	import EditActivity from './EditActivity.svelte';
 
 	interface Props {
@@ -33,6 +34,8 @@
 	let deleteDialogOpen = $state(false);
 	let archiveDialogOpen = $state(false);
 	let statisticsOpen = $state(false);
+	let isDeleting = $state(false);
+	let isArchiving = $state(false);
 
 	// Check if this activity is currently running
 	let isRunning = $derived(currentCategory === categoryName && currentActivity === activity.name);
@@ -58,7 +61,10 @@
 
 	// Confirm archive
 	async function confirmArchive() {
-		if (!userId) return;
+		if (!userId || isArchiving) return;
+
+		isArchiving = true;
+		const actionName = activity.archived ? 'unarchived' : 'archived';
 
 		try {
 			await archiveActivity({
@@ -67,15 +73,22 @@
 				userId
 			});
 
+			toast.success(`"${activity.name}" ${actionName}`);
 			archiveDialogOpen = false;
 		} catch (error) {
 			console.error('Failed to archive activity:', error);
+			toast.error(`Failed to ${activity.archived ? 'unarchive' : 'archive'} activity`);
+		} finally {
+			isArchiving = false;
 		}
 	}
 
 	// Confirm delete
 	async function confirmDelete() {
-		if (!userId) return;
+		if (!userId || isDeleting) return;
+
+		isDeleting = true;
+		const activityName = activity.name;
 
 		try {
 			await deleteActivity({
@@ -83,9 +96,13 @@
 				userId
 			});
 
+			toast.success(`"${activityName}" deleted`);
 			deleteDialogOpen = false;
 		} catch (error) {
 			console.error('Failed to delete activity:', error);
+			toast.error('Failed to delete activity');
+		} finally {
+			isDeleting = false;
 		}
 	}
 
@@ -177,9 +194,15 @@
 			</Dialog.Description>
 		</Dialog.Header>
 		<Dialog.Footer>
-			<Button variant="outline" onclick={() => (archiveDialogOpen = false)}>Cancel</Button>
-			<Button onclick={confirmArchive}>
-				{activity.archived ? 'Unarchive' : 'Archive'}
+			<Button variant="outline" onclick={() => (archiveDialogOpen = false)} disabled={isArchiving}>
+				Cancel
+			</Button>
+			<Button onclick={confirmArchive} disabled={isArchiving}>
+				{#if isArchiving}
+					{activity.archived ? 'Unarchiving...' : 'Archiving...'}
+				{:else}
+					{activity.archived ? 'Unarchive' : 'Archive'}
+				{/if}
 			</Button>
 		</Dialog.Footer>
 	</Dialog.Content>
@@ -196,8 +219,12 @@
 			</Dialog.Description>
 		</Dialog.Header>
 		<Dialog.Footer>
-			<Button variant="outline" onclick={() => (deleteDialogOpen = false)}>Cancel</Button>
-			<Button variant="destructive" onclick={confirmDelete}>Delete</Button>
+			<Button variant="outline" onclick={() => (deleteDialogOpen = false)} disabled={isDeleting}>
+				Cancel
+			</Button>
+			<Button variant="destructive" onclick={confirmDelete} disabled={isDeleting}>
+				{isDeleting ? 'Deleting...' : 'Delete'}
+			</Button>
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>

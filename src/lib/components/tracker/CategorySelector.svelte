@@ -7,9 +7,11 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Field from '$lib/components/ui/field';
 	import { Label } from '$lib/components/ui/label';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Switch } from '$lib/components/ui/switch';
 	import type { Category } from '$lib/types';
 	import { PencilLine, Trash2 } from '@lucide/svelte';
+	import { toast } from 'svelte-sonner';
 	import EditCategory from './EditCategory.svelte';
 
 	interface Props {
@@ -38,6 +40,7 @@
 	let categoryToEdit = $state<Category | null>(null);
 	let deleteDialogOpen = $state(false);
 	let categoryToDelete = $state<Category | null>(null);
+	let isDeleting = $state(false);
 
 	// Handle category selection
 	function handleCategoryChange(value: string) {
@@ -63,7 +66,10 @@
 
 	// Confirm delete category
 	async function confirmDeleteCategory() {
-		if (!userId || !categoryToDelete) return;
+		if (!userId || !categoryToDelete || isDeleting) return;
+
+		isDeleting = true;
+		const categoryName = categoryToDelete.name;
 
 		try {
 			await deleteCategory({
@@ -71,13 +77,14 @@
 				userId
 			});
 
-			// Close dialog and reset state
+			toast.success(`"${categoryName}" deleted`);
 			deleteDialogOpen = false;
 			categoryToDelete = null;
 		} catch (error) {
 			console.error('Failed to delete category:', error);
-			// You could add a toast notification here instead of alert
-			alert('Failed to delete category. Please try again.');
+			toast.error('Failed to delete category. Please try again.');
+		} finally {
+			isDeleting = false;
 		}
 	}
 
@@ -90,9 +97,24 @@
 
 <div class="mt-4 space-y-2">
 	{#if error}
-		<div class="mt-4 text-center text-xs text-red-500">Failed to load categories</div>
+		<div class="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-center">
+			<p class="text-sm font-medium text-foreground">Failed to load categories</p>
+			<p class="mt-1 text-xs text-muted-foreground">Please try refreshing the page</p>
+		</div>
 	{:else if loading}
-		<div class="mt-4 text-center text-xs text-muted-foreground">Loading categories...</div>
+		<!-- Skeleton loading state -->
+		<Card class="py-4 shadow-none">
+			<CardContent class="px-4">
+				<div class="space-y-4">
+					<Skeleton class="h-5 w-24" />
+					<div class="flex flex-wrap gap-2">
+						{#each Array(4) as _, index (index)}
+							<Skeleton class="h-8 w-20 rounded-full" />
+						{/each}
+					</div>
+				</div>
+			</CardContent>
+		</Card>
 	{:else if !categories || categories.length === 0}
 		<div class="mt-4 text-center text-xs text-muted-foreground">No categories yet</div>
 	{:else}
@@ -151,7 +173,7 @@
 											<ContextMenu.Separator />
 											<ContextMenu.Item
 												onclick={() => handleDeleteCategory(category)}
-												class="text-red-600 focus:text-red-600"
+												class="text-destructive focus:text-destructive"
 											>
 												<Trash2 class="mr-2 h-4 w-4" />
 												Delete
@@ -187,8 +209,12 @@
 			</Dialog.Description>
 		</Dialog.Header>
 		<Dialog.Footer>
-			<Button variant="outline" onclick={() => (deleteDialogOpen = false)}>Cancel</Button>
-			<Button variant="destructive" onclick={confirmDeleteCategory}>Delete</Button>
+			<Button variant="outline" onclick={() => (deleteDialogOpen = false)} disabled={isDeleting}>
+				Cancel
+			</Button>
+			<Button variant="destructive" onclick={confirmDeleteCategory} disabled={isDeleting}>
+				{isDeleting ? 'Deleting...' : 'Delete'}
+			</Button>
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>

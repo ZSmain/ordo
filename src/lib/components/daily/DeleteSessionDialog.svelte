@@ -3,6 +3,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Trash2 } from '@lucide/svelte';
+	import { toast } from 'svelte-sonner';
 
 	interface Props {
 		open: boolean;
@@ -78,11 +79,13 @@
 				userId
 			});
 
+			toast.success('Session deleted');
 			// Notify parent component
 			onSessionDeleted();
 			onOpenChange(false);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to delete session';
+			toast.error('Failed to delete session');
 		} finally {
 			loading = false;
 		}
