@@ -34,13 +34,13 @@
 	// Computed: selected activities from multiple categories
 	const selectedActivities = $derived.by(() => {
 		// Don't process if no categories are selected or data isn't loaded
-		const selectedIds = $selectionStore.selectedCategoryIds || [];
+		const selectedIds = selectionStore.current.selectedCategoryIds;
 		const currentCategories = categoriesQuery?.current;
 		if (selectedIds.length === 0 || !currentCategories) {
 			return [];
 		}
 
-		const filterMode = $selectionStore.filterMode || 'OR';
+		const filterMode = selectionStore.current.filterMode;
 
 		if (filterMode === 'AND' && selectedIds.length > 1) {
 			// AND Logic: Intersection
@@ -281,6 +281,12 @@
 		}
 	}
 
+	function handleVisibilityChange() {
+		if (document.visibilityState === 'visible' && user?.id) {
+			syncTimerWithDatabase();
+		}
+	}
+
 	// Restore timer session on mount
 	onMount(() => {
 		// Initial timer sync
@@ -307,30 +313,15 @@
 					} else {
 						console.log('Timer state already in sync with database');
 					}
-				} else {
+				} else if (timerStore.current.isActive) {
 					// No active session in database, clear any persisted timer state
-					if (timerStore.current.isActive) {
-						timerStore.stopTimer();
-						console.log('Cleared stale timer state - no active session in database');
-					}
+					timerStore.stopTimer();
+					console.log('Cleared stale timer state - no active session in database');
 				}
 			} catch (error) {
 				console.error('Failed to restore timer session:', error);
 			}
 		})();
-
-		// Sync timer when tab becomes visible (handles multi-tab/device scenarios)
-		function handleVisibilityChange() {
-			if (document.visibilityState === 'visible' && user?.id) {
-				syncTimerWithDatabase();
-			}
-		}
-
-		document.addEventListener('visibilitychange', handleVisibilityChange);
-
-		return () => {
-			document.removeEventListener('visibilitychange', handleVisibilityChange);
-		};
 	});
 
 	// Check if there are any non-archived activities in selected categories
@@ -338,6 +329,8 @@
 		selectedActivities.some((item) => !item.activity.archived)
 	);
 </script>
+
+<svelte:document onvisibilitychange={handleVisibilityChange} />
 
 <svelte:head>
 	<title>Ordo - Timer</title>
@@ -358,18 +351,15 @@
 
 	{#if !categoriesQuery?.loading && (categoriesQuery?.current?.length ?? 0) === 0}
 		<!-- Empty state for new users with no categories -->
-		<EmptyState
-			type="no-categories"
-			onCreateCategory={() => (showCreateCategory = true)}
-		/>
+		<EmptyState type="no-categories" onCreateCategory={() => (showCreateCategory = true)} />
 	{:else}
 		<Separator />
 
 		<!-- Categories -->
 		<CategorySelector
 			categories={categoriesQuery?.current || []}
-			selectedCategoryIds={$selectionStore.selectedCategoryIds || []}
-			filterMode={$selectionStore.filterMode || 'OR'}
+			selectedCategoryIds={selectionStore.current.selectedCategoryIds}
+			filterMode={selectionStore.current.filterMode}
 			onFilterModeChange={handleFilterModeChange}
 			onCategoryChange={handleCategorySelection}
 			loading={categoriesQuery?.loading || false}
@@ -378,15 +368,12 @@
 		/>
 
 		<!-- Activities for Selected Categories -->
-		{#if $selectionStore.selectedCategoryIds.length === 0}
+		{#if selectionStore.current.selectedCategoryIds.length === 0}
 			<Separator class="my-4" />
 			<EmptyState type="no-selection" />
 		{:else if !hasActivitiesInSelection}
 			<Separator class="my-4" />
-			<EmptyState
-				type="no-activities"
-				onCreateActivity={() => (showCreateActivity = true)}
-			/>
+			<EmptyState type="no-activities" onCreateActivity={() => (showCreateActivity = true)} />
 		{:else}
 			<ActivityList
 				activities={selectedActivities}

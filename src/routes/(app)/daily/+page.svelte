@@ -130,9 +130,10 @@
 	{@const sessions = sessionsQuery?.current ?? []}
 
 	<div
-		class="grid h-full"
-		class:grid-rows-[auto_1fr_auto]={sessions.length > 0}
-		class:grid-rows-[1fr_auto]={sessions.length === 0}
+		class={[
+			'grid h-full',
+			sessions.length > 0 ? 'grid-rows-[auto_1fr_auto]' : 'grid-rows-[1fr_auto]'
+		]}
 	>
 		<!-- Total duration summary -->
 		{#if sessions.length > 0}
@@ -163,7 +164,7 @@
 								</p>
 							</div>
 						{:else}
-							{#each sessions as session, index (session.id + '-' + index)}
+							{#each sessions as session (session.id)}
 								<SessionCard
 									{session}
 									userId={data.user.id}

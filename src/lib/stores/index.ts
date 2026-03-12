@@ -1,7 +1,9 @@
-export { selectionStore, type SelectionState } from './selection';
+export { selectionPersistedState, selectionStore, type SelectionState } from './selection';
 export {
 	calculateElapsedTime,
-	restoreTimerFromDatabase, timerPersistedState, timerStore, type DatabaseSession,
+	restoreTimerFromDatabase,
+	timerPersistedState,
+	timerStore,
+	type DatabaseSession,
 	type TimerState
 } from './timer';
-

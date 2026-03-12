@@ -1,86 +1,105 @@
 import { browser } from '$app/environment';
-import { writable } from 'svelte/store';
+import { PersistedState } from 'runed';
 
 // Selection state interface
 export interface SelectionState {
-    selectedCategoryIds: string[];
-    filterMode: 'AND' | 'OR';
+	selectedCategoryIds: string[];
+	filterMode: 'AND' | 'OR';
 }
 
 // Default selection state
 const defaultSelectionState: SelectionState = {
-    selectedCategoryIds: [],
-    filterMode: 'OR'
+	selectedCategoryIds: [],
+	filterMode: 'OR'
 };
 
-// Create the store with localStorage persistence
+const selectionStorageKey = 'ordo-selection-state';
+
+function normalizeSelectionState(parsed: unknown): SelectionState | null {
+	if (!parsed || typeof parsed !== 'object') {
+		return null;
+	}
+
+	if ('selectedCategoryId' in parsed) {
+		const selectedCategoryId = parsed.selectedCategoryId;
+
+		return {
+			selectedCategoryIds:
+				typeof selectedCategoryId === 'string' && selectedCategoryId ? [selectedCategoryId] : [],
+			filterMode: 'OR'
+		};
+	}
+
+	const { selectedCategoryIds, filterMode } = parsed as Partial<SelectionState>;
+
+	return {
+		selectedCategoryIds: Array.isArray(selectedCategoryIds)
+			? selectedCategoryIds.filter((id): id is string => typeof id === 'string')
+			: [],
+		filterMode: filterMode === 'AND' ? 'AND' : 'OR'
+	};
+}
+
+if (browser) {
+	const stored = localStorage.getItem(selectionStorageKey);
+
+	if (stored) {
+		try {
+			const normalized = normalizeSelectionState(JSON.parse(stored));
+
+			if (normalized) {
+				localStorage.setItem(selectionStorageKey, JSON.stringify(normalized));
+			} else {
+				localStorage.removeItem(selectionStorageKey);
+			}
+		} catch (error) {
+			console.error('Failed to parse selection state', error);
+			localStorage.removeItem(selectionStorageKey);
+		}
+	}
+}
+
+export const selectionPersistedState = new PersistedState(
+	selectionStorageKey,
+	defaultSelectionState,
+	{
+		storage: 'local',
+		syncTabs: true
+	}
+);
+
 function createSelectionStore() {
-    // Initialize from localStorage if available
-    const stored = browser ? localStorage.getItem('ordo-selection-state') : null;
-    let initial = defaultSelectionState;
-    
-    if (stored) {
-        try {
-            const parsed = JSON.parse(stored);
-            // Migrate old state if needed
-            if ('selectedCategoryId' in parsed) {
-                initial = {
-                    selectedCategoryIds: parsed.selectedCategoryId ? [parsed.selectedCategoryId] : [],
-                    filterMode: 'OR'
-                };
-            } else {
-                // Ensure filterMode exists for existing states
-                initial = {
-                    ...defaultSelectionState,
-                    ...parsed
-                };
-            }
-        } catch (e) {
-            console.error('Failed to parse selection state', e);
-        }
-    }
+	return {
+		get current() {
+			return selectionPersistedState.current;
+		},
 
-    const { subscribe, update, set } = writable<SelectionState>(initial);
+		set: (value: SelectionState) => {
+			selectionPersistedState.current = value;
+		},
 
-    return {
-        subscribe,
-        toggleCategory: (categoryId: string) => {
-            update(state => {
-                const ids = state.selectedCategoryIds || [];
-                const index = ids.indexOf(categoryId);
-                
-                let newIds;
-                if (index >= 0) {
-                    // Remove if already selected
-                    newIds = [...ids.slice(0, index), ...ids.slice(index + 1)];
-                } else {
-                    // Add if not selected
-                    newIds = [...ids, categoryId];
-                }
-                
-                const newState = { ...state, selectedCategoryIds: newIds };
-                if (browser) {
-                    localStorage.setItem('ordo-selection-state', JSON.stringify(newState));
-                }
-                return newState;
-            });
-        },
-        setFilterMode: (mode: 'AND' | 'OR') => {
-            update(state => {
-                const newState = { ...state, filterMode: mode };
-                if (browser) {
-                    localStorage.setItem('ordo-selection-state', JSON.stringify(newState));
-                }
-                return newState;
-            });
-        },
-        reset: () => {
-            set(defaultSelectionState);
-            if (browser) {
-                localStorage.removeItem('ordo-selection-state');
-            }
-        }
-    };
+		toggleCategory: (categoryId: string) => {
+			const ids = selectionPersistedState.current.selectedCategoryIds;
+			const index = ids.indexOf(categoryId);
+
+			selectionPersistedState.current = {
+				...selectionPersistedState.current,
+				selectedCategoryIds:
+					index >= 0 ? [...ids.slice(0, index), ...ids.slice(index + 1)] : [...ids, categoryId]
+			};
+		},
+
+		setFilterMode: (mode: 'AND' | 'OR') => {
+			selectionPersistedState.current = {
+				...selectionPersistedState.current,
+				filterMode: mode
+			};
+		},
+
+		reset: () => {
+			selectionPersistedState.current = defaultSelectionState;
+		}
+	};
 }
 
 export const selectionStore = createSelectionStore();

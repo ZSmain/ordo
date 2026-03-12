@@ -26,9 +26,10 @@
 		<div class="flex items-center justify-around py-3">
 			<a
 				href={resolve('/')}
-				class="flex flex-col items-center gap-1 transition-colors"
-				class:text-primary={page.url.pathname === '/'}
-				class:text-muted-foreground={page.url.pathname !== '/'}
+				class={[
+					'flex flex-col items-center gap-1 transition-colors',
+					page.url.pathname === '/' ? 'text-primary' : 'text-muted-foreground'
+				]}
 				aria-current={page.url.pathname === '/' ? 'page' : undefined}
 			>
 				<Timer class="h-6 w-6" />
@@ -37,9 +38,10 @@
 
 			<a
 				href={resolve('/daily')}
-				class="flex flex-col items-center gap-1 transition-colors"
-				class:text-primary={page.url.pathname === '/daily'}
-				class:text-muted-foreground={page.url.pathname !== '/daily'}
+				class={[
+					'flex flex-col items-center gap-1 transition-colors',
+					page.url.pathname === '/daily' ? 'text-primary' : 'text-muted-foreground'
+				]}
 				aria-current={page.url.pathname === '/daily' ? 'page' : undefined}
 			>
 				<Calendar class="h-6 w-6" />
@@ -48,9 +50,10 @@
 
 			<a
 				href={resolve('/stats')}
-				class="flex flex-col items-center gap-1 transition-colors"
-				class:text-primary={page.url.pathname === '/stats'}
-				class:text-muted-foreground={page.url.pathname !== '/stats'}
+				class={[
+					'flex flex-col items-center gap-1 transition-colors',
+					page.url.pathname === '/stats' ? 'text-primary' : 'text-muted-foreground'
+				]}
 				aria-current={page.url.pathname === '/stats' ? 'page' : undefined}
 			>
 				<ChartColumn class="h-6 w-6" />
@@ -59,9 +62,10 @@
 
 			<a
 				href={resolve('/settings')}
-				class="flex flex-col items-center gap-1 transition-colors"
-				class:text-primary={page.url.pathname === '/settings'}
-				class:text-muted-foreground={page.url.pathname !== '/settings'}
+				class={[
+					'flex flex-col items-center gap-1 transition-colors',
+					page.url.pathname === '/settings' ? 'text-primary' : 'text-muted-foreground'
+				]}
 				aria-current={page.url.pathname === '/settings' ? 'page' : undefined}
 			>
 				<Settings class="h-6 w-6" />
