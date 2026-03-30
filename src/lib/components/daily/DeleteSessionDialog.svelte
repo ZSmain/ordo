@@ -82,6 +82,7 @@
 			toast.success('Session deleted');
 			// Notify parent component
 			onSessionDeleted();
+			error = null;
 			onOpenChange(false);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to delete session';
@@ -92,15 +93,9 @@
 	}
 
 	function handleCancel() {
+		error = null;
 		onOpenChange(false);
 	}
-
-	// Reset error when dialog opens
-	$effect(() => {
-		if (open) {
-			error = null;
-		}
-	});
 </script>
 
 <Dialog.Root {open} {onOpenChange}>

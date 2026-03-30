@@ -19,13 +19,7 @@
 		currentActivity?: string;
 	}
 
-	let {
-		activities,
-		onActivitySelect,
-		userId,
-		currentCategory,
-		currentActivity
-	}: Props = $props();
+	let { activities, onActivitySelect, userId, currentCategory, currentActivity }: Props = $props();
 
 	// Search state
 	let searchQuery = $state('');
@@ -33,11 +27,11 @@
 	// Filter out archived activities and apply search filter
 	let visibleActivities = $derived.by(() => {
 		const nonArchived = activities?.filter((item) => !item.activity.archived) || [];
-		
+
 		if (!searchQuery.trim()) {
 			return nonArchived;
 		}
-		
+
 		const query = searchQuery.toLowerCase().trim();
 		return nonArchived.filter(
 			(item) =>
@@ -65,29 +59,28 @@
 	<Separator class="my-4" />
 	<div class="mt-4 space-y-3">
 		<div class="flex items-center justify-between gap-2">
-			<h2 class="text-lg font-semibold text-foreground">
-				Activities
-			</h2>
+			<h2 class="text-lg font-semibold text-foreground">Activities</h2>
 			<span class="text-xs text-muted-foreground">
-				{visibleActivities.length} of {activities.filter(a => !a.activity.archived).length}
+				{visibleActivities.length} of {activities.filter((activity) => !activity.activity.archived)
+					.length}
 			</span>
 		</div>
 
 		<!-- Search input -->
 		<div class="relative">
-			<Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+			<Search class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 			<Input
 				type="text"
 				placeholder="Search activities... (Esc to clear)"
 				bind:value={searchQuery}
-				class="pl-9 pr-9"
+				class="pr-9 pl-9"
 				onkeydown={handleKeydown}
 			/>
 			{#if searchQuery}
 				<button
 					type="button"
 					onclick={clearSearch}
-					class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+					class="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
 					aria-label="Clear search"
 				>
 					<X class="h-4 w-4" />
@@ -112,7 +105,7 @@
 			</div>
 		{:else}
 			<div class="grid grid-cols-2 gap-3">
-				{#each visibleActivities as item, index (item.activity.id + '-' + index)}
+				{#each visibleActivities as item (item.activity.id)}
 					<ActivityCard
 						activity={item.activity}
 						categoryColor={item.categoryColor}

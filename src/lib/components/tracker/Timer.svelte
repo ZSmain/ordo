@@ -26,42 +26,48 @@
 		return calculateElapsedTime(timerState);
 	});
 
-	// Global keyboard shortcut to stop timer with Space or Escape
+	// Ignore shortcuts while focus is inside other interactive controls.
+	const interactiveSelector =
+		'input, textarea, select, button, a, [contenteditable="true"], [role="button"], [role="link"], [role="menuitem"], [role="option"], [role="checkbox"], [role="radio"], [role="switch"], [role="tab"]';
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (
+			!timerState.isActive ||
+			event.defaultPrevented ||
+			event.metaKey ||
+			event.ctrlKey ||
+			event.altKey
+		) {
+			return;
+		}
+
+		const target = event.target as HTMLElement | null;
+		if (!target) {
+			return;
+		}
+
+		if (target.matches(interactiveSelector) || target.closest(interactiveSelector)) {
+			return;
+		}
+
+		if (event.code === 'Space' || event.key === 'Escape') {
+			event.preventDefault();
+			onStop();
+		}
+	}
+
 	onMount(() => {
 		const interval = setInterval(() => {
 			now.setTime(Date.now());
 		}, 1000);
 
-		function handleKeydown(event: KeyboardEvent) {
-			if (!timerState.isActive || event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) {
-				return;
-			}
-
-			const target = event.target as HTMLElement | null;
-			if (!target) {
-				return;
-			}
-
-			const interactiveSelector =
-				'input, textarea, select, button, a, [contenteditable="true"], [role="button"], [role="link"], [role="menuitem"], [role="option"], [role="checkbox"], [role="radio"], [role="switch"], [role="tab"]';
-
-			if (target.matches(interactiveSelector) || target.closest(interactiveSelector)) {
-				return;
-			}
-
-			if (event.code === 'Space' || event.key === 'Escape') {
-				event.preventDefault();
-				onStop();
-			}
-		}
-
-		document.addEventListener('keydown', handleKeydown);
 		return () => {
 			clearInterval(interval);
-			document.removeEventListener('keydown', handleKeydown);
 		};
 	});
 </script>
+
+<svelte:document onkeydown={handleKeydown} />
 
 <div class="rounded-2xl bg-primary px-3 py-2 text-primary-foreground">
 	<div class="flex items-center justify-between">
