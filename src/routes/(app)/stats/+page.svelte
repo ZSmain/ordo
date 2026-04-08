@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import {
 		ActivityStatisticsDrawer,
 		ActivityStatsCard,
@@ -156,7 +157,9 @@
 						<div class="py-8 text-center">
 							<p class="text-muted-foreground">No data recorded for this period.</p>
 							<p class="mt-2 text-sm text-muted-foreground">
-								<a href="/" class="text-primary underline-offset-4 hover:underline">Start tracking activities</a> to see statistics here!
+								<a href={resolve('/')} class="text-primary underline-offset-4 hover:underline"
+									>Start tracking activities</a
+								> to see statistics here!
 							</p>
 						</div>
 					{:else}
@@ -183,7 +186,7 @@
 	</div>
 
 	<!-- Date navigation -->
-	<div class="border-t bg-background/80 p-1.5 backdrop-blur-sm">
+	<div class="border-t p-1.5 backdrop-blur-sm">
 		<div class="container mx-auto max-w-4xl">
 			<PeriodSelector
 				{selectedPeriod}

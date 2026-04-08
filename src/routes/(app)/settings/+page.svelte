@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { goto } from '$app/navigation';
 	import { logout } from '$lib/api/auth.remote';
 	import { deleteUserAccount } from '$lib/api/settings.remote';
@@ -21,7 +22,7 @@
 		try {
 			const result = await logout();
 			if (result.success) {
-				goto('/login');
+				goto(resolve('/login'));
 			}
 		} catch (error) {
 			console.error('Sign out error:', error);
@@ -41,7 +42,7 @@
 			// Sign out and redirect after successful deletion
 			const result = await logout();
 			if (result.success) {
-				goto('/login');
+				goto(resolve('/login'));
 			}
 		} catch (error) {
 			console.error('Delete account error:', error);
@@ -71,9 +72,7 @@
 
 		<!-- User Profile Section -->
 		{#if $session.data?.user}
-			<div
-				class="rounded-lg border border-border bg-card p-4"
-			>
+			<div class="rounded-lg border border-border p-4">
 				<div class="flex items-center gap-4">
 					<div
 						class="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-lg font-medium text-primary-foreground"
@@ -98,14 +97,10 @@
 		<!-- Appearance Section -->
 		<div class="space-y-3">
 			<h3 class="text-lg font-medium text-foreground">Appearance</h3>
-			<div
-				class="flex items-center justify-between rounded-lg border border-border bg-card p-4"
-			>
+			<div class="flex items-center justify-between rounded-lg border border-border p-4">
 				<div class="space-y-0.5">
 					<div class="text-sm font-medium text-foreground">Theme</div>
-					<div class="text-xs text-muted-foreground">
-						Customize the look and feel of the app
-					</div>
+					<div class="text-xs text-muted-foreground">Customize the look and feel of the app</div>
 				</div>
 				<ModeToggle />
 			</div>

@@ -22,7 +22,7 @@
 
 <Drawer.Root {open} {onOpenChange}>
 	{#if open}
-		<Drawer.Content class="flex max-h-[90vh] flex-col">
+		<Drawer.Content class="flex flex-col">
 			<AddSessionDrawerContent {userId} {selectedDate} {onOpenChange} {onSessionCreated} />
 		</Drawer.Content>
 	{/if}
