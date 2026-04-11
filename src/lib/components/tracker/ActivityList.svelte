@@ -67,7 +67,7 @@
 		</div>
 
 		<!-- Search input -->
-		<div class="relative">
+		<div class="relative px-1">
 			<Search class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 			<Input
 				type="text"

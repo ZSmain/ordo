@@ -5,7 +5,7 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Calendar, ChartBar, ChevronDown, Clock, Hash, Timer } from '@lucide/svelte';
 	import { scaleBand } from 'd3-scale';
-	import { BarChart, type ChartContextValue } from 'layerchart';
+	import { BarChart, type ChartState } from 'layerchart';
 	import { cubicInOut } from 'svelte/easing';
 	import { getActivityStatistics } from '../../../routes/(app)/stats/stats.remote';
 
@@ -67,7 +67,7 @@
 	let selectedPeriod = $state<PeriodType>('year');
 	let selectedGranularity = $state<GranularityType>('monthly');
 
-	let chartContext = $state<ChartContextValue>();
+	let chartContext = $state<ChartState | undefined>();
 
 	const chartConfig = {
 		duration: { label: 'Time', color: 'var(--chart-1)' }
@@ -194,7 +194,7 @@
 </script>
 
 <Drawer.Root {open} {onOpenChange}>
-	<Drawer.Content class="flex max-h-[90vh] flex-col">
+	<Drawer.Content class="flex flex-col">
 		<div class="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-hidden">
 			<Drawer.Header class="pb-2">
 				<Drawer.Title class="text-center">

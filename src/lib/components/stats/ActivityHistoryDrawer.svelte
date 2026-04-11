@@ -100,7 +100,7 @@
 </script>
 
 <Drawer.Root {open} {onOpenChange}>
-	<Drawer.Content class="max-h-[85vh]">
+	<Drawer.Content>
 		<div class="mx-auto flex h-full w-full max-w-md flex-col">
 			<Drawer.Header>
 				<Drawer.Title class="text-center">

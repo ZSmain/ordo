@@ -178,7 +178,7 @@
 		</div>
 
 		<!-- Date navigation -->
-		<div class="border-t bg-background/80 p-1.5 backdrop-blur-sm">
+		<div class="border-t p-1.5 backdrop-blur-sm">
 			<div class="container mx-auto flex max-w-2xl items-center justify-between">
 				<Button variant="ghost" size="icon" onclick={goToPreviousDay}>
 					<ChevronLeft class="size-4" />
@@ -195,16 +195,14 @@
 						<Dialog.Header>
 							<Dialog.Title>Select Date</Dialog.Title>
 						</Dialog.Header>
-						<div class="flex justify-center p-4">
-							<Calendar
-								type="single"
-								bind:value={selectedDateValue}
-								initialFocus
-								maxValue={today(getLocalTimeZone())}
-								class="rounded-md border"
-								onValueChange={handleDateSelect}
-							/>
-						</div>
+						<Calendar
+							type="single"
+							bind:value={selectedDateValue}
+							initialFocus
+							maxValue={today(getLocalTimeZone())}
+							class="rounded-md border"
+							onValueChange={handleDateSelect}
+						/>
 					</Dialog.Content>
 				</Dialog.Root>
 

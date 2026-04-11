@@ -22,7 +22,7 @@
 	</main>
 
 	<!-- Bottom Navigation - Fixed -->
-	<nav class="shrink-0 border-t border-border bg-background">
+	<nav class="shrink-0 border-t border-border">
 		<div class="flex items-center justify-around py-3">
 			<a
 				href={resolve('/')}
