@@ -13,9 +13,9 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<Toaster />
-
 <div class="flex h-dvh flex-col overflow-hidden bg-muted">
+	<Toaster position="top-right" />
+
 	<!-- Main content area with proper scrolling -->
 	<main class="flex-1 overflow-y-auto">
 		{@render children?.()}
