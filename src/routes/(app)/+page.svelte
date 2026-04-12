@@ -117,6 +117,10 @@
 		selectionStore.setFilterMode(mode);
 	}
 
+	function handleClearCategorySelection() {
+		selectionStore.reset();
+	}
+
 	// Start timer function with optimistic update
 	function startTimer(activityId: number, categoryName: string, activityName: string) {
 		if (!user?.id) return;
@@ -360,6 +364,7 @@
 			selectedCategoryIds={selectionStore.current.selectedCategoryIds}
 			filterMode={selectionStore.current.filterMode}
 			onFilterModeChange={handleFilterModeChange}
+			onClearSelection={handleClearCategorySelection}
 			onCategoryChange={handleCategorySelection}
 			loading={categoriesQuery?.loading || false}
 			error={categoriesQuery?.error}
