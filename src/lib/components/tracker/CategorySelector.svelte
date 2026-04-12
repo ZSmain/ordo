@@ -10,7 +10,7 @@
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Switch } from '$lib/components/ui/switch';
 	import type { Category } from '$lib/types';
-	import { PencilLine, Trash2 } from '@lucide/svelte';
+	import { PencilLine, Trash2, X } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import EditCategory from './EditCategory.svelte';
 
@@ -19,6 +19,7 @@
 		selectedCategoryIds: string[];
 		filterMode?: 'AND' | 'OR';
 		onFilterModeChange?: (mode: 'AND' | 'OR') => void;
+		onClearSelection?: () => void;
 		loading?: boolean;
 		error?: Error | null;
 		onCategoryChange?: (categoryId: string) => void;
@@ -30,6 +31,7 @@
 		selectedCategoryIds = $bindable([]),
 		filterMode = 'OR',
 		onFilterModeChange,
+		onClearSelection,
 		loading = false,
 		error = null,
 		onCategoryChange,
@@ -45,6 +47,10 @@
 	// Handle category selection
 	function handleCategoryChange(value: string) {
 		onCategoryChange?.(value);
+	}
+
+	function handleClearSelection() {
+		onClearSelection?.();
 	}
 
 	// Check if a category is selected
@@ -108,7 +114,7 @@
 				<div class="space-y-4">
 					<Skeleton class="h-5 w-24" />
 					<div class="flex flex-wrap gap-2">
-						{#each Array(4) as _, index (index)}
+						{#each Array.from({ length: 4 }, (_, index) => index) as index (index)}
 							<Skeleton class="h-8 w-20 rounded-full" />
 						{/each}
 					</div>
@@ -123,16 +129,33 @@
 				<form>
 					<Field.Group>
 						<Field.Set class="gap-4">
-							<div class="flex items-center justify-between">
+							<div class="flex items-center justify-between gap-3">
 								<Field.Legend>Categories</Field.Legend>
-								{#if selectedCategoryIds.length > 1}
-									<div class="flex items-center gap-2">
-										<Label for="filter-mode" class="text-xs text-muted-foreground">Match all</Label>
-										<Switch
-											id="filter-mode"
-											checked={filterMode === 'AND'}
-											onCheckedChange={(checked) => onFilterModeChange?.(checked ? 'AND' : 'OR')}
-										/>
+								{#if selectedCategoryIds.length > 0}
+									<div class="flex flex-wrap items-center justify-end gap-2">
+										{#if selectedCategoryIds.length > 1}
+											<div class="flex items-center gap-2">
+												<Label for="filter-mode" class="text-xs text-muted-foreground"
+													>Match all</Label
+												>
+												<Switch
+													id="filter-mode"
+													checked={filterMode === 'AND'}
+													onCheckedChange={(checked) =>
+														onFilterModeChange?.(checked ? 'AND' : 'OR')}
+												/>
+											</div>
+										{/if}
+										<Button
+											variant="ghost"
+											size="sm"
+											class="h-7 rounded-full px-2 text-xs text-muted-foreground hover:text-foreground"
+											onclick={handleClearSelection}
+											aria-label="Clear selected categories"
+										>
+											<X class="size-3.5" />
+											Clear
+										</Button>
 									</div>
 								{/if}
 							</div>
