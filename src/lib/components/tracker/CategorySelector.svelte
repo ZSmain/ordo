@@ -95,7 +95,7 @@
 	}
 </script>
 
-<div class="mt-4 space-y-2">
+<div class="mt-4 space-y-2 px-1">
 	{#if error}
 		<div class="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-center">
 			<p class="text-sm font-medium text-foreground">Failed to load categories</p>
@@ -127,14 +127,11 @@
 								<Field.Legend>Categories</Field.Legend>
 								{#if selectedCategoryIds.length > 1}
 									<div class="flex items-center gap-2">
-										<Label for="filter-mode" class="text-xs text-muted-foreground">
-											Match all
-										</Label>
+										<Label for="filter-mode" class="text-xs text-muted-foreground">Match all</Label>
 										<Switch
 											id="filter-mode"
 											checked={filterMode === 'AND'}
-											onCheckedChange={(checked) =>
-												onFilterModeChange?.(checked ? 'AND' : 'OR')}
+											onCheckedChange={(checked) => onFilterModeChange?.(checked ? 'AND' : 'OR')}
 										/>
 									</div>
 								{/if}
@@ -146,7 +143,7 @@
 											<Field.Label for={String(category.id)} class="w-fit! cursor-pointer">
 												<Field.Field
 													orientation="horizontal"
-													class="group-has-data-[state=checked]/field-label:px-2! gap-1.5 overflow-hidden rounded-full px-3! py-1.5! transition-all duration-100 ease-linear"
+													class="gap-1.5 overflow-hidden rounded-full px-3! py-1.5! transition-all duration-100 ease-linear group-has-data-[state=checked]/field-label:px-2!"
 													style="background-color: {isSelected(category.id)
 														? category.color + '40'
 														: category.color + '10'}"
