@@ -258,7 +258,7 @@
 		if (!user?.id) return;
 
 		try {
-			const activeSession = await getActiveSession(user.id);
+			const activeSession = await getActiveSession(user.id).run();
 
 			if (activeSession) {
 				const dbTimerState = restoreTimerFromDatabase(activeSession);
