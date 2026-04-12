@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { SvelteMap } from 'svelte/reactivity';
+
 	interface ActivityStat {
 		activityId: number;
 		activityName: string;
@@ -31,7 +33,7 @@
 
 	// Group activities by category
 	function groupActivitiesByCategory() {
-		const grouped = new Map<
+		const grouped = new SvelteMap<
 			number,
 			{
 				category: {

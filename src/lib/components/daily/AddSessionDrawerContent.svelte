@@ -269,7 +269,7 @@
 					{/if}
 				</div>
 
-				<div class="space-y-4">
+				<div class="space-y-2">
 					<div class="text-center">
 						<Label class="text-sm font-medium text-muted-foreground">START TIME</Label>
 					</div>
@@ -348,7 +348,7 @@
 					</div>
 				</div>
 
-				<div class="space-y-4">
+				<div class="space-y-2">
 					<div class="text-center">
 						<Label class="text-sm font-medium text-muted-foreground">END TIME</Label>
 					</div>

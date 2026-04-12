@@ -258,7 +258,7 @@
 		if (!user?.id) return;
 
 		try {
-			const activeSession = await getActiveSession(user.id);
+			const activeSession = await getActiveSession(user.id).run();
 
 			if (activeSession) {
 				const dbTimerState = restoreTimerFromDatabase(activeSession);
@@ -347,14 +347,13 @@
 			</div>
 			<div class="text-sm text-muted-foreground">Right-click or long-press to edit or delete</div>
 		</div>
+		<Separator />
 	{/if}
 
 	{#if !categoriesQuery?.loading && (categoriesQuery?.current?.length ?? 0) === 0}
 		<!-- Empty state for new users with no categories -->
 		<EmptyState type="no-categories" onCreateCategory={() => (showCreateCategory = true)} />
 	{:else}
-		<Separator />
-
 		<!-- Categories -->
 		<CategorySelector
 			categories={categoriesQuery?.current || []}
