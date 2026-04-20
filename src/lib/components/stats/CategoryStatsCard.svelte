@@ -36,7 +36,7 @@
 	}
 </script>
 
-<div class="rounded-lg border bg-card p-6">
+<div class="rounded-lg border bg-card p-6 select-none">
 	<h3 class="mb-4 text-lg font-semibold">Time by Category</h3>
 
 	{#if categories.length === 0}

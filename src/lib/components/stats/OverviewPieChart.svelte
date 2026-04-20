@@ -78,7 +78,7 @@
 	);
 </script>
 
-<Card.Root class="flex flex-col">
+<Card.Root class="flex flex-col select-none">
 	<Card.Header class="items-center pb-2">
 		<Card.Title>Activity Distribution</Card.Title>
 		<Card.Description>Time spent on activities {period}</Card.Description>

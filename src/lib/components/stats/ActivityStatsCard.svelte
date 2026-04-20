@@ -67,7 +67,7 @@
 	let groupedActivities = $derived(groupActivitiesByCategory());
 </script>
 
-<div class="rounded-lg border bg-card p-6">
+<div class="rounded-lg border bg-card p-6 select-none">
 	<h3 class="mb-4 text-lg font-semibold">Activity Details</h3>
 
 	{#if activities.length === 0}
