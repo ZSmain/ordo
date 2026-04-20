@@ -6,7 +6,6 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import * as Popover from '$lib/components/ui/popover';
-	import { ScrollArea } from '$lib/components/ui/scroll-area';
 	import * as Select from '$lib/components/ui/select';
 	import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date';
 	import { ChevronDown, Clock, Plus } from '@lucide/svelte';
@@ -205,7 +204,7 @@
 	</Drawer.Header>
 
 	<div class="px-4 pb-4">
-		<div class="rounded-lg bg-muted/50 p-4 text-center">
+		<div class="rounded-lg bg-muted/50 p-2 text-center">
 			<div class="mb-1 flex items-center justify-center gap-2">
 				<Clock class="h-4 w-4 text-muted-foreground" />
 				<span class="text-sm font-medium">Duration</span>
@@ -219,224 +218,222 @@
 		</div>
 	</div>
 
-	<div class="min-h-0 flex-1 overflow-hidden">
-		<ScrollArea class="h-full">
-			<div class="space-y-6 px-4 pb-8">
-				{#if error}
-					<div class="rounded-md bg-destructive/10 p-3">
-						<p class="text-sm text-destructive">{error}</p>
+	<div class="min-h-0 flex-1 overflow-y-auto">
+		<div class="space-y-6 px-4 pb-8">
+			{#if error}
+				<div class="rounded-md bg-destructive/10 p-3">
+					<p class="text-sm text-destructive">{error}</p>
+				</div>
+			{/if}
+
+			<div class="space-y-2">
+				<Label class="text-sm font-medium">Activity</Label>
+				{#if activitiesQuery?.loading}
+					<div class="rounded-md border p-3 text-center text-sm text-muted-foreground">
+						Loading activities...
+					</div>
+				{:else if activitiesQuery?.current && activitiesQuery.current.length > 0}
+					<Select.Root type="single" bind:value={selectedActivityId}>
+						<Select.Trigger class="w-full">
+							{#if selectedActivity}
+								<span class="flex items-center gap-2">
+									<span>{selectedActivity.icon}</span>
+									<span>{selectedActivity.name}</span>
+								</span>
+							{:else}
+								<span class="text-muted-foreground">Select an activity</span>
+							{/if}
+						</Select.Trigger>
+						<Select.Content>
+							{#each activitiesQuery.current as activity (activity.id)}
+								<Select.Item value={String(activity.id)}>
+									<span class="flex items-center gap-2">
+										<span>{activity.icon}</span>
+										<span>{activity.name}</span>
+										{#if activity.categories.length > 0}
+											<span class="text-xs text-muted-foreground">
+												({activity.categories[0].name})
+											</span>
+										{/if}
+									</span>
+								</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				{:else}
+					<div class="rounded-md border p-3 text-center text-sm text-muted-foreground">
+						No activities found. Create an activity first.
 					</div>
 				{/if}
+			</div>
 
-				<div class="space-y-2">
-					<Label class="text-sm font-medium">Activity</Label>
-					{#if activitiesQuery?.loading}
-						<div class="rounded-md border p-3 text-center text-sm text-muted-foreground">
-							Loading activities...
-						</div>
-					{:else if activitiesQuery?.current && activitiesQuery.current.length > 0}
-						<Select.Root type="single" bind:value={selectedActivityId}>
-							<Select.Trigger class="w-full">
-								{#if selectedActivity}
-									<span class="flex items-center gap-2">
-										<span>{selectedActivity.icon}</span>
-										<span>{selectedActivity.name}</span>
-									</span>
-								{:else}
-									<span class="text-muted-foreground">Select an activity</span>
-								{/if}
-							</Select.Trigger>
-							<Select.Content>
-								{#each activitiesQuery.current as activity (activity.id)}
-									<Select.Item value={String(activity.id)}>
-										<span class="flex items-center gap-2">
-											<span>{activity.icon}</span>
-											<span>{activity.name}</span>
-											{#if activity.categories.length > 0}
-												<span class="text-xs text-muted-foreground">
-													({activity.categories[0].name})
-												</span>
-											{/if}
-										</span>
-									</Select.Item>
-								{/each}
-							</Select.Content>
-						</Select.Root>
-					{:else}
-						<div class="rounded-md border p-3 text-center text-sm text-muted-foreground">
-							No activities found. Create an activity first.
-						</div>
-					{/if}
+			<div class="space-y-2">
+				<div class="text-center">
+					<Label class="text-sm font-medium text-muted-foreground">START TIME</Label>
 				</div>
 
-				<div class="space-y-2">
-					<div class="text-center">
-						<Label class="text-sm font-medium text-muted-foreground">START TIME</Label>
-					</div>
-
-					<div class="flex justify-center gap-3">
-						<Popover.Root bind:open={startPopoverOpen}>
-							<Popover.Trigger>
-								<Button variant="outline" class="justify-between font-normal" disabled={loading}>
-									{startDateValue
-										? startDateValue.toDate(getLocalTimeZone()).toLocaleDateString()
-										: 'Select date'}
-									<ChevronDown class="h-4 w-4" />
-								</Button>
-							</Popover.Trigger>
-							<Popover.Content class="w-auto overflow-hidden p-0" align="start">
-								<Calendar
-									type="single"
-									bind:value={startDateValue}
-									onValueChange={() => {
-										startPopoverOpen = false;
-									}}
-									maxValue={today(getLocalTimeZone())}
-									captionLayout="dropdown"
-								/>
-							</Popover.Content>
-						</Popover.Root>
-						<Input type="time" bind:value={startTime} disabled={loading} class="w-28 text-center" />
-					</div>
-
-					<div class="rounded-lg bg-muted/30 p-3">
-						<div class="mb-2 text-center text-xs text-muted-foreground">Quick Adjust</div>
-						<div class="grid grid-cols-6 gap-1">
-							<Button
-								variant="outline"
-								size="sm"
-								onclick={() => adjustTime('start', -30)}
-								disabled={loading}
-								class="px-2 text-xs">-30m</Button
-							>
-							<Button
-								variant="outline"
-								size="sm"
-								onclick={() => adjustTime('start', -5)}
-								disabled={loading}
-								class="px-2 text-xs">-5m</Button
-							>
-							<Button
-								variant="outline"
-								size="sm"
-								onclick={() => adjustTime('start', -1)}
-								disabled={loading}
-								class="px-2 text-xs">-1m</Button
-							>
-							<Button
-								variant="outline"
-								size="sm"
-								onclick={() => adjustTime('start', 1)}
-								disabled={loading}
-								class="px-2 text-xs">+1m</Button
-							>
-							<Button
-								variant="outline"
-								size="sm"
-								onclick={() => adjustTime('start', 5)}
-								disabled={loading}
-								class="px-2 text-xs">+5m</Button
-							>
-							<Button
-								variant="outline"
-								size="sm"
-								onclick={() => adjustTime('start', 30)}
-								disabled={loading}
-								class="px-2 text-xs">+30m</Button
-							>
-						</div>
-					</div>
+				<div class="flex justify-center gap-3">
+					<Popover.Root bind:open={startPopoverOpen}>
+						<Popover.Trigger>
+							<Button variant="outline" class="justify-between font-normal" disabled={loading}>
+								{startDateValue
+									? startDateValue.toDate(getLocalTimeZone()).toLocaleDateString()
+									: 'Select date'}
+								<ChevronDown class="h-4 w-4" />
+							</Button>
+						</Popover.Trigger>
+						<Popover.Content class="w-auto overflow-hidden p-0" align="start">
+							<Calendar
+								type="single"
+								bind:value={startDateValue}
+								onValueChange={() => {
+									startPopoverOpen = false;
+								}}
+								maxValue={today(getLocalTimeZone())}
+								captionLayout="dropdown"
+							/>
+						</Popover.Content>
+					</Popover.Root>
+					<Input type="time" bind:value={startTime} disabled={loading} class="w-28 text-center" />
 				</div>
 
-				<div class="space-y-2">
-					<div class="text-center">
-						<Label class="text-sm font-medium text-muted-foreground">END TIME</Label>
+				<div class="rounded-lg bg-muted/30 p-2">
+					<div class="mb-2 text-center text-xs text-muted-foreground">Quick Adjust</div>
+					<div class="grid grid-cols-6 gap-1">
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('start', -30)}
+							disabled={loading}
+							class="px-2 text-xs">-30m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('start', -5)}
+							disabled={loading}
+							class="px-2 text-xs">-5m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('start', -1)}
+							disabled={loading}
+							class="px-2 text-xs">-1m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('start', 1)}
+							disabled={loading}
+							class="px-2 text-xs">+1m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('start', 5)}
+							disabled={loading}
+							class="px-2 text-xs">+5m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('start', 30)}
+							disabled={loading}
+							class="px-2 text-xs">+30m</Button
+						>
 					</div>
-
-					<div class="flex justify-center gap-3">
-						<Popover.Root bind:open={endPopoverOpen}>
-							<Popover.Trigger>
-								<Button variant="outline" class="justify-between font-normal" disabled={loading}>
-									{endDateValue
-										? endDateValue.toDate(getLocalTimeZone()).toLocaleDateString()
-										: 'Select date'}
-									<ChevronDown class="h-4 w-4" />
-								</Button>
-							</Popover.Trigger>
-							<Popover.Content class="w-auto overflow-hidden p-0" align="start">
-								<Calendar
-									type="single"
-									bind:value={endDateValue}
-									onValueChange={() => {
-										endPopoverOpen = false;
-									}}
-									maxValue={today(getLocalTimeZone())}
-									captionLayout="dropdown"
-								/>
-							</Popover.Content>
-						</Popover.Root>
-						<Input type="time" bind:value={endTime} disabled={loading} class="w-28 text-center" />
-					</div>
-
-					<div class="rounded-lg bg-muted/30 p-3">
-						<div class="mb-2 text-center text-xs text-muted-foreground">Quick Adjust</div>
-						<div class="grid grid-cols-6 gap-1">
-							<Button
-								variant="outline"
-								size="sm"
-								onclick={() => adjustTime('end', -30)}
-								disabled={loading}
-								class="px-2 text-xs">-30m</Button
-							>
-							<Button
-								variant="outline"
-								size="sm"
-								onclick={() => adjustTime('end', -5)}
-								disabled={loading}
-								class="px-2 text-xs">-5m</Button
-							>
-							<Button
-								variant="outline"
-								size="sm"
-								onclick={() => adjustTime('end', -1)}
-								disabled={loading}
-								class="px-2 text-xs">-1m</Button
-							>
-							<Button
-								variant="outline"
-								size="sm"
-								onclick={() => adjustTime('end', 1)}
-								disabled={loading}
-								class="px-2 text-xs">+1m</Button
-							>
-							<Button
-								variant="outline"
-								size="sm"
-								onclick={() => adjustTime('end', 5)}
-								disabled={loading}
-								class="px-2 text-xs">+5m</Button
-							>
-							<Button
-								variant="outline"
-								size="sm"
-								onclick={() => adjustTime('end', 30)}
-								disabled={loading}
-								class="px-2 text-xs">+30m</Button
-							>
-						</div>
-					</div>
-				</div>
-
-				<div class="space-y-2">
-					<Label class="text-sm font-medium">Notes (optional)</Label>
-					<Input
-						bind:value={notes}
-						placeholder="Add any notes about this session..."
-						disabled={loading}
-					/>
 				</div>
 			</div>
-		</ScrollArea>
+
+			<div class="space-y-2">
+				<div class="text-center">
+					<Label class="text-sm font-medium text-muted-foreground">END TIME</Label>
+				</div>
+
+				<div class="flex justify-center gap-3">
+					<Popover.Root bind:open={endPopoverOpen}>
+						<Popover.Trigger>
+							<Button variant="outline" class="justify-between font-normal" disabled={loading}>
+								{endDateValue
+									? endDateValue.toDate(getLocalTimeZone()).toLocaleDateString()
+									: 'Select date'}
+								<ChevronDown class="h-4 w-4" />
+							</Button>
+						</Popover.Trigger>
+						<Popover.Content class="w-auto overflow-hidden p-0" align="start">
+							<Calendar
+								type="single"
+								bind:value={endDateValue}
+								onValueChange={() => {
+									endPopoverOpen = false;
+								}}
+								maxValue={today(getLocalTimeZone())}
+								captionLayout="dropdown"
+							/>
+						</Popover.Content>
+					</Popover.Root>
+					<Input type="time" bind:value={endTime} disabled={loading} class="w-28 text-center" />
+				</div>
+
+				<div class="rounded-lg bg-muted/30 p-2">
+					<div class="mb-2 text-center text-xs text-muted-foreground">Quick Adjust</div>
+					<div class="grid grid-cols-6 gap-1">
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('end', -30)}
+							disabled={loading}
+							class="px-2 text-xs">-30m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('end', -5)}
+							disabled={loading}
+							class="px-2 text-xs">-5m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('end', -1)}
+							disabled={loading}
+							class="px-2 text-xs">-1m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('end', 1)}
+							disabled={loading}
+							class="px-2 text-xs">+1m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('end', 5)}
+							disabled={loading}
+							class="px-2 text-xs">+5m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('end', 30)}
+							disabled={loading}
+							class="px-2 text-xs">+30m</Button
+						>
+					</div>
+				</div>
+			</div>
+
+			<div class="space-y-2">
+				<Label class="text-sm font-medium">Notes (optional)</Label>
+				<Input
+					bind:value={notes}
+					placeholder="Add any notes about this session..."
+					disabled={loading}
+				/>
+			</div>
+		</div>
 	</div>
 </div>
 

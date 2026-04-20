@@ -1,1 +1,1 @@
-export { formatTime } from './utils';
+export { formatDuration, formatTime } from './utils';

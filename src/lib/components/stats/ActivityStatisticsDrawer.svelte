@@ -3,6 +3,7 @@
 	import * as Chart from '$lib/components/ui/chart/index.js';
 	import * as Drawer from '$lib/components/ui/drawer';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+	import { formatDuration } from '$lib/time';
 	import { Calendar, ChartBar, ChevronDown, Clock, Hash, Timer } from '@lucide/svelte';
 	import { scaleBand } from 'd3-scale';
 	import { BarChart } from 'layerchart';
@@ -145,24 +146,6 @@
 		});
 	});
 
-	function formatDuration(seconds: number | null | undefined): string {
-		if (seconds === null || seconds === undefined || seconds === 0) return '0m';
-
-		const hours = Math.floor(seconds / 3600);
-		const minutes = Math.floor((seconds % 3600) / 60);
-		const secs = seconds % 60;
-
-		if (hours > 0) {
-			if (minutes === 0) return `${hours}h`;
-			return `${hours}h ${minutes}m`;
-		}
-		if (minutes > 0) {
-			if (secs === 0) return `${minutes}m`;
-			return `${minutes}m ${secs}s`;
-		}
-		return `${secs}s`;
-	}
-
 	function formatDateTime(date: Date | string | null | undefined): string {
 		if (!date) return '-';
 		const d = typeof date === 'string' ? new Date(date) : date;
@@ -270,25 +253,22 @@
 									<p class="text-muted-foreground">No data recorded for this period.</p>
 								</div>
 							{:else if statistics}
-								{@const chartDataInHours = statistics.chartData.map((d) => ({
-									label: d.label,
-									duration: d.duration / 3600
-								}))}
+								{@const chartData = statistics.chartData}
 
 								<!-- Bar Chart -->
-								{#if chartDataInHours.length > 0}
+								{#if chartData.length > 0}
 									<div class="rounded-lg border bg-card p-4">
 										<h3 class="mb-3 text-sm font-medium text-muted-foreground">
 											Time Distribution
 										</h3>
 										<Chart.Container config={chartConfig} class="h-45 w-full">
 											<BarChart
-												data={chartDataInHours}
+												data={chartData}
 												xScale={scaleBand().padding(0.3)}
 												x="label"
 												axis="x"
 												series={[
-													{ key: 'duration', label: 'Hours', color: chartConfig.duration.color }
+													{ key: 'duration', label: 'Time', color: chartConfig.duration.color }
 												]}
 												props={{
 													bars: {
@@ -304,11 +284,23 @@
 														}
 													},
 													highlight: { area: { fill: 'none' } },
-													xAxis: { format: (d: string) => d }
+													xAxis: { format: (d: string) => d },
+													yAxis: { format: (value: number) => formatDuration(value) }
 												}}
 											>
 												{#snippet tooltip()}
-													<Chart.Tooltip />
+													<Chart.Tooltip>
+														{#snippet formatter({ value, name })}
+															<div
+																class="flex w-full items-center justify-between gap-2 leading-none"
+															>
+																<span class="text-muted-foreground">{name}</span>
+																<span class="font-mono font-medium text-foreground tabular-nums">
+																	{formatDuration(Number(value))}
+																</span>
+															</div>
+														{/snippet}
+													</Chart.Tooltip>
 												{/snippet}
 											</BarChart>
 										</Chart.Container>

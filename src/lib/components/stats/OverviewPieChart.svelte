@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Chart from '$lib/components/ui/chart/index.js';
+	import { formatDuration } from '$lib/time';
 	import TrendingUpIcon from '@lucide/svelte/icons/trending-up';
 	import { PieChart, Text } from 'layerchart';
 
@@ -38,12 +39,6 @@
 
 	let { activities, period }: Props = $props();
 
-	function formatDuration(seconds: number): string {
-		const hours = Math.floor(seconds / 3600);
-		const minutes = Math.floor((seconds % 3600) / 60);
-		return hours === 0 ? `${minutes}m` : `${hours}h ${minutes}m`;
-	}
-
 	let chartData = $derived.by(() => {
 		// Now activities are already deduplicated from the remote function
 		return activities.map((activity) => ({
@@ -78,7 +73,7 @@
 	);
 </script>
 
-<Card.Root class="flex flex-col">
+<Card.Root class="flex flex-col select-none">
 	<Card.Header class="items-center pb-2">
 		<Card.Title>Activity Distribution</Card.Title>
 		<Card.Description>Time spent on activities {period}</Card.Description>
@@ -116,7 +111,16 @@
 						/>
 					{/snippet}
 					{#snippet tooltip()}
-						<Chart.Tooltip />
+						<Chart.Tooltip>
+							{#snippet formatter({ value, name })}
+								<div class="flex w-full items-center justify-between gap-2 leading-none">
+									<span class="text-muted-foreground">{name}</span>
+									<span class="font-mono font-medium text-foreground tabular-nums">
+										{formatDuration(Number(value))}
+									</span>
+								</div>
+							{/snippet}
+						</Chart.Tooltip>
 					{/snippet}
 				</PieChart>
 			</Chart.Container>

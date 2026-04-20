@@ -179,7 +179,7 @@
 	}
 </script>
 
-<div class="mx-auto w-full max-w-md">
+<div class="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col overflow-hidden">
 	<Drawer.Header>
 		<Drawer.Title class="text-center">
 			<div class="mb-2 flex items-center justify-center gap-2">
@@ -193,7 +193,7 @@
 	</Drawer.Header>
 
 	<div class="px-4 pb-4">
-		<div class="rounded-lg bg-muted/50 p-4 text-center">
+		<div class="rounded-lg bg-muted/50 p-2 text-center">
 			<div class="mb-1 flex items-center justify-center gap-2">
 				<Clock class="h-4 w-4 text-muted-foreground" />
 				<span class="text-sm font-medium">Duration</span>
@@ -207,174 +207,176 @@
 		</div>
 	</div>
 
-	<div class="space-y-6 px-4 pb-0">
-		{#if error}
-			<div class="rounded-md bg-destructive/10 p-3">
-				<p class="text-sm text-destructive">{error}</p>
-			</div>
-		{/if}
+	<div class="min-h-0 flex-1 overflow-y-auto">
+		<div class="space-y-6 px-4 pb-8">
+			{#if error}
+				<div class="rounded-md bg-destructive/10 p-3">
+					<p class="text-sm text-destructive">{error}</p>
+				</div>
+			{/if}
 
-		<div class="space-y-4">
-			<div class="text-center">
-				<Label class="text-sm font-medium text-muted-foreground">START TIME</Label>
-			</div>
+			<div class="space-y-4">
+				<div class="text-center">
+					<Label class="text-sm font-medium text-muted-foreground">START TIME</Label>
+				</div>
 
-			<div class="flex justify-center gap-3">
-				<Popover.Root bind:open={startPopoverOpen}>
-					<Popover.Trigger>
-						<Button variant="outline" class="justify-between font-normal" disabled={loading}>
-							{startDateValue
-								? startDateValue.toDate(getLocalTimeZone()).toLocaleDateString()
-								: 'Select date'}
-							<ChevronDown class="h-4 w-4" />
-						</Button>
-					</Popover.Trigger>
-					<Popover.Content class="w-auto overflow-hidden p-0" align="start">
-						<Calendar
-							type="single"
-							bind:value={startDateValue}
-							onValueChange={() => {
-								startPopoverOpen = false;
-							}}
-							captionLayout="dropdown"
-						/>
-					</Popover.Content>
-				</Popover.Root>
-				<Input type="time" bind:value={startTime} disabled={loading} class="w-28 text-center" />
-			</div>
+				<div class="flex justify-center gap-3">
+					<Popover.Root bind:open={startPopoverOpen}>
+						<Popover.Trigger>
+							<Button variant="outline" class="justify-between font-normal" disabled={loading}>
+								{startDateValue
+									? startDateValue.toDate(getLocalTimeZone()).toLocaleDateString()
+									: 'Select date'}
+								<ChevronDown class="h-4 w-4" />
+							</Button>
+						</Popover.Trigger>
+						<Popover.Content class="w-auto overflow-hidden p-0" align="start">
+							<Calendar
+								type="single"
+								bind:value={startDateValue}
+								onValueChange={() => {
+									startPopoverOpen = false;
+								}}
+								captionLayout="dropdown"
+							/>
+						</Popover.Content>
+					</Popover.Root>
+					<Input type="time" bind:value={startTime} disabled={loading} class="w-28 text-center" />
+				</div>
 
-			<div class="rounded-lg bg-muted/30 p-3">
-				<div class="mb-2 text-center text-xs text-muted-foreground">Quick Adjust</div>
-				<div class="grid grid-cols-6 gap-1">
-					<Button
-						variant="outline"
-						size="sm"
-						onclick={() => adjustTime('start', -30)}
-						disabled={loading}
-						class="px-2 text-xs">-30m</Button
-					>
-					<Button
-						variant="outline"
-						size="sm"
-						onclick={() => adjustTime('start', -5)}
-						disabled={loading}
-						class="px-2 text-xs">-5m</Button
-					>
-					<Button
-						variant="outline"
-						size="sm"
-						onclick={() => adjustTime('start', -1)}
-						disabled={loading}
-						class="px-2 text-xs">-1m</Button
-					>
-					<Button
-						variant="outline"
-						size="sm"
-						onclick={() => adjustTime('start', 1)}
-						disabled={loading}
-						class="px-2 text-xs">+1m</Button
-					>
-					<Button
-						variant="outline"
-						size="sm"
-						onclick={() => adjustTime('start', 5)}
-						disabled={loading}
-						class="px-2 text-xs">+5m</Button
-					>
-					<Button
-						variant="outline"
-						size="sm"
-						onclick={() => adjustTime('start', 30)}
-						disabled={loading}
-						class="px-2 text-xs">+30m</Button
-					>
+				<div class="rounded-lg bg-muted/30 p-2">
+					<div class="mb-2 text-center text-xs text-muted-foreground">Quick Adjust</div>
+					<div class="grid grid-cols-6 gap-1">
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('start', -30)}
+							disabled={loading}
+							class="px-2 text-xs">-30m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('start', -5)}
+							disabled={loading}
+							class="px-2 text-xs">-5m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('start', -1)}
+							disabled={loading}
+							class="px-2 text-xs">-1m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('start', 1)}
+							disabled={loading}
+							class="px-2 text-xs">+1m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('start', 5)}
+							disabled={loading}
+							class="px-2 text-xs">+5m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('start', 30)}
+							disabled={loading}
+							class="px-2 text-xs">+30m</Button
+						>
+					</div>
 				</div>
 			</div>
-		</div>
 
-		<div class="space-y-4">
-			<div class="text-center">
-				<Label class="text-sm font-medium text-muted-foreground">END TIME</Label>
-			</div>
+			<div class="space-y-4">
+				<div class="text-center">
+					<Label class="text-sm font-medium text-muted-foreground">END TIME</Label>
+				</div>
 
-			<div class="flex justify-center gap-3">
-				<Popover.Root bind:open={endPopoverOpen}>
-					<Popover.Trigger>
-						<Button variant="outline" class="justify-between font-normal" disabled={loading}>
-							{endDateValue
-								? endDateValue.toDate(getLocalTimeZone()).toLocaleDateString()
-								: 'Select date'}
-							<ChevronDown class="h-4 w-4" />
-						</Button>
-					</Popover.Trigger>
-					<Popover.Content class="w-auto overflow-hidden p-0" align="start">
-						<Calendar
-							type="single"
-							bind:value={endDateValue}
-							onValueChange={() => {
-								endPopoverOpen = false;
-							}}
-							captionLayout="dropdown"
-						/>
-					</Popover.Content>
-				</Popover.Root>
-				<Input type="time" bind:value={endTime} disabled={loading} class="w-28 text-center" />
-			</div>
+				<div class="flex justify-center gap-3">
+					<Popover.Root bind:open={endPopoverOpen}>
+						<Popover.Trigger>
+							<Button variant="outline" class="justify-between font-normal" disabled={loading}>
+								{endDateValue
+									? endDateValue.toDate(getLocalTimeZone()).toLocaleDateString()
+									: 'Select date'}
+								<ChevronDown class="h-4 w-4" />
+							</Button>
+						</Popover.Trigger>
+						<Popover.Content class="w-auto overflow-hidden p-0" align="start">
+							<Calendar
+								type="single"
+								bind:value={endDateValue}
+								onValueChange={() => {
+									endPopoverOpen = false;
+								}}
+								captionLayout="dropdown"
+							/>
+						</Popover.Content>
+					</Popover.Root>
+					<Input type="time" bind:value={endTime} disabled={loading} class="w-28 text-center" />
+				</div>
 
-			<div class="rounded-lg bg-muted/30 p-3">
-				<div class="mb-2 text-center text-xs text-muted-foreground">Quick Adjust</div>
-				<div class="grid grid-cols-6 gap-1">
-					<Button
-						variant="outline"
-						size="sm"
-						onclick={() => adjustTime('end', -30)}
-						disabled={loading}
-						class="px-2 text-xs">-30m</Button
-					>
-					<Button
-						variant="outline"
-						size="sm"
-						onclick={() => adjustTime('end', -5)}
-						disabled={loading}
-						class="px-2 text-xs">-5m</Button
-					>
-					<Button
-						variant="outline"
-						size="sm"
-						onclick={() => adjustTime('end', -1)}
-						disabled={loading}
-						class="px-2 text-xs">-1m</Button
-					>
-					<Button
-						variant="outline"
-						size="sm"
-						onclick={() => adjustTime('end', 1)}
-						disabled={loading}
-						class="px-2 text-xs">+1m</Button
-					>
-					<Button
-						variant="outline"
-						size="sm"
-						onclick={() => adjustTime('end', 5)}
-						disabled={loading}
-						class="px-2 text-xs">+5m</Button
-					>
-					<Button
-						variant="outline"
-						size="sm"
-						onclick={() => adjustTime('end', 30)}
-						disabled={loading}
-						class="px-2 text-xs">+30m</Button
-					>
+				<div class="rounded-lg bg-muted/30 p-2">
+					<div class="mb-2 text-center text-xs text-muted-foreground">Quick Adjust</div>
+					<div class="grid grid-cols-6 gap-1">
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('end', -30)}
+							disabled={loading}
+							class="px-2 text-xs">-30m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('end', -5)}
+							disabled={loading}
+							class="px-2 text-xs">-5m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('end', -1)}
+							disabled={loading}
+							class="px-2 text-xs">-1m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('end', 1)}
+							disabled={loading}
+							class="px-2 text-xs">+1m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('end', 5)}
+							disabled={loading}
+							class="px-2 text-xs">+5m</Button
+						>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => adjustTime('end', 30)}
+							disabled={loading}
+							class="px-2 text-xs">+30m</Button
+						>
+					</div>
 				</div>
 			</div>
 		</div>
 	</div>
-
-	<Drawer.Footer>
-		<Button onclick={handleSave} disabled={loading}>
-			{loading ? 'Saving...' : 'Save Changes'}
-		</Button>
-		<Button variant="outline" onclick={handleCancel} disabled={loading}>Cancel</Button>
-	</Drawer.Footer>
 </div>
+
+<Drawer.Footer class="shrink-0">
+	<Button onclick={handleSave} disabled={loading}>
+		{loading ? 'Saving...' : 'Save Changes'}
+	</Button>
+	<Button variant="outline" onclick={handleCancel} disabled={loading}>Cancel</Button>
+</Drawer.Footer>

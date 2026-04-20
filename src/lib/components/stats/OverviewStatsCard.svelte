@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { formatDuration } from '$lib/time';
+
 	interface OverviewStats {
 		totalDuration: number;
 		totalSessions: number;
@@ -12,20 +14,9 @@
 	}
 
 	let { stats, period }: Props = $props();
-
-	function formatDuration(seconds: number) {
-		const hours = Math.floor(seconds / 3600);
-		const minutes = Math.floor((seconds % 3600) / 60);
-
-		if (hours === 0) {
-			return `${minutes}m`;
-		}
-
-		return `${hours}h ${minutes}m`;
-	}
 </script>
 
-<div class="rounded-lg bg-muted/50 p-6">
+<div class="rounded-lg bg-muted/50 p-6 select-none">
 	<h3 class="mb-4 text-lg font-semibold">Overview for {period}</h3>
 	<div class="grid grid-cols-2 gap-4 md:grid-cols-4">
 		<div class="text-center">
