@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { formatDuration } from '$lib/time';
+
 	interface CategoryStat {
 		categoryId: number;
 		categoryName: string;
@@ -13,17 +15,6 @@
 	}
 
 	let { categories }: Props = $props();
-
-	function formatDuration(seconds: number) {
-		const hours = Math.floor(seconds / 3600);
-		const minutes = Math.floor((seconds % 3600) / 60);
-
-		if (hours === 0) {
-			return `${minutes}m`;
-		}
-
-		return `${hours}h ${minutes}m`;
-	}
 
 	function getTotalDuration() {
 		return categories.reduce((total, category) => total + category.totalDuration, 0);

@@ -2,6 +2,7 @@
 	import { SessionCard } from '$lib/components/daily';
 	import * as Drawer from '$lib/components/ui/drawer';
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
+	import { formatDuration } from '$lib/time';
 	import { Clock, History } from '@lucide/svelte';
 	import { getSessionsForActivity } from '../../../routes/(app)/stats/stats.remote';
 
@@ -86,17 +87,6 @@
 	);
 
 	let sessionCount = $derived(((sessionsQuery?.current ?? []) as Session[]).length);
-
-	function formatDuration(seconds: number): string {
-		const hours = Math.floor(seconds / 3600);
-		const minutes = Math.floor((seconds % 3600) / 60);
-
-		if (hours === 0) {
-			return `${minutes}m`;
-		}
-
-		return `${hours}h ${minutes}m`;
-	}
 </script>
 
 <Drawer.Root {open} {onOpenChange}>
