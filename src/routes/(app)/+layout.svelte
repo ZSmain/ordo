@@ -4,7 +4,7 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import { Toaster } from '$lib/components/ui/sonner';
 	import { Calendar, ChartColumn, Settings, Timer } from '@lucide/svelte';
-	import '../../app.css';
+	import './../layout.css';
 
 	let { children } = $props();
 </script>
