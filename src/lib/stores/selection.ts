@@ -79,13 +79,19 @@ function createSelectionStore() {
 		},
 
 		toggleCategory: (categoryId: string) => {
-			const ids = selectionPersistedState.current.selectedCategoryIds;
-			const index = ids.indexOf(categoryId);
+			const current = selectionPersistedState.current;
+			const isSelected = current.selectedCategoryIds.includes(categoryId);
+			const selectedCategoryIds = isSelected
+				? current.selectedCategoryIds.filter((id) => id !== categoryId)
+				: [...current.selectedCategoryIds, categoryId];
 
 			selectionPersistedState.current = {
-				...selectionPersistedState.current,
-				selectedCategoryIds:
-					index >= 0 ? [...ids.slice(0, index), ...ids.slice(index + 1)] : [...ids, categoryId]
+				...current,
+				selectedCategoryIds,
+				filterMode:
+					!isSelected && selectedCategoryIds.length > 1 && current.filterMode === 'OR'
+						? 'AND'
+						: current.filterMode
 			};
 		},
 

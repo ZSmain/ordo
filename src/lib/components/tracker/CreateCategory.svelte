@@ -133,11 +133,6 @@
 						{/each}
 					</div>
 				</div>
-
-				<div class="space-y-2">
-					<Label>Icon</Label>
-					<IconPicker value={categoryForm.icon} onSelect={(emoji) => (categoryForm.icon = emoji)} />
-				</div>
 			</div>
 
 			<DrawerFooter>
