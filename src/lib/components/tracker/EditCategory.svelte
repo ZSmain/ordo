@@ -120,10 +120,6 @@
 							placeholder="Enter category name"
 							class="flex-1"
 						/>
-						<IconPicker
-							value={categoryForm.icon}
-							onSelect={(emoji) => (categoryForm.icon = emoji)}
-						/>
 					</div>
 				</div>
 

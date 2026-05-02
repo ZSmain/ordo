@@ -37,12 +37,6 @@
 			{#each categories as category, index (category.categoryId + '-' + index)}
 				<div class="flex items-center justify-between">
 					<div class="flex items-center gap-3">
-						<div
-							class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium text-white"
-							style="background-color: {category.categoryColor}"
-						>
-							{category.categoryIcon}
-						</div>
 						<div>
 							<p class="font-medium">{category.categoryName}</p>
 							<p class="text-sm text-muted-foreground">

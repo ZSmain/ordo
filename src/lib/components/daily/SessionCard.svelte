@@ -103,9 +103,7 @@
 									<Badge
 										variant="outline"
 										class="h-auto px-1.5 py-0.5 text-xs"
-										style="border-color: {category.color}; color: {category.color};"
 									>
-										<span class="mr-1">{category.icon}</span>
 										{category.name}
 									</Badge>
 								{/each}
