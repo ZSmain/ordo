@@ -179,6 +179,7 @@
 														class="-ms-6 -translate-x-1 rounded-full transition-all duration-100 ease-linear data-[state=checked]:ms-0 data-[state=checked]:translate-x-0"
 													/>
 													<div class="flex items-center gap-1.5">
+														<span class="text-sm">{category.icon}</span>
 														<Field.Title class="text-nowrap">{category.name}</Field.Title>
 													</div>
 												</Field.Field>
