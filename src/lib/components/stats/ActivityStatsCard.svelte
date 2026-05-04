@@ -67,6 +67,12 @@
 			{#each groupedActivities as group, index (group.category.id + '-' + index)}
 				<div>
 					<div class="mb-2 flex items-center gap-2">
+						<div
+							class="font-small flex h-6 w-6 items-center justify-center rounded-full text-xs text-white"
+							style="background-color: {group.category.color}"
+						>
+							{group.category.icon}
+						</div>
 						<h4 class="font-medium text-muted-foreground">{group.category.name}</h4>
 					</div>
 					<div class="space-y-2">
