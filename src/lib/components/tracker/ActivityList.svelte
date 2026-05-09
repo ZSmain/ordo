@@ -13,13 +13,12 @@
 
 	interface Props {
 		activities: ActivityWithContext[];
-		onActivitySelect?: (categoryName: string, activityName: string) => void;
+		onActivitySelect?: (activityId: number, categoryName: string, activityName: string) => void;
 		userId?: string;
-		currentCategory?: string;
-		currentActivity?: string;
+		currentActivityId?: number | null;
 	}
 
-	let { activities, onActivitySelect, userId, currentCategory, currentActivity }: Props = $props();
+	let { activities, onActivitySelect, userId, currentActivityId }: Props = $props();
 
 	// Search state
 	let searchQuery = $state('');
@@ -112,8 +111,7 @@
 						categoryName={item.categoryName}
 						{onActivitySelect}
 						{userId}
-						{currentCategory}
-						{currentActivity}
+						{currentActivityId}
 					/>
 				{/each}
 			</div>

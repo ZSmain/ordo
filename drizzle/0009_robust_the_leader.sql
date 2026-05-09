@@ -1,0 +1,1 @@
+ALTER TABLE `activity` ADD `favorite` integer DEFAULT false NOT NULL;

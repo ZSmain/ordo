@@ -24,10 +24,12 @@ export const getCategoriesWithActivities = query(
 			.where(eq(category.userId, userId))
 			.all();
 
+		const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
+
 		type ActivityWithCategories = SelectActivity & { categories: SelectCategory[] };
 		type CategoryWithActivities = SelectCategory & { activities: ActivityWithCategories[] };
 
-		if (categories.length === 0) {
+		if (sortedCategories.length === 0) {
 			return [] as CategoryWithActivities[];
 		}
 
@@ -39,13 +41,17 @@ export const getCategoriesWithActivities = query(
 			.all();
 
 		if (userActivities.length === 0) {
-			return categories.map((cat) => ({
+			return sortedCategories.map((cat) => ({
 				...cat,
 				activities: [] as ActivityWithCategories[]
 			})) satisfies CategoryWithActivities[];
 		}
 
-		const activityIds = userActivities.map((item) => item.id);
+		const sortedUserActivities = [...userActivities].sort(
+			(a, b) => Number(b.favorite) - Number(a.favorite) || a.name.localeCompare(b.name)
+		);
+
+		const activityIds = sortedUserActivities.map((item) => item.id);
 
 		// Get all activity-category links for the fetched activities
 		const activityCategoryRows = await locals.db
@@ -69,7 +75,7 @@ export const getCategoriesWithActivities = query(
 			activityCategoryMap.set(row.activityId, assignedCategories);
 		}
 
-		const activitiesWithCategories: ActivityWithCategories[] = userActivities.map(
+		const activitiesWithCategories: ActivityWithCategories[] = sortedUserActivities.map(
 			(userActivity) => ({
 				...userActivity,
 				categories: activityCategoryMap.get(userActivity.id) ?? []
@@ -77,7 +83,7 @@ export const getCategoriesWithActivities = query(
 		);
 
 		// Group activities by category
-		const categoriesWithActivities: CategoryWithActivities[] = categories.map((cat) => {
+		const categoriesWithActivities: CategoryWithActivities[] = sortedCategories.map((cat) => {
 			const categoryActivities = activitiesWithCategories.filter((activity) =>
 				activity.categories.some((c: SelectCategory) => c.id === cat.id)
 			);
@@ -453,6 +459,37 @@ export const updateActivity = command(
 		await getCategoriesWithActivities(userId).refresh();
 
 		return activityUpdate;
+	}
+);
+
+// Archive/unarchive an activity
+export const setActivityFavorite = command(
+	v.object({
+		id: v.pipe(v.number(), v.minValue(1, 'Activity ID must be a positive number')),
+		favorite: v.boolean('Favorite must be a boolean'),
+		userId: v.string()
+	}),
+	async ({ id, favorite, userId }) => {
+		const { locals } = getRequestEvent();
+		const db = locals.db;
+
+		const updatedActivity = await db
+			.update(activity)
+			.set({
+				favorite,
+				updatedAt: new Date()
+			})
+			.where(eq(activity.id, id))
+			.returning()
+			.get();
+
+		if (!updatedActivity || updatedActivity.userId !== userId) {
+			throw new Error('Activity not found or unauthorized');
+		}
+
+		await getCategoriesWithActivities(userId).refresh();
+
+		return updatedActivity;
 	}
 );
 

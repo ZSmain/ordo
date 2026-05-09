@@ -12,18 +12,27 @@
 		CreateActivity,
 		CreateCategory,
 		EmptyState,
+		FavoriteActivities,
 		FloatingAddButton,
 		Timer
 	} from '$lib/components/tracker';
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
 	import { Separator } from '$lib/components/ui/separator';
-	import { restoreTimerFromDatabase, selectionStore, timerStore } from '$lib/stores';
+	import * as Tabs from '$lib/components/ui/tabs';
+	import {
+		restoreTimerFromDatabase,
+		selectionStore,
+		timerStore,
+		trackerTabPersistedState,
+		type TrackerTab
+	} from '$lib/stores';
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 
 	// State for create dialogs triggered from empty states
 	let showCreateCategory = $state(false);
 	let showCreateActivity = $state(false);
+	let activeTab = $state<TrackerTab>(trackerTabPersistedState.current);
 
 	// Get user from page data
 	const user = $derived(page.data?.user);
@@ -149,7 +158,8 @@
 					category: { name: categoryName }
 				}))
 			)
-			.then((session) => {
+			.then(async (sessionPromise) => {
+				const session = await sessionPromise;
 				// Update the timer store with the real session ID once server responds
 				timerStore.updateSessionId(session.id);
 			})
@@ -191,70 +201,20 @@
 	}
 
 	// Handle activity selection
-	function handleActivitySelect(categoryName: string, activityName: string) {
+	function handleActivitySelect(activityId: number, categoryName: string, activityName: string) {
 		if (!user?.id) return;
 
 		// Check if this is the currently running activity (toggle behavior)
-		if (
-			timerStore.current.isActive &&
-			timerStore.current.categoryName === categoryName &&
-			timerStore.current.activityName === activityName
-		) {
-			// Stop the timer if clicking the same activity
+		if (timerStore.current.isActive && timerStore.current.activityId === activityId) {
 			stopTimer();
 			return;
 		}
 
-		// Stop any existing timer first
 		if (timerStore.current.isActive) {
 			stopTimer();
 		}
 
-		// Get categories data to find the activity ID
-		const categoriesData = categoriesQuery?.current;
-		if (!categoriesData) {
-			console.error('Categories not loaded');
-			return;
-		}
-
-		// We need to find the activity ID. Since we have multiple categories selected,
-		// we can search through the selectedActivities derived store or the raw categories.
-		// Searching raw categories is safer as it covers all possibilities.
-
-		let foundActivityId = -1;
-
-		// Find the activity in the categories
-		for (const cat of categoriesData) {
-			if (cat.name === categoryName) {
-				const act = cat.activities.find((a) => a.name === activityName);
-				if (act) {
-					foundActivityId = act.id;
-					break;
-				}
-			}
-		}
-
-		if (foundActivityId === -1) {
-			// Fallback: try to find by name across all categories if category name match failed
-			// This handles edge cases where category name might be ambiguous or display-only
-			for (const cat of categoriesData) {
-				const act = cat.activities.find((a) => a.name === activityName);
-				if (act) {
-					foundActivityId = act.id;
-					// Update category name to the one where we found it
-					categoryName = cat.name;
-					break;
-				}
-			}
-		}
-
-		if (foundActivityId === -1) {
-			console.error('Activity not found:', activityName);
-			return;
-		}
-
-		// Start timer with the found activity
-		startTimer(foundActivityId, categoryName, activityName);
+		startTimer(activityId, categoryName, activityName);
 	}
 
 	// Sync timer state with database
@@ -328,6 +288,46 @@
 		})();
 	});
 
+	$effect(() => {
+		if (trackerTabPersistedState.current !== activeTab) {
+			trackerTabPersistedState.current = activeTab;
+		}
+	});
+
+	$effect(() => {
+		if (activeTab !== trackerTabPersistedState.current) {
+			activeTab = trackerTabPersistedState.current;
+		}
+	});
+
+	const favoriteActivities = $derived.by(() => {
+		const currentCategories = categoriesQuery?.current;
+		if (!currentCategories) return [];
+
+		const favoritesMap: Record<
+			number,
+			{
+				activity: (typeof currentCategories)[0]['activities'][0];
+				categoryColor: string;
+				categoryName: string;
+			}
+		> = {};
+
+		for (const category of currentCategories) {
+			for (const activity of category.activities) {
+				if (activity.archived || !activity.favorite || favoritesMap[activity.id]) continue;
+
+				favoritesMap[activity.id] = {
+					activity,
+					categoryColor: category.color,
+					categoryName: category.name
+				};
+			}
+		}
+
+		return Object.values(favoritesMap).sort((a, b) => a.activity.name.localeCompare(b.activity.name));
+	});
+
 	// Check if there are any non-archived activities in selected categories
 	const hasActivitiesInSelection = $derived(
 		selectedActivities.some((item) => !item.activity.archived)
@@ -358,35 +358,56 @@
 		<!-- Empty state for new users with no categories -->
 		<EmptyState type="no-categories" onCreateCategory={() => (showCreateCategory = true)} />
 	{:else}
-		<!-- Categories -->
-		<CategorySelector
-			categories={categoriesQuery?.current || []}
-			selectedCategoryIds={selectionStore.current.selectedCategoryIds}
-			filterMode={selectionStore.current.filterMode}
-			onFilterModeChange={handleFilterModeChange}
-			onClearSelection={handleClearCategorySelection}
-			onCategoryChange={handleCategorySelection}
-			loading={categoriesQuery?.loading || false}
-			error={categoriesQuery?.error}
-			userId={user?.id || ''}
-		/>
+		<Tabs.Root bind:value={activeTab} class="mt-4 w-full">
+			<Tabs.List class="grid w-full grid-cols-2 rounded-lg bg-muted p-1">
+				<Tabs.Trigger value="activities" class="rounded-md data-[state=active]:bg-background">
+					Activities
+				</Tabs.Trigger>
+				<Tabs.Trigger value="favorites" class="rounded-md data-[state=active]:bg-background">
+					Favorites
+				</Tabs.Trigger>
+			</Tabs.List>
 
-		<!-- Activities for Selected Categories -->
-		{#if selectionStore.current.selectedCategoryIds.length === 0}
-			<Separator class="my-4" />
-			<EmptyState type="no-selection" />
-		{:else if !hasActivitiesInSelection}
-			<Separator class="my-4" />
-			<EmptyState type="no-activities" onCreateActivity={() => (showCreateActivity = true)} />
-		{:else}
-			<ActivityList
-				activities={selectedActivities}
-				onActivitySelect={handleActivitySelect}
-				userId={user?.id || ''}
-				currentCategory={timerStore.current.categoryName}
-				currentActivity={timerStore.current.activityName}
-			/>
-		{/if}
+			<Tabs.Content value="activities" class="mt-0">
+				<!-- Categories -->
+				<CategorySelector
+					categories={categoriesQuery?.current || []}
+					selectedCategoryIds={selectionStore.current.selectedCategoryIds}
+					filterMode={selectionStore.current.filterMode}
+					onFilterModeChange={handleFilterModeChange}
+					onClearSelection={handleClearCategorySelection}
+					onCategoryChange={handleCategorySelection}
+					loading={categoriesQuery?.loading || false}
+					error={categoriesQuery?.error}
+					userId={user?.id || ''}
+				/>
+
+				<!-- Activities for Selected Categories -->
+				{#if selectionStore.current.selectedCategoryIds.length === 0}
+					<Separator class="my-4" />
+					<EmptyState type="no-selection" />
+				{:else if !hasActivitiesInSelection}
+					<Separator class="my-4" />
+					<EmptyState type="no-activities" onCreateActivity={() => (showCreateActivity = true)} />
+				{:else}
+					<ActivityList
+						activities={selectedActivities}
+						onActivitySelect={handleActivitySelect}
+						userId={user?.id || ''}
+						currentActivityId={timerStore.current.activityId}
+					/>
+				{/if}
+			</Tabs.Content>
+
+			<Tabs.Content value="favorites" class="mt-0">
+				<FavoriteActivities
+					activities={favoriteActivities}
+					onActivitySelect={handleActivitySelect}
+					userId={user?.id || ''}
+					currentActivityId={timerStore.current.activityId}
+				/>
+			</Tabs.Content>
+		</Tabs.Root>
 	{/if}
 </ScrollArea>
 
