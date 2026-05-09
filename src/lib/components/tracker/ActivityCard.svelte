@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { archiveActivity, deleteActivity } from '$lib/api/data.remote';
+	import { archiveActivity, deleteActivity, setActivityFavorite } from '$lib/api/data.remote';
 	import { ActivityStatisticsDrawer } from '$lib/components/stats';
 	import { Button } from '$lib/components/ui/button';
 	import * as ContextMenu from '$lib/components/ui/context-menu';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Label } from '$lib/components/ui/label';
 	import type { ActivityWithOptionalCategories } from '$lib/types';
-	import { Archive, ChartBar, Pause, PencilLine, Play, Trash2 } from '@lucide/svelte';
+	import { Archive, ChartBar, Pause, PencilLine, Play, Star, Trash2 } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import EditActivity from './EditActivity.svelte';
 
@@ -14,10 +14,9 @@
 		activity: ActivityWithOptionalCategories;
 		categoryColor: string;
 		categoryName: string;
-		onActivitySelect?: (categoryName: string, activityName: string) => void;
+		onActivitySelect?: (activityId: number, categoryName: string, activityName: string) => void;
 		userId?: string;
-		currentCategory?: string;
-		currentActivity?: string;
+		currentActivityId?: number | null;
 	}
 
 	let {
@@ -26,8 +25,7 @@
 		categoryName,
 		onActivitySelect,
 		userId = '',
-		currentCategory,
-		currentActivity
+		currentActivityId
 	}: Props = $props();
 
 	let editActivityOpen = $state(false);
@@ -36,12 +34,13 @@
 	let statisticsOpen = $state(false);
 	let isDeleting = $state(false);
 	let isArchiving = $state(false);
+	let isUpdatingFavorite = $state(false);
 
 	// Check if this activity is currently running
-	let isRunning = $derived(currentCategory === categoryName && currentActivity === activity.name);
+	let isRunning = $derived(currentActivityId === activity.id);
 
 	function handleClick() {
-		onActivitySelect?.(categoryName, activity.name);
+		onActivitySelect?.(activity.id, categoryName, activity.name);
 	}
 
 	// Handle modify activity
@@ -57,6 +56,32 @@
 	// Handle delete activity
 	function handleDeleteActivity() {
 		deleteDialogOpen = true;
+	}
+
+	async function handleToggleFavorite() {
+		if (!userId || isUpdatingFavorite) return;
+
+		isUpdatingFavorite = true;
+		const nextFavoriteState = !activity.favorite;
+
+		try {
+			await setActivityFavorite({
+				id: activity.id,
+				favorite: nextFavoriteState,
+				userId
+			});
+
+			toast.success(
+				nextFavoriteState
+					? `"${activity.name}" added to favorites`
+					: `"${activity.name}" removed from favorites`
+			);
+		} catch (error) {
+			console.error('Failed to update favorite activity:', error);
+			toast.error('Failed to update favorites');
+		} finally {
+			isUpdatingFavorite = false;
+		}
 	}
 
 	// Confirm archive
@@ -124,6 +149,9 @@
 			<div class="grid gap-1 font-normal">
 				<div class="text-sm font-medium">
 					{activity.name}
+					{#if activity.favorite}
+						<Star class="ml-1 inline h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+					{/if}
 					{#if activity.archived}
 						<span class="ml-1 text-xs text-muted-foreground">(Archived)</span>
 					{/if}
@@ -152,6 +180,10 @@
 		<ContextMenu.Item onclick={() => (statisticsOpen = true)}>
 			<ChartBar class="mr-2 h-4 w-4" />
 			Statistics
+		</ContextMenu.Item>
+		<ContextMenu.Item onclick={handleToggleFavorite} disabled={isUpdatingFavorite}>
+			<Star class="mr-2 h-4 w-4" />
+			{activity.favorite ? 'Remove from favorites' : 'Add to favorites'}
 		</ContextMenu.Item>
 		<ContextMenu.Item onclick={handleArchiveActivity}>
 			<Archive class="mr-2 h-4 w-4" />

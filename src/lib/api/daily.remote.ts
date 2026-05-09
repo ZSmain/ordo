@@ -1,6 +1,6 @@
 import { command, getRequestEvent, query } from '$app/server';
 import { activity, activityCategory, category, timeSession } from '$lib/server/db/schema';
-import { and, eq, gte, inArray, isNotNull, lt } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, isNotNull, lt } from 'drizzle-orm';
 import * as v from 'valibot';
 
 // Get all activities with their categories for the current user (for manual session entry)
@@ -21,7 +21,7 @@ export const getActivitiesForUser = query(
 			})
 			.from(activity)
 			.where(and(eq(activity.userId, userId), eq(activity.archived, false)))
-			.orderBy(activity.name)
+			.orderBy(desc(activity.favorite), activity.name)
 			.all();
 
 		if (activities.length === 0) {

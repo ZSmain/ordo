@@ -25,6 +25,7 @@ export const activity = sqliteTable('activity', {
 	dailyGoal: integer('daily_goal'), // in minutes
 	weeklyGoal: integer('weekly_goal'), // in minutes
 	monthlyGoal: integer('monthly_goal'), // in minutes
+	favorite: integer('favorite', { mode: 'boolean' }).default(false).notNull(),
 	archived: integer('archived', { mode: 'boolean' }).default(false).notNull(),
 	userId: text('user_id')
 		.notNull()
@@ -134,7 +135,7 @@ export const insertActivitySchema = createInsertSchema(activity, {
 			v.minValue(1, 'Monthly goal must be at least 1 minute')
 		)
 	),
-
+	favorite: v.optional(v.boolean('Favorite must be a boolean')),
 	archived: v.optional(v.boolean('Archived must be a boolean')),
 	userId: v.pipe(v.string('User ID must be a string'), v.minLength(1, 'User ID is required'))
 });
