@@ -1,6 +1,11 @@
 import { getRequestEvent, query } from '$app/server';
+import {
+	getCategoriesForActivityId,
+	getCategoriesForActivityIds,
+	getRepresentativeCategory
+} from '$lib/server/activity-catalog';
 import { activity, activityCategory, category, timeSession } from '$lib/server/db/schema';
-import { and, eq, gte, inArray, isNotNull, lt, sql, sum } from 'drizzle-orm';
+import { and, eq, gte, isNotNull, lt, sql, sum } from 'drizzle-orm';
 import * as v from 'valibot';
 
 export const getCategoryStats = query(
@@ -17,7 +22,12 @@ export const getCategoryStats = query(
 		const end = new Date(endDate + 'T23:59:59.999Z');
 
 		// Get all sessions for the time period
-		const sessions = await db
+		const sessions: Array<{
+			sessionId: number;
+			duration: number | null;
+			activityId: number;
+			activityName: string;
+		}> = await db
 			.select({
 				sessionId: timeSession.id,
 				duration: timeSession.duration,
@@ -36,33 +46,25 @@ export const getCategoryStats = query(
 			)
 			.all();
 
-		// Get all activity-category relationships for these sessions
-		const activityIds = [...new Set(sessions.map(s => s.activityId))];
-		const activityCategories = activityIds.length > 0 ? await db
-			.select({
-				activityId: activityCategory.activityId,
-				categoryId: category.id,
-				categoryName: category.name,
-				categoryColor: category.color,
-				categoryIcon: category.icon
-			})
-			.from(activityCategory)
-			.innerJoin(category, eq(activityCategory.categoryId, category.id))
-			.where(inArray(activityCategory.activityId, activityIds))
-			.all() : [];
+		const categoriesByActivityId = await getCategoriesForActivityIds(db, [
+			...new Set(sessions.map((session: (typeof sessions)[number]) => session.activityId))
+		]);
 
 		// Calculate category stats by distributing session time proportionally
-		const categoryStatsMap = new Map<number, {
-			categoryId: number;
-			categoryName: string;
-			categoryColor: string;
-			categoryIcon: string;
-			totalDuration: number;
-			sessionCount: number;
-		}>();
+		const categoryStatsMap = new Map<
+			number,
+			{
+				categoryId: number;
+				categoryName: string;
+				categoryColor: string;
+				categoryIcon: string;
+				totalDuration: number;
+				sessionCount: number;
+			}
+		>();
 
-		sessions.forEach(session => {
-			const categoriesForActivity = activityCategories.filter(ac => ac.activityId === session.activityId);
+		sessions.forEach((session: (typeof sessions)[number]) => {
+			const categoriesForActivity = categoriesByActivityId.get(session.activityId) ?? [];
 			const categoryCount = categoriesForActivity.length;
 
 			if (categoryCount === 0) return; // Skip activities without categories
@@ -71,26 +73,26 @@ export const getCategoryStats = query(
 			const durationPerCategory = (session.duration || 0) / categoryCount;
 			const sessionCountPerCategory = 1 / categoryCount;
 
-			categoriesForActivity.forEach(({ categoryId, categoryName, categoryColor, categoryIcon }) => {
-				if (!categoryStatsMap.has(categoryId)) {
-					categoryStatsMap.set(categoryId, {
-						categoryId,
-						categoryName,
-						categoryColor,
-						categoryIcon,
+			categoriesForActivity.forEach(({ id, name, color, icon }) => {
+				if (!categoryStatsMap.has(id)) {
+					categoryStatsMap.set(id, {
+						categoryId: id,
+						categoryName: name,
+						categoryColor: color,
+						categoryIcon: icon,
 						totalDuration: 0,
 						sessionCount: 0
 					});
 				}
 
-				const stats = categoryStatsMap.get(categoryId)!;
+				const stats = categoryStatsMap.get(id)!;
 				stats.totalDuration += durationPerCategory;
 				stats.sessionCount += sessionCountPerCategory;
 			});
 		});
 
 		const categoryStats = Array.from(categoryStatsMap.values())
-			.map(stat => ({
+			.map((stat) => ({
 				...stat,
 				totalDuration: Math.round(stat.totalDuration),
 				sessionCount: Math.round(stat.sessionCount)
@@ -115,7 +117,13 @@ export const getActivityStats = query(
 		const end = new Date(endDate + 'T23:59:59.999Z');
 
 		// First get activity stats without category duplication
-		const activityStats = await db
+		const activityStats: Array<{
+			activityId: number;
+			activityName: string;
+			activityIcon: string;
+			totalDuration: number | null;
+			sessionCount: number;
+		}> = await db
 			.select({
 				activityId: activity.id,
 				activityName: activity.name,
@@ -137,33 +145,28 @@ export const getActivityStats = query(
 			.orderBy(sql`totalDuration DESC`)
 			.all();
 
-		// Get categories for each activity
-		const activityIds = activityStats.map(stat => stat.activityId);
-		const categoriesForActivities = activityIds.length > 0 ? await db
-			.select({
-				activityId: activityCategory.activityId,
-				categoryId: category.id,
-				categoryName: category.name,
-				categoryColor: category.color,
-				categoryIcon: category.icon
-			})
-			.from(activityCategory)
-			.innerJoin(category, eq(activityCategory.categoryId, category.id))
-			.where(inArray(activityCategory.activityId, activityIds))
-			.all() : [];
+		const activityIds = activityStats.map(
+			(stat: (typeof activityStats)[number]) => stat.activityId
+		);
+		const categoriesByActivityId = await getCategoriesForActivityIds(db, activityIds);
 
 		// Combine activity stats with their categories
-		return activityStats.map((stat) => {
-			const categories = categoriesForActivities.filter(cat => cat.activityId === stat.activityId);
-			const primaryCategory = categories[0] || { categoryId: 0, categoryName: 'Uncategorized', categoryColor: '#gray', categoryIcon: '📂' };
+		return activityStats.map((stat: (typeof activityStats)[number]) => {
+			const categories = categoriesByActivityId.get(stat.activityId) ?? [];
+			const primaryCategory = getRepresentativeCategory(categories);
 
 			return {
 				...stat,
-				categoryId: primaryCategory.categoryId,
-				categoryName: primaryCategory.categoryName,
-				categoryColor: primaryCategory.categoryColor,
-				categoryIcon: primaryCategory.categoryIcon,
-				allCategories: categories,
+				categoryId: primaryCategory.id,
+				categoryName: primaryCategory.name,
+				categoryColor: primaryCategory.color,
+				categoryIcon: primaryCategory.icon,
+				allCategories: categories.map((cat) => ({
+					categoryId: cat.id,
+					categoryName: cat.name,
+					categoryColor: cat.color,
+					categoryIcon: cat.icon
+				})),
 				totalDuration: Number(stat.totalDuration || 0),
 				sessionCount: Number(stat.sessionCount)
 			};
@@ -254,21 +257,10 @@ export const getSessionsForActivity = query(
 			.orderBy(sql`${timeSession.startedAt} DESC`)
 			.all();
 
-		// Get categories for the activity
-		const categories = await db
-			.select({
-				categoryId: category.id,
-				categoryName: category.name,
-				categoryColor: category.color,
-				categoryIcon: category.icon
-			})
-			.from(activityCategory)
-			.innerJoin(category, eq(activityCategory.categoryId, category.id))
-			.where(eq(activityCategory.activityId, activityId))
-			.all();
+		const categories = await getCategoriesForActivityId(db, activityId);
 
 		// Transform sessions to match SessionCard format
-		return sessions.map((session: typeof sessions[number]) => ({
+		return sessions.map((session: (typeof sessions)[number]) => ({
 			id: session.id,
 			startedAt: session.startedAt,
 			stoppedAt: session.stoppedAt,
@@ -279,12 +271,7 @@ export const getSessionsForActivity = query(
 				name: session.activityName,
 				icon: session.activityIcon
 			},
-			categories: categories.map((cat: typeof categories[number]) => ({
-				id: cat.categoryId,
-				name: cat.categoryName,
-				color: cat.categoryColor,
-				icon: cat.categoryIcon
-			}))
+			categories
 		}));
 	}
 );
@@ -348,7 +335,7 @@ export const getActivityStatistics = query(
 		// Calculate aggregated chart data based on granularity
 		const chartDataMap: Record<string, { label: string; duration: number; sortKey: string }> = {};
 
-		sessions.forEach((session: typeof sessions[number]) => {
+		sessions.forEach((session: (typeof sessions)[number]) => {
 			const date = new Date(session.startedAt);
 			let key: string;
 			let label: string;
@@ -362,16 +349,24 @@ export const getActivityStatistics = query(
 					key = `${year}-${month}-${day}`;
 					sortKey = key;
 					// Format as "Nov 24"
-					label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+					label = date.toLocaleDateString('en-US', {
+						month: 'short',
+						day: 'numeric',
+						timeZone: 'UTC'
+					});
 					break;
 				}
 				case 'weekly': {
 					// Get ISO week number and year
-					const tempDate = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+					const tempDate = new Date(
+						Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+					);
 					const dayNum = tempDate.getUTCDay() || 7;
 					tempDate.setUTCDate(tempDate.getUTCDate() + 4 - dayNum);
 					const yearStart = new Date(Date.UTC(tempDate.getUTCFullYear(), 0, 1));
-					const weekNum = Math.ceil((((tempDate.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+					const weekNum = Math.ceil(
+						((tempDate.getTime() - yearStart.getTime()) / 86400000 + 1) / 7
+					);
 					const year = tempDate.getUTCFullYear();
 					key = `${year}-W${String(weekNum).padStart(2, '0')}`;
 					sortKey = key;
@@ -383,7 +378,11 @@ export const getActivityStatistics = query(
 					const month = String(date.getUTCMonth() + 1).padStart(2, '0');
 					key = `${year}-${month}`;
 					sortKey = key;
-					label = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit', timeZone: 'UTC' });
+					label = date.toLocaleDateString('en-US', {
+						month: 'short',
+						year: '2-digit',
+						timeZone: 'UTC'
+					});
 					break;
 				}
 			}
@@ -400,13 +399,16 @@ export const getActivityStatistics = query(
 			.map(({ label, duration }) => ({ label, duration }));
 
 		// Calculate statistics
-		const durations = sessions.map((s: typeof sessions[number]) => s.duration || 0).filter((d: number) => d > 0);
+		const durations = sessions
+			.map((s: (typeof sessions)[number]) => s.duration || 0)
+			.filter((d: number) => d > 0);
 		const totalDuration = durations.reduce((sum: number, d: number) => sum + d, 0);
 		const totalSessions = sessions.length;
 
 		const shortestSession = durations.length > 0 ? Math.min(...durations) : null;
 		const longestSession = durations.length > 0 ? Math.max(...durations) : null;
-		const averageSession = durations.length > 0 ? Math.round(totalDuration / durations.length) : null;
+		const averageSession =
+			durations.length > 0 ? Math.round(totalDuration / durations.length) : null;
 
 		// First and last session times
 		const firstSession = sessions[0]?.startedAt || null;

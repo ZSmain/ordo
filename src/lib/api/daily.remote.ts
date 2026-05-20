@@ -1,6 +1,10 @@
 import { command, getRequestEvent, query } from '$app/server';
-import { activity, activityCategory, category, timeSession } from '$lib/server/db/schema';
-import { and, desc, eq, gte, inArray, isNotNull, lt } from 'drizzle-orm';
+import {
+	getCategoriesForActivityIds,
+	hydrateActivitiesWithCategories
+} from '$lib/server/activity-catalog';
+import { activity, timeSession } from '$lib/server/db/schema';
+import { and, desc, eq, gte, isNotNull, lt } from 'drizzle-orm';
 import * as v from 'valibot';
 
 // Get all activities with their categories for the current user (for manual session entry)
@@ -13,7 +17,7 @@ export const getActivitiesForUser = query(
 		const db = locals.db;
 
 		// Get all non-archived activities for the user
-		const activities = await db
+		const activities: Array<{ id: number; name: string; icon: string }> = await db
 			.select({
 				id: activity.id,
 				name: activity.name,
@@ -28,37 +32,12 @@ export const getActivitiesForUser = query(
 			return [];
 		}
 
-		// Get categories for these activities
-		const activityIds = activities.map((a) => a.id);
-		const activityCategories = await db
-			.select({
-				activityId: activityCategory.activityId,
-				categoryId: category.id,
-				categoryName: category.name,
-				categoryColor: category.color,
-				categoryIcon: category.icon
-			})
-			.from(activityCategory)
-			.innerJoin(category, eq(activityCategory.categoryId, category.id))
-			.where(inArray(activityCategory.activityId, activityIds))
-			.all();
+		const categoriesByActivityId = await getCategoriesForActivityIds(
+			db,
+			activities.map((item) => item.id)
+		);
 
-		// Combine activities with their categories
-		return activities.map((act) => {
-			const categories = activityCategories
-				.filter((ac) => ac.activityId === act.id)
-				.map((ac) => ({
-					id: ac.categoryId,
-					name: ac.categoryName,
-					color: ac.categoryColor,
-					icon: ac.categoryIcon
-				}));
-
-			return {
-				...act,
-				categories
-			};
-		});
+		return hydrateActivitiesWithCategories(activities, categoriesByActivityId);
 	}
 );
 
@@ -144,7 +123,16 @@ export const getSessionsForDate = query(
 		const endOfDay = new Date(date + 'T23:59:59.999Z');
 
 		// Get all sessions for the day
-		const sessions = await db
+		const sessions: Array<{
+			id: number;
+			startedAt: Date;
+			stoppedAt: Date | null;
+			duration: number | null;
+			notes: string | null;
+			activityId: number;
+			activityName: string;
+			activityIcon: string;
+		}> = await db
 			.select({
 				id: timeSession.id,
 				startedAt: timeSession.startedAt,
@@ -168,44 +156,23 @@ export const getSessionsForDate = query(
 			.orderBy(timeSession.startedAt)
 			.all();
 
-		// Get all categories for the activities in these sessions
-		const activityIds = [...new Set(sessions.map(s => s.activityId))];
-		const activityCategories = activityIds.length > 0 ? await db
-			.select({
-				activityId: activityCategory.activityId,
-				categoryId: category.id,
-				categoryName: category.name,
-				categoryColor: category.color,
-				categoryIcon: category.icon
-			})
-			.from(activityCategory)
-			.innerJoin(category, eq(activityCategory.categoryId, category.id))
-			.where(inArray(activityCategory.activityId, activityIds))
-			.all() : [];
+		const categoriesByActivityId = await getCategoriesForActivityIds(db, [
+			...new Set(sessions.map((session: (typeof sessions)[number]) => session.activityId))
+		]);
 
-		// Combine sessions with their categories
-		return sessions.map(session => {
-			const categories = activityCategories.filter(ac => ac.activityId === session.activityId);
-
-			return {
-				id: session.id,
-				startedAt: session.startedAt,
-				stoppedAt: session.stoppedAt,
-				duration: session.duration,
-				notes: session.notes,
-				activity: {
-					id: session.activityId,
-					name: session.activityName,
-					icon: session.activityIcon
-				},
-				categories: categories.map(cat => ({
-					id: cat.categoryId,
-					name: cat.categoryName,
-					color: cat.categoryColor,
-					icon: cat.categoryIcon
-				}))
-			};
-		});
+		return sessions.map((session: (typeof sessions)[number]) => ({
+			id: session.id,
+			startedAt: session.startedAt,
+			stoppedAt: session.stoppedAt,
+			duration: session.duration,
+			notes: session.notes,
+			activity: {
+				id: session.activityId,
+				name: session.activityName,
+				icon: session.activityIcon
+			},
+			categories: categoriesByActivityId.get(session.activityId) ?? []
+		}));
 	}
 );
 
@@ -298,9 +265,7 @@ export const deleteSession = command(
 		const sessionDate = existingSession.startedAt.toISOString().split('T')[0];
 
 		// Delete the session
-		await db
-			.delete(timeSession)
-			.where(eq(timeSession.id, sessionId));
+		await db.delete(timeSession).where(eq(timeSession.id, sessionId));
 
 		// Refresh the sessions query for the date this session was on
 		await getSessionsForDate({ userId, date: sessionDate }).refresh();
