@@ -1,18 +1,12 @@
 <script lang="ts">
 	import { Input } from '$lib/components/ui/input';
 	import { Separator } from '$lib/components/ui/separator';
-	import type { SelectActivity } from '$lib/server/db/schema';
+	import type { TrackerActivityRow } from '$lib/tracker/activity-projection';
 	import { Search, X } from '@lucide/svelte';
 	import ActivityCard from './ActivityCard.svelte';
 
-	interface ActivityWithContext {
-		activity: SelectActivity;
-		categoryColor: string;
-		categoryName: string;
-	}
-
 	interface Props {
-		activities: ActivityWithContext[];
+		activities: TrackerActivityRow[];
 		onActivitySelect?: (activityId: number, categoryName: string, activityName: string) => void;
 		userId?: string;
 		currentActivityId?: number | null;

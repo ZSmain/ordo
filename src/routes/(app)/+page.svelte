@@ -21,6 +21,10 @@
 		trackerTabPersistedState,
 		type TrackerTab
 	} from '$lib/stores';
+	import {
+		projectFavoriteActivities,
+		projectSelectedActivities
+	} from '$lib/tracker/activity-projection';
 	import { onMount } from 'svelte';
 
 	// State for create dialogs triggered from empty states
@@ -35,80 +39,9 @@
 	const categoriesQuery = $derived(user?.id ? getCategoriesWithActivities(user.id) : null);
 
 	// Computed: selected activities from multiple categories
-	const selectedActivities = $derived.by(() => {
-		// Don't process if no categories are selected or data isn't loaded
-		const selectedIds = selectionStore.current.selectedCategoryIds;
-		const currentCategories = categoriesQuery?.current;
-		if (selectedIds.length === 0 || !currentCategories) {
-			return [];
-		}
-
-		const filterMode = selectionStore.current.filterMode;
-
-		if (filterMode === 'AND' && selectedIds.length > 1) {
-			// AND Logic: Intersection
-			// Get activities for each selected category
-			const activitiesPerCategory = selectedIds
-				.map((idStr) => {
-					const cat = currentCategories.find((c) => c.id === parseInt(idStr));
-					return cat ? { category: cat, activities: cat.activities || [] } : null;
-				})
-				.filter((item) => item !== null);
-
-			if (activitiesPerCategory.length === 0) return [];
-
-			// Start with the first category's activities
-			let intersection = activitiesPerCategory[0]!.activities;
-
-			// Filter to keep only those present in all other selected categories
-			for (let i = 1; i < activitiesPerCategory.length; i++) {
-				const currentIds = new Set(activitiesPerCategory[i]!.activities.map((a) => a.id));
-				intersection = intersection.filter((a) => currentIds.has(a.id));
-			}
-
-			// Map to result format
-			return intersection.map((activity) => {
-				// Use the first selected category as context (or any valid one)
-				const contextCategory = activitiesPerCategory[0]!.category;
-				return {
-					activity,
-					categoryColor: contextCategory.color,
-					categoryName: contextCategory.name
-				};
-			});
-		} else {
-			// OR Logic: Union (Deduplicated)
-			const activitiesMap: Record<
-				number,
-				{
-					activity: (typeof currentCategories)[0]['activities'][0];
-					categoryColor: string;
-					categoryName: string;
-				}
-			> = {};
-
-			// Iterate through all selected categories
-			for (const categoryIdStr of selectedIds) {
-				const categoryId = parseInt(categoryIdStr);
-				const category = currentCategories.find((cat) => cat.id === categoryId);
-
-				if (category && category.activities) {
-					for (const activity of category.activities) {
-						// Use activity ID as key to deduplicate
-						if (!activitiesMap[activity.id]) {
-							activitiesMap[activity.id] = {
-								activity,
-								categoryColor: category.color,
-								categoryName: category.name
-							};
-						}
-					}
-				}
-			}
-
-			return Object.values(activitiesMap);
-		}
-	});
+	const selectedActivities = $derived.by(() =>
+		projectSelectedActivities(categoriesQuery?.current, selectionStore.current)
+	);
 
 	// Handle category selection changes
 	function handleCategorySelection(categoryId: string) {
@@ -166,35 +99,7 @@
 		}
 	});
 
-	const favoriteActivities = $derived.by(() => {
-		const currentCategories = categoriesQuery?.current;
-		if (!currentCategories) return [];
-
-		const favoritesMap: Record<
-			number,
-			{
-				activity: (typeof currentCategories)[0]['activities'][0];
-				categoryColor: string;
-				categoryName: string;
-			}
-		> = {};
-
-		for (const category of currentCategories) {
-			for (const activity of category.activities) {
-				if (activity.archived || !activity.favorite || favoritesMap[activity.id]) continue;
-
-				favoritesMap[activity.id] = {
-					activity,
-					categoryColor: category.color,
-					categoryName: category.name
-				};
-			}
-		}
-
-		return Object.values(favoritesMap).sort((a, b) =>
-			a.activity.name.localeCompare(b.activity.name)
-		);
-	});
+	const favoriteActivities = $derived.by(() => projectFavoriteActivities(categoriesQuery?.current));
 
 	// Check if there are any non-archived activities in selected categories
 	const hasActivitiesInSelection = $derived(

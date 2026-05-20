@@ -14,12 +14,12 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
-	import type { ActivityWithOptionalCategories, Category } from '$lib/types';
+	import type { TrackerActivity } from '$lib/tracker/activity-projection';
 	import { toast } from 'svelte-sonner';
 
 	interface Props {
 		open: boolean;
-		activity: ActivityWithOptionalCategories | null;
+		activity: TrackerActivity | null;
 		onOpenChange?: (open: boolean) => void;
 		onActivityUpdated?: () => void;
 		userId: string;
@@ -62,7 +62,7 @@
 			activityForm.monthlyGoal = activity.monthlyGoal || undefined;
 
 			// Initialize selected categories from the activity's categories
-			selectedCategoryIds = activity.categories?.map((cat: Category) => cat.id.toString()) || [];
+			selectedCategoryIds = activity.categories?.map((cat) => cat.id.toString()) || [];
 		} else {
 			// Reset form when activity is null
 			resetForm();
@@ -70,7 +70,8 @@
 	});
 
 	async function handleUpdateActivity() {
-		if (!activityForm.name.trim() || !activity || selectedCategoryIds.length === 0 || isPending) return;
+		if (!activityForm.name.trim() || !activity || selectedCategoryIds.length === 0 || isPending)
+			return;
 
 		isPending = true;
 		try {

@@ -5,13 +5,13 @@
 	import * as ContextMenu from '$lib/components/ui/context-menu';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Label } from '$lib/components/ui/label';
-	import type { ActivityWithOptionalCategories } from '$lib/types';
+	import type { TrackerActivity } from '$lib/tracker/activity-projection';
 	import { Archive, ChartBar, Pause, PencilLine, Play, Star, Trash2 } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import EditActivity from './EditActivity.svelte';
 
 	interface Props {
-		activity: ActivityWithOptionalCategories;
+		activity: TrackerActivity;
 		categoryColor: string;
 		categoryName: string;
 		onActivitySelect?: (activityId: number, categoryName: string, activityName: string) => void;
