@@ -1,38 +1,59 @@
 import type { SelectionState } from '$lib/stores/selection';
+import type { SelectActivity, SelectCategory } from '$lib/server/db/schema';
 
-export interface TrackerActivity {
-	id: number;
-	name: string;
-	icon: string;
-	dailyGoal: number | null;
-	weeklyGoal: number | null;
-	monthlyGoal: number | null;
-	favorite: boolean;
-	archived: boolean;
-	categories?: TrackerActivityCategory[];
-	[key: string]: unknown;
-}
+export type TrackerActivityCategory = Pick<SelectCategory, 'id' | 'name' | 'color' | 'icon'>;
 
-export interface TrackerActivityCategory {
-	id: number;
-	name: string;
-	color: string;
-	icon: string;
-	[key: string]: unknown;
-}
+export type TrackerActivity = Pick<
+	SelectActivity,
+	'id' | 'name' | 'icon' | 'dailyGoal' | 'weeklyGoal' | 'monthlyGoal' | 'favorite' | 'archived'
+> & {
+	categories: TrackerActivityCategory[];
+};
 
-export interface TrackerCategory<TActivity extends TrackerActivity = TrackerActivity> {
-	id: number;
-	name: string;
-	color: string;
+export type TrackerCategory<TActivity extends TrackerActivity = TrackerActivity> = Pick<
+	SelectCategory,
+	'id' | 'name' | 'color'
+> & {
 	activities: TActivity[];
-	[key: string]: unknown;
-}
+};
 
 export interface TrackerActivityRow<TActivity extends TrackerActivity = TrackerActivity> {
 	activity: TActivity;
 	categoryColor: string;
 	categoryName: string;
+}
+
+const UNCATEGORIZED_TRACKER_CATEGORY: TrackerActivityCategory = {
+	id: 0,
+	name: 'Uncategorized',
+	color: '#6B7280',
+	icon: '📂'
+};
+
+function getRepresentativeActivityCategory(
+	activity: TrackerActivity,
+	selectedCategoryIds?: ReadonlySet<number>
+): TrackerActivityCategory {
+	const matchingCategories = selectedCategoryIds
+		? activity.categories.filter((category) => selectedCategoryIds.has(category.id))
+		: activity.categories;
+
+	const candidateCategories =
+		matchingCategories.length > 0 ? matchingCategories : activity.categories;
+
+	if (candidateCategories.length === 0) {
+		return UNCATEGORIZED_TRACKER_CATEGORY;
+	}
+
+	return [...candidateCategories].sort((left, right) => {
+		const nameComparison = left.name.localeCompare(right.name);
+
+		if (nameComparison !== 0) {
+			return nameComparison;
+		}
+
+		return left.id - right.id;
+	})[0];
 }
 
 function toSelectedCategories<TCategory extends TrackerCategory>(
@@ -46,8 +67,10 @@ function toSelectedCategories<TCategory extends TrackerCategory>(
 
 function toTrackerActivityRow<TActivity extends TrackerActivity>(
 	activity: TActivity,
-	category: Pick<TrackerCategory<TActivity>, 'color' | 'name'>
+	selectedCategoryIds?: ReadonlySet<number>
 ): TrackerActivityRow<TActivity> {
+	const category = getRepresentativeActivityCategory(activity, selectedCategoryIds);
+
 	return {
 		activity,
 		categoryColor: category.color,
@@ -72,6 +95,8 @@ export function projectSelectedActivities<
 		return [];
 	}
 
+	const selectedCategoryIdSet = new Set(selectedCategories.map((category) => category.id));
+
 	if (selection.filterMode === 'AND' && selectedCategories.length > 1) {
 		let intersection = selectedCategories[0].activities;
 
@@ -82,7 +107,7 @@ export function projectSelectedActivities<
 			intersection = intersection.filter((activity) => activityIds.has(activity.id));
 		}
 
-		return intersection.map((activity) => toTrackerActivityRow(activity, selectedCategories[0]));
+		return intersection.map((activity) => toTrackerActivityRow(activity, selectedCategoryIdSet));
 	}
 
 	const activities = new Map<number, TrackerActivityRow<TActivity>>();
@@ -90,7 +115,7 @@ export function projectSelectedActivities<
 	for (const category of selectedCategories) {
 		for (const activity of category.activities) {
 			if (!activities.has(activity.id)) {
-				activities.set(activity.id, toTrackerActivityRow(activity, category));
+				activities.set(activity.id, toTrackerActivityRow(activity, selectedCategoryIdSet));
 			}
 		}
 	}
@@ -114,7 +139,7 @@ export function projectFavoriteActivities<
 				continue;
 			}
 
-			favorites.set(activity.id, toTrackerActivityRow(activity, category));
+			favorites.set(activity.id, toTrackerActivityRow(activity));
 		}
 	}
 

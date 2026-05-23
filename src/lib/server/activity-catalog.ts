@@ -15,7 +15,7 @@ export type CategoryWithActivities<TActivity extends { categories: ActivityCateg
 export const UNCATEGORIZED_ACTIVITY_CATEGORY: ActivityCategoryDetails = {
 	id: 0,
 	name: 'Uncategorized',
-	color: '#gray',
+	color: '#6B7280',
 	icon: '📂'
 };
 
