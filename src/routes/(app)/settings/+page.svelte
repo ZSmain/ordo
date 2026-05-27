@@ -1,60 +1,23 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
-	import { goto } from '$app/navigation';
-	import { logout } from '$lib/api/auth.remote';
-	import { deleteUserAccount } from '$lib/api/settings.remote';
-	import { authClient } from '$lib/auth-client';
+	import { enhance } from '$app/forms';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import ModeToggle from '$lib/components/ui/ModeToggle.svelte';
 	import { Separator } from '$lib/components/ui/separator';
 	import { LogOut, Trash2, TriangleAlert, User } from '@lucide/svelte';
+	import type { PageData } from './$types';
 
-	const session = authClient.useSession();
+	type SettingsFormData = {
+		action?: 'signOut' | 'deleteAccount';
+		message?: string;
+	};
+
+	let { data, form }: { data: PageData; form: SettingsFormData | null } = $props();
+
 	let isDeleteDialogOpen = $state(false);
-	let isDeleting = $state(false);
-	let isSigningOut = $state(false);
-	let deleteError = $state('');
-
-	async function handleSignOut() {
-		if (isSigningOut) return;
-		isSigningOut = true;
-		try {
-			const result = await logout();
-			if (result.success) {
-				goto(resolve('/login'));
-			}
-		} catch (error) {
-			console.error('Sign out error:', error);
-		} finally {
-			isSigningOut = false;
-		}
-	}
-
-	async function handleDeleteAccount() {
-		if (!$session.data?.user?.id) return;
-
-		isDeleting = true;
-		deleteError = '';
-
-		try {
-			await deleteUserAccount($session.data.user.id);
-			// Sign out and redirect after successful deletion
-			const result = await logout();
-			if (result.success) {
-				goto(resolve('/login'));
-			}
-		} catch (error) {
-			console.error('Delete account error:', error);
-			deleteError = error instanceof Error ? error.message : 'Failed to delete account';
-		} finally {
-			isDeleting = false;
-		}
-	}
 
 	function closeDeleteDialog() {
 		isDeleteDialogOpen = false;
-		deleteError = '';
 	}
 </script>
 
@@ -71,7 +34,7 @@
 		</div>
 
 		<!-- User Profile Section -->
-		{#if $session.data?.user}
+		{#if data.user}
 			<div class="rounded-lg border border-border p-4">
 				<div class="flex items-center gap-4">
 					<div
@@ -80,12 +43,10 @@
 						<User class="h-6 w-6" />
 					</div>
 					<div>
-						<h2 class="text-lg font-semibold text-foreground">
-							{$session.data.user.name || 'User'}
-						</h2>
-						<p class="text-sm text-muted-foreground">{$session.data.user.email}</p>
+						<h2 class="text-lg font-semibold text-foreground">{data.user.name || 'User'}</h2>
+						<p class="text-sm text-muted-foreground">{data.user.email}</p>
 						<p class="text-xs text-muted-foreground">
-							Member since {new Date($session.data.user.createdAt).toLocaleDateString()}
+							Member since {new Date(data.user.createdAt).toLocaleDateString()}
 						</p>
 					</div>
 				</div>
@@ -110,15 +71,22 @@
 
 		<!-- Account Actions -->
 		<div class="space-y-3">
-			<Button
-				variant="outline"
-				onclick={handleSignOut}
-				disabled={isSigningOut}
-				class="flex h-9 w-full items-center justify-center gap-2"
-			>
-				<LogOut class="h-4 w-4" />
-				{isSigningOut ? 'Signing out...' : 'Sign Out'}
-			</Button>
+			<form method="POST" action="?/signOut" use:enhance>
+				<Button
+					variant="outline"
+					type="submit"
+					class="flex h-9 w-full items-center justify-center gap-2"
+				>
+					<LogOut class="h-4 w-4" />
+					Sign Out
+				</Button>
+			</form>
+
+			{#if form?.action === 'signOut' && form.message}
+				<div class="rounded-lg bg-red-100 p-3 dark:bg-red-900/20">
+					<p class="text-sm text-red-800 dark:text-red-300">{form.message}</p>
+				</div>
+			{/if}
 
 			<Dialog.Root bind:open={isDeleteDialogOpen}>
 				<Dialog.Trigger
@@ -155,33 +123,21 @@
 								<li>• All your statistics and progress data</li>
 							</ul>
 						</div>
-						{#if deleteError}
+						{#if form?.action === 'deleteAccount' && form.message}
 							<div class="mt-4 rounded-lg bg-red-100 p-3 dark:bg-red-900/20">
-								<p class="text-sm text-red-800 dark:text-red-300">{deleteError}</p>
+								<p class="text-sm text-red-800 dark:text-red-300">{form.message}</p>
 							</div>
 						{/if}
 					</div>
-					<Dialog.Footer class="gap-2">
-						<Button variant="outline" onclick={closeDeleteDialog} disabled={isDeleting}>
-							Cancel
-						</Button>
-						<Button
-							variant="destructive"
-							onclick={handleDeleteAccount}
-							disabled={isDeleting}
-							class="flex items-center gap-2"
-						>
-							{#if isDeleting}
-								<div
-									class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
-								></div>
-								Deleting...
-							{:else}
+					<form method="POST" action="?/deleteAccount" use:enhance class="contents">
+						<Dialog.Footer class="gap-2">
+							<Button variant="outline" type="button" onclick={closeDeleteDialog}>Cancel</Button>
+							<Button variant="destructive" type="submit" class="flex items-center gap-2">
 								<Trash2 class="h-4 w-4" />
 								Delete Account
-							{/if}
-						</Button>
-					</Dialog.Footer>
+							</Button>
+						</Dialog.Footer>
+					</form>
 				</Dialog.Content>
 			</Dialog.Root>
 		</div>
