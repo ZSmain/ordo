@@ -1,4 +1,13 @@
 import { command, getRequestEvent, query } from '$app/server';
+import {
+	getCategoriesForActivityId,
+	getCategoriesForActivityIds,
+	getRepresentativeCategory,
+	groupActivitiesByCategory,
+	hydrateActivitiesWithCategories,
+	type ActivityWithCategories,
+	type CategoryWithActivities
+} from '$lib/server/activity-catalog';
 import type { InsertActivityCategory, SelectActivity, SelectCategory } from '$lib/server/db/schema';
 import {
 	activity,
@@ -8,7 +17,7 @@ import {
 	insertCategorySchema,
 	timeSession
 } from '$lib/server/db/schema';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import * as v from 'valibot';
 
 // Return all categories with their activities for the current user
@@ -16,25 +25,25 @@ export const getCategoriesWithActivities = query(
 	v.string(), // userId
 	async (userId) => {
 		const { locals } = getRequestEvent();
+		const db = locals.db;
 
 		// Get all categories for the user
-		const categories: SelectCategory[] = await locals.db
+		const categories: SelectCategory[] = await db
 			.select()
 			.from(category)
 			.where(eq(category.userId, userId))
 			.all();
 
 		const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
-
-		type ActivityWithCategories = SelectActivity & { categories: SelectCategory[] };
-		type CategoryWithActivities = SelectCategory & { activities: ActivityWithCategories[] };
+		type UserActivityWithCategories = ActivityWithCategories<SelectActivity>;
+		type UserCategoryWithActivities = CategoryWithActivities<UserActivityWithCategories>;
 
 		if (sortedCategories.length === 0) {
-			return [] as CategoryWithActivities[];
+			return [] as UserCategoryWithActivities[];
 		}
 
 		// Get all activities for the user first
-		const userActivities: SelectActivity[] = await locals.db
+		const userActivities: SelectActivity[] = await db
 			.select()
 			.from(activity)
 			.where(eq(activity.userId, userId))
@@ -43,8 +52,8 @@ export const getCategoriesWithActivities = query(
 		if (userActivities.length === 0) {
 			return sortedCategories.map((cat) => ({
 				...cat,
-				activities: [] as ActivityWithCategories[]
-			})) satisfies CategoryWithActivities[];
+				activities: [] as UserActivityWithCategories[]
+			})) satisfies UserCategoryWithActivities[];
 		}
 
 		const sortedUserActivities = [...userActivities].sort(
@@ -52,49 +61,13 @@ export const getCategoriesWithActivities = query(
 		);
 
 		const activityIds = sortedUserActivities.map((item) => item.id);
-
-		// Get all activity-category links for the fetched activities
-		const activityCategoryRows = await locals.db
-			.select({
-				activityId: activityCategory.activityId,
-				category: category
-			})
-			.from(activityCategory)
-			.leftJoin(category, eq(activityCategory.categoryId, category.id))
-			.where(inArray(activityCategory.activityId, activityIds))
-			.all();
-
-		const activityCategoryMap = new Map<number, SelectCategory[]>();
-
-		for (const row of activityCategoryRows) {
-			if (!row.category) continue;
-			const assignedCategories = activityCategoryMap.get(row.activityId) ?? [];
-			if (!assignedCategories.some((assigned) => assigned.id === row.category!.id)) {
-				assignedCategories.push(row.category);
-			}
-			activityCategoryMap.set(row.activityId, assignedCategories);
-		}
-
-		const activitiesWithCategories: ActivityWithCategories[] = sortedUserActivities.map(
-			(userActivity) => ({
-				...userActivity,
-				categories: activityCategoryMap.get(userActivity.id) ?? []
-			})
+		const categoriesByActivityId = await getCategoriesForActivityIds(db, activityIds);
+		const activitiesWithCategories = hydrateActivitiesWithCategories(
+			sortedUserActivities,
+			categoriesByActivityId
 		);
 
-		// Group activities by category
-		const categoriesWithActivities: CategoryWithActivities[] = sortedCategories.map((cat) => {
-			const categoryActivities = activitiesWithCategories.filter((activity) =>
-				activity.categories.some((c: SelectCategory) => c.id === cat.id)
-			);
-
-			return {
-				...cat,
-				activities: categoryActivities
-			};
-		});
-
-		return categoriesWithActivities;
+		return groupActivitiesByCategory(sortedCategories, activitiesWithCategories);
 	}
 );
 
@@ -120,26 +93,14 @@ export const getActiveSession = query(
 			return null;
 		}
 
-		// Then get the categories for this activity
-		const activityCategories = await db
-			.select({
-				categoryData: category
-			})
-			.from(activityCategory)
-			.leftJoin(category, eq(activityCategory.categoryId, category.id))
-			.where(eq(activityCategory.activityId, activeSession.activity.id))
-			.all();
-
-		// Use the first category if available, otherwise provide a default category
-		const categoryData =
-			activityCategories.length > 0 && activityCategories[0].categoryData
-				? activityCategories[0].categoryData
-				: { name: 'Uncategorized' };
+		const activityCategories = await getCategoriesForActivityId(db, activeSession.activity.id);
 
 		return {
 			session: activeSession.timeSession,
 			activity: activeSession.activity,
-			category: categoryData
+			category: {
+				name: getRepresentativeCategory(activityCategories).name
+			}
 		};
 	}
 );

@@ -43,7 +43,7 @@ A simple time tracking application inspired by "Simple Time Tracker" mobile appl
    DATABASE_URL=your_database_url
    # Add other required environment variables for authentication
    BETTER_AUTH_SECRET=your_better_auth_secret
-   BETTER_AUTH_URL=https://your-app-domain
+   ORIGIN=https://your-app-domain
 
    # Optional tuning for password hashing (defaults work for local dev)
    # Lower the iteration count if Cloudflare Workers report CPU limit errors

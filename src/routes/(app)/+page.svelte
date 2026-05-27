@@ -1,11 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import {
-		getActiveSession,
-		getCategoriesWithActivities,
-		startTimerSession,
-		stopTimerSession
-	} from '$lib/api/data.remote';
+	import { getCategoriesWithActivities } from '$lib/api/data.remote';
 	import {
 		ActivityList,
 		CategorySelector,
@@ -20,14 +15,17 @@
 	import { Separator } from '$lib/components/ui/separator';
 	import * as Tabs from '$lib/components/ui/tabs';
 	import {
-		restoreTimerFromDatabase,
 		selectionStore,
+		trackerSessionController,
 		timerStore,
 		trackerTabPersistedState,
 		type TrackerTab
 	} from '$lib/stores';
+	import {
+		projectFavoriteActivities,
+		projectSelectedActivities
+	} from '$lib/tracker/activity-projection';
 	import { onMount } from 'svelte';
-	import { toast } from 'svelte-sonner';
 
 	// State for create dialogs triggered from empty states
 	let showCreateCategory = $state(false);
@@ -41,80 +39,9 @@
 	const categoriesQuery = $derived(user?.id ? getCategoriesWithActivities(user.id) : null);
 
 	// Computed: selected activities from multiple categories
-	const selectedActivities = $derived.by(() => {
-		// Don't process if no categories are selected or data isn't loaded
-		const selectedIds = selectionStore.current.selectedCategoryIds;
-		const currentCategories = categoriesQuery?.current;
-		if (selectedIds.length === 0 || !currentCategories) {
-			return [];
-		}
-
-		const filterMode = selectionStore.current.filterMode;
-
-		if (filterMode === 'AND' && selectedIds.length > 1) {
-			// AND Logic: Intersection
-			// Get activities for each selected category
-			const activitiesPerCategory = selectedIds
-				.map((idStr) => {
-					const cat = currentCategories.find((c) => c.id === parseInt(idStr));
-					return cat ? { category: cat, activities: cat.activities || [] } : null;
-				})
-				.filter((item) => item !== null);
-
-			if (activitiesPerCategory.length === 0) return [];
-
-			// Start with the first category's activities
-			let intersection = activitiesPerCategory[0]!.activities;
-
-			// Filter to keep only those present in all other selected categories
-			for (let i = 1; i < activitiesPerCategory.length; i++) {
-				const currentIds = new Set(activitiesPerCategory[i]!.activities.map((a) => a.id));
-				intersection = intersection.filter((a) => currentIds.has(a.id));
-			}
-
-			// Map to result format
-			return intersection.map((activity) => {
-				// Use the first selected category as context (or any valid one)
-				const contextCategory = activitiesPerCategory[0]!.category;
-				return {
-					activity,
-					categoryColor: contextCategory.color,
-					categoryName: contextCategory.name
-				};
-			});
-		} else {
-			// OR Logic: Union (Deduplicated)
-			const activitiesMap: Record<
-				number,
-				{
-					activity: (typeof currentCategories)[0]['activities'][0];
-					categoryColor: string;
-					categoryName: string;
-				}
-			> = {};
-
-			// Iterate through all selected categories
-			for (const categoryIdStr of selectedIds) {
-				const categoryId = parseInt(categoryIdStr);
-				const category = currentCategories.find((cat) => cat.id === categoryId);
-
-				if (category && category.activities) {
-					for (const activity of category.activities) {
-						// Use activity ID as key to deduplicate
-						if (!activitiesMap[activity.id]) {
-							activitiesMap[activity.id] = {
-								activity,
-								categoryColor: category.color,
-								categoryName: category.name
-							};
-						}
-					}
-				}
-			}
-
-			return Object.values(activitiesMap);
-		}
-	});
+	const selectedActivities = $derived.by(() =>
+		projectSelectedActivities(categoriesQuery?.current, selectionStore.current)
+	);
 
 	// Handle category selection changes
 	function handleCategorySelection(categoryId: string) {
@@ -130,162 +57,34 @@
 		selectionStore.reset();
 	}
 
-	// Start timer function with optimistic update
-	function startTimer(activityId: number, categoryName: string, activityName: string) {
+	function stopTimer() {
 		if (!user?.id) return;
 
-		// Optimistically update the timer store immediately
-		// Use a temporary session ID (-1) until the server responds
-		timerStore.startTimer(categoryName, activityName, activityId, -1);
-
-		// Start session in database with optimistic update on getActiveSession
-		startTimerSession({ activityId, userId: user.id })
-			.updates(
-				getActiveSession(user.id).withOverride(() => ({
-					session: {
-						id: -1,
-						activityId,
-						userId: user.id,
-						startedAt: new Date(),
-						stoppedAt: null,
-						duration: null,
-						notes: null,
-						isActive: true,
-						createdAt: new Date(),
-						updatedAt: new Date()
-					},
-					activity: { id: activityId, name: activityName, icon: '⏱️', userId: user.id },
-					category: { name: categoryName }
-				}))
-			)
-			.then(async (sessionPromise) => {
-				const session = await sessionPromise;
-				// Update the timer store with the real session ID once server responds
-				timerStore.updateSessionId(session.id);
-			})
-			.catch((error) => {
-				// Check for SvelteKit redirects (e.g., authentication issues)
-				if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
-					throw error; // Re-throw redirect objects
-				}
-
-				console.error('Failed to start timer session:', error);
-				// Rollback the optimistic update
-				timerStore.stopTimer();
-				toast.error('Failed to start timer. Please check your connection and try again.');
-			});
-	}
-
-	// Stop timer function with optimistic update
-	function stopTimer() {
-		const currentSessionId = timerStore.current.sessionId;
-		const currentUserId = user?.id;
-
-		// Optimistically stop the timer immediately
-		timerStore.stopTimer();
-
-		// Stop session in database if we have a valid session ID
-		if (currentSessionId && currentSessionId > 0 && currentUserId) {
-			stopTimerSession({ sessionId: currentSessionId, userId: currentUserId })
-				.updates(getActiveSession(currentUserId).withOverride(() => null))
-				.catch((error) => {
-					// Check for SvelteKit redirects (e.g., authentication issues)
-					if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
-						throw error; // Re-throw redirect objects
-					}
-
-					console.error('Failed to stop timer session:', error);
-					toast.error('Failed to stop timer on server. The timer was cleared locally.');
-				});
-		}
+		void trackerSessionController.stop(user.id);
 	}
 
 	// Handle activity selection
 	function handleActivitySelect(activityId: number, categoryName: string, activityName: string) {
 		if (!user?.id) return;
 
-		// Check if this is the currently running activity (toggle behavior)
-		if (timerStore.current.isActive && timerStore.current.activityId === activityId) {
-			stopTimer();
-			return;
-		}
-
-		if (timerStore.current.isActive) {
-			stopTimer();
-		}
-
-		startTimer(activityId, categoryName, activityName);
-	}
-
-	// Sync timer state with database
-	async function syncTimerWithDatabase() {
-		if (!user?.id) return;
-
-		try {
-			const activeSession = await getActiveSession(user.id).run();
-
-			if (activeSession) {
-				const dbTimerState = restoreTimerFromDatabase(activeSession);
-
-				// Update if different
-				if (
-					!timerStore.current.isActive ||
-					timerStore.current.sessionId !== dbTimerState.sessionId
-				) {
-					timerStore.set(dbTimerState);
-					console.log('Tab sync: Timer updated from database');
-				}
-			} else if (timerStore.current.isActive) {
-				// Timer running locally but not in database - was stopped elsewhere
-				timerStore.stopTimer();
-				console.log('Tab sync: Timer stopped - session ended elsewhere');
-			}
-		} catch (error) {
-			console.error('Failed to sync timer:', error);
-		}
+		void trackerSessionController.toggle({
+			userId: user.id,
+			activityId,
+			categoryName,
+			activityName
+		});
 	}
 
 	function handleVisibilityChange() {
 		if (document.visibilityState === 'visible' && user?.id) {
-			syncTimerWithDatabase();
+			void trackerSessionController.reconcile(user.id);
 		}
 	}
 
-	// Restore timer session on mount
 	onMount(() => {
-		// Initial timer sync
-		(async () => {
-			if (!user?.id) return;
-
-			try {
-				// Check the database for any active session
-				const activeSession = await getActiveSession(user.id);
-
-				if (activeSession) {
-					// Check if the persisted timer state matches the database session
-					const dbTimerState = restoreTimerFromDatabase(activeSession);
-
-					// Only update if the database session is different from persisted state
-					// This handles cases where the session was stopped on another device
-					if (
-						!timerStore.current.isActive ||
-						timerStore.current.sessionId !== dbTimerState.sessionId ||
-						timerStore.current.activityId !== dbTimerState.activityId
-					) {
-						timerStore.set(dbTimerState);
-						console.log('Synced timer with database:', dbTimerState);
-					} else {
-						console.log('Timer state already in sync with database');
-					}
-				} else if (timerStore.current.isActive) {
-					// No active session in database, clear any persisted timer state
-					timerStore.stopTimer();
-					console.log('Cleared stale timer state - no active session in database');
-				}
-			} catch (error) {
-				console.error('Failed to restore timer session:', error);
-			}
-		})();
+		if (user?.id) {
+			void trackerSessionController.reconcile(user.id);
+		}
 	});
 
 	$effect(() => {
@@ -300,33 +99,7 @@
 		}
 	});
 
-	const favoriteActivities = $derived.by(() => {
-		const currentCategories = categoriesQuery?.current;
-		if (!currentCategories) return [];
-
-		const favoritesMap: Record<
-			number,
-			{
-				activity: (typeof currentCategories)[0]['activities'][0];
-				categoryColor: string;
-				categoryName: string;
-			}
-		> = {};
-
-		for (const category of currentCategories) {
-			for (const activity of category.activities) {
-				if (activity.archived || !activity.favorite || favoritesMap[activity.id]) continue;
-
-				favoritesMap[activity.id] = {
-					activity,
-					categoryColor: category.color,
-					categoryName: category.name
-				};
-			}
-		}
-
-		return Object.values(favoritesMap).sort((a, b) => a.activity.name.localeCompare(b.activity.name));
-	});
+	const favoriteActivities = $derived.by(() => projectFavoriteActivities(categoriesQuery?.current));
 
 	// Check if there are any non-archived activities in selected categories
 	const hasActivitiesInSelection = $derived(

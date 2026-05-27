@@ -1,4 +1,5 @@
 import { command, getRequestEvent } from '$app/server';
+import type { DrizzleClient } from '$lib/server/db';
 import {
 	account,
 	activity,
@@ -11,6 +12,8 @@ import {
 import { eq } from 'drizzle-orm';
 import * as v from 'valibot';
 
+type TransactionClient = Parameters<Parameters<DrizzleClient['transaction']>[0]>[0];
+
 // Delete user account and all associated data
 export const deleteUserAccount = command(
 	v.string(), // userId
@@ -20,7 +23,7 @@ export const deleteUserAccount = command(
 
 		try {
 			// Start a transaction to delete all user data in the correct order
-			await db.transaction(async (tx) => {
+			await db.transaction(async (tx: TransactionClient) => {
 				// Delete time sessions (must be deleted first due to foreign key constraints)
 				await tx.delete(timeSession).where(eq(timeSession.userId, userId));
 

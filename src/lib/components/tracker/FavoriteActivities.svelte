@@ -1,18 +1,12 @@
 <script lang="ts">
 	import { Input } from '$lib/components/ui/input';
 	import { Separator } from '$lib/components/ui/separator';
-	import type { SelectActivity } from '$lib/server/db/schema';
+	import type { TrackerActivityRow } from '$lib/tracker/activity-projection';
 	import { Search, Star, X } from '@lucide/svelte';
 	import ActivityCard from './ActivityCard.svelte';
 
-	interface ActivityWithContext {
-		activity: SelectActivity;
-		categoryColor: string;
-		categoryName: string;
-	}
-
 	interface Props {
-		activities: ActivityWithContext[];
+		activities: TrackerActivityRow[];
 		onActivitySelect?: (activityId: number, categoryName: string, activityName: string) => void;
 		userId?: string;
 		currentActivityId?: number | null;
@@ -54,7 +48,9 @@
 <div class="mt-4 space-y-3">
 	<div class="flex items-center justify-between gap-2">
 		<div class="flex items-start gap-2">
-			<div class="rounded-full bg-amber-100 p-2 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
+			<div
+				class="rounded-full bg-amber-100 p-2 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
+			>
 				<Star class="h-4 w-4 fill-current" />
 			</div>
 			<div>
@@ -62,7 +58,9 @@
 				<p class="text-sm text-muted-foreground">Quick access to your most-used activities</p>
 			</div>
 		</div>
-		<span class="text-xs text-muted-foreground">{visibleFavorites.length} of {allFavorites.length}</span>
+		<span class="text-xs text-muted-foreground"
+			>{visibleFavorites.length} of {allFavorites.length}</span
+		>
 	</div>
 
 	{#if allFavorites.length > 0}
@@ -98,11 +96,7 @@
 	{:else if visibleFavorites.length === 0}
 		<div class="py-6 text-center">
 			<p class="text-sm text-muted-foreground">No favorites match "{searchQuery}"</p>
-			<button
-				type="button"
-				onclick={clearSearch}
-				class="mt-2 text-sm text-primary hover:underline"
-			>
+			<button type="button" onclick={clearSearch} class="mt-2 text-sm text-primary hover:underline">
 				Clear search
 			</button>
 		</div>
