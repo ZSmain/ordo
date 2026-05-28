@@ -333,7 +333,10 @@ export const getActivityStatistics = query(
 		}
 
 		// Calculate aggregated chart data based on granularity
-		const chartDataMap: Record<string, { label: string; duration: number; sortKey: string }> = {};
+		const chartDataMap: Record<
+			string,
+			{ label: string; duration: number; sortKey: string; bucketKey: string }
+		> = {};
 
 		sessions.forEach((session: (typeof sessions)[number]) => {
 			const date = new Date(session.startedAt);
@@ -388,7 +391,7 @@ export const getActivityStatistics = query(
 			}
 
 			if (!chartDataMap[key]) {
-				chartDataMap[key] = { label, duration: 0, sortKey };
+				chartDataMap[key] = { label, duration: 0, sortKey, bucketKey: key };
 			}
 			chartDataMap[key].duration += session.duration || 0;
 		});
@@ -396,7 +399,7 @@ export const getActivityStatistics = query(
 		// Convert to sorted array (only entries with data)
 		const chartData = Object.values(chartDataMap)
 			.sort((a, b) => a.sortKey.localeCompare(b.sortKey))
-			.map(({ label, duration }) => ({ label, duration }));
+			.map(({ label, duration, bucketKey }) => ({ label, duration, bucketKey }));
 
 		// Calculate statistics
 		const durations = sessions
