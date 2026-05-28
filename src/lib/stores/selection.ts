@@ -78,6 +78,22 @@ function createSelectionStore() {
 			selectionPersistedState.current = value;
 		},
 
+		setSelectedCategories: (selectedCategoryIds: string[]) => {
+			const current = selectionPersistedState.current;
+			const normalizedSelectedCategoryIds = [...new Set(selectedCategoryIds)];
+
+			selectionPersistedState.current = {
+				...current,
+				selectedCategoryIds: normalizedSelectedCategoryIds,
+				filterMode:
+					normalizedSelectedCategoryIds.length > current.selectedCategoryIds.length &&
+					normalizedSelectedCategoryIds.length > 1 &&
+					current.filterMode === 'OR'
+						? 'AND'
+						: current.filterMode
+			};
+		},
+
 		toggleCategory: (categoryId: string) => {
 			const current = selectionPersistedState.current;
 			const isSelected = current.selectedCategoryIds.includes(categoryId);

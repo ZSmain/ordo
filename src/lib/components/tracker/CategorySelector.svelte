@@ -2,13 +2,13 @@
 	import { deleteCategory } from '$lib/api/data.remote';
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent } from '$lib/components/ui/card';
-	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as ContextMenu from '$lib/components/ui/context-menu';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Field from '$lib/components/ui/field';
 	import { Label } from '$lib/components/ui/label';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Switch } from '$lib/components/ui/switch';
+	import { ToggleGroup, ToggleGroupItem } from '$lib/components/ui/toggle-group';
 	import type { Category } from '$lib/types';
 	import { PencilLine, Trash2, X } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
@@ -22,7 +22,7 @@
 		onClearSelection?: () => void;
 		loading?: boolean;
 		error?: Error | null;
-		onCategoryChange?: (categoryId: string) => void;
+		onSelectedCategoryIdsChange?: (categoryIds: string[]) => void;
 		userId?: string;
 	}
 
@@ -34,7 +34,7 @@
 		onClearSelection,
 		loading = false,
 		error = null,
-		onCategoryChange,
+		onSelectedCategoryIdsChange,
 		userId = ''
 	}: Props = $props();
 
@@ -44,9 +44,8 @@
 	let categoryToDelete = $state<Category | null>(null);
 	let isDeleting = $state(false);
 
-	// Handle category selection
-	function handleCategoryChange(value: string) {
-		onCategoryChange?.(value);
+	function handleSelectedCategoryIdsChange(categoryIds: string[]) {
+		onSelectedCategoryIdsChange?.(categoryIds);
 	}
 
 	function handleClearSelection() {
@@ -159,31 +158,28 @@
 									</div>
 								{/if}
 							</div>
-							<Field.Group class="flex flex-row flex-wrap gap-2 [--radius:9999rem]">
+							<ToggleGroup
+								type="multiple"
+								value={selectedCategoryIds}
+								onValueChange={handleSelectedCategoryIdsChange}
+								aria-label="Categories"
+								class="flex w-full flex-row flex-wrap gap-2 rounded-none"
+							>
 								{#each categories as category, index (category.id + '-' + index)}
 									<ContextMenu.Root>
 										<ContextMenu.Trigger>
-											<Field.Label for={String(category.id)} class="w-fit! cursor-pointer">
-												<Field.Field
-													orientation="horizontal"
-													class="gap-1.5 overflow-hidden rounded-full px-3! py-1.5! transition-all duration-100 ease-linear group-has-data-[state=checked]/field-label:px-2!"
-													style="background-color: {isSelected(category.id)
-														? category.color + '40'
-														: category.color + '10'}"
-												>
-													<Checkbox
-														value={String(category.id)}
-														id={String(category.id)}
-														checked={isSelected(category.id)}
-														onCheckedChange={() => handleCategoryChange(String(category.id))}
-														class="-ms-6 -translate-x-1 rounded-full transition-all duration-100 ease-linear data-[state=checked]:ms-0 data-[state=checked]:translate-x-0"
-													/>
-													<div class="flex items-center gap-1.5">
-														<span class="text-sm">{category.icon}</span>
-														<Field.Title class="text-nowrap">{category.name}</Field.Title>
-													</div>
-												</Field.Field>
-											</Field.Label>
+											<ToggleGroupItem
+												value={String(category.id)}
+												class="h-auto rounded-full border-0 px-3 py-1.5 text-sm font-normal shadow-none transition-all duration-100 ease-linear"
+												style="background-color: {isSelected(category.id)
+													? category.color + '40'
+													: category.color + '10'}"
+											>
+												<div class="flex items-center gap-1.5">
+													<span class="text-sm">{category.icon}</span>
+													<span class="text-nowrap">{category.name}</span>
+												</div>
+											</ToggleGroupItem>
 										</ContextMenu.Trigger>
 										<ContextMenu.Content>
 											<ContextMenu.Item onclick={() => handleModifyCategory(category)}>
@@ -201,7 +197,7 @@
 										</ContextMenu.Content>
 									</ContextMenu.Root>
 								{/each}
-							</Field.Group>
+							</ToggleGroup>
 						</Field.Set>
 					</Field.Group>
 				</form>

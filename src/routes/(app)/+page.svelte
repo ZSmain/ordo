@@ -44,8 +44,8 @@
 	);
 
 	// Handle category selection changes
-	function handleCategorySelection(categoryId: string) {
-		selectionStore.toggleCategory(categoryId);
+	function handleCategorySelectionChange(categoryIds: string[]) {
+		selectionStore.setSelectedCategories(categoryIds);
 	}
 
 	// Handle filter mode changes
@@ -149,7 +149,7 @@
 					filterMode={selectionStore.current.filterMode}
 					onFilterModeChange={handleFilterModeChange}
 					onClearSelection={handleClearCategorySelection}
-					onCategoryChange={handleCategorySelection}
+					onSelectedCategoryIdsChange={handleCategorySelectionChange}
 					loading={categoriesQuery?.loading || false}
 					error={categoriesQuery?.error}
 					userId={user?.id || ''}
