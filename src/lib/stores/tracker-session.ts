@@ -81,7 +81,7 @@ function isSameTimerState(nextState: TimerState) {
 	);
 }
 
-async function resolveSessionIdForStop(previousState: TimerState, userId: string) {
+async function resolveSessionIdForStop(previousState: TimerState) {
 	if (previousState.sessionId && previousState.sessionId > 0) {
 		return previousState.sessionId;
 	}
@@ -90,7 +90,7 @@ async function resolveSessionIdForStop(previousState: TimerState, userId: string
 		return null;
 	}
 
-	const activeSession = await getActiveSession(userId).run();
+	const activeSession = await getActiveSession();
 
 	if (!activeSession || activeSession.activity.id !== previousState.activityId) {
 		return null;
@@ -99,11 +99,11 @@ async function resolveSessionIdForStop(previousState: TimerState, userId: string
 	return activeSession.session.id;
 }
 
-async function reconcile(userId: string) {
+async function reconcile() {
 	await mutationChain.catch(() => undefined);
 
 	try {
-		const activeSession = await getActiveSession(userId).run();
+		const activeSession = await getActiveSession();
 
 		if (activeSession) {
 			const nextState = restoreTimerFromDatabase(activeSession);
@@ -131,11 +131,8 @@ async function start(input: TrackerSessionInput) {
 
 	return queueMutation(async () => {
 		try {
-			const session = await startTimerSession({
-				activityId: input.activityId,
-				userId: input.userId
-			}).updates(
-				getActiveSession(input.userId).withOverride(() => createOptimisticActiveSession(input))
+			const session = await startTimerSession({ activityId: input.activityId }).updates(
+				getActiveSession().withOverride(() => createOptimisticActiveSession(input))
 			);
 
 			if (isCurrentOperation(operationId)) {
@@ -156,7 +153,7 @@ async function start(input: TrackerSessionInput) {
 	});
 }
 
-async function stop(userId: string) {
+async function stop() {
 	const operationId = nextOperationId();
 	const previousState = snapshotTimerState();
 
@@ -167,16 +164,14 @@ async function stop(userId: string) {
 	}
 
 	return queueMutation(async () => {
-		const sessionId = await resolveSessionIdForStop(previousState, userId);
+		const sessionId = await resolveSessionIdForStop(previousState);
 
 		if (!sessionId || sessionId <= 0) {
 			return;
 		}
 
 		try {
-			await stopTimerSession({ sessionId, userId }).updates(
-				getActiveSession(userId).withOverride(() => null)
-			);
+			await stopTimerSession({ sessionId }).updates(getActiveSession().withOverride(() => null));
 		} catch (error) {
 			if (isRedirect(error)) {
 				throw error;
@@ -194,7 +189,7 @@ async function stop(userId: string) {
 
 async function toggle(input: TrackerSessionInput) {
 	if (timerStore.current.isActive && timerStore.current.activityId === input.activityId) {
-		return stop(input.userId);
+		return stop();
 	}
 
 	return start(input);

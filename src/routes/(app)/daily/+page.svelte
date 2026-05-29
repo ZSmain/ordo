@@ -20,7 +20,7 @@
 	const sessionsQuery = $derived.by(() => {
 		if (!data.user) return null;
 		const dateStr = formatDateForAPI(selectedDateValue);
-		return getSessionsForDate({ userId: data.user.id, date: dateStr });
+		return getSessionsForDate({ date: dateStr });
 	});
 
 	// Convert DateValue to JS Date for display formatting

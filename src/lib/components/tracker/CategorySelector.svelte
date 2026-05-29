@@ -77,10 +77,7 @@
 		const categoryName = categoryToDelete.name;
 
 		try {
-			await deleteCategory({
-				id: categoryToDelete.id,
-				userId
-			});
+			await deleteCategory({ id: categoryToDelete.id });
 
 			toast.success(`"${categoryName}" deleted`);
 			deleteDialogOpen = false;
@@ -216,7 +213,7 @@
 
 <!-- Delete Category Confirmation Dialog -->
 <Dialog.Root bind:open={deleteDialogOpen}>
-	<Dialog.Content class="sm:max-w-[425px]">
+	<Dialog.Content class="sm:max-w-106.25">
 		<Dialog.Header>
 			<Dialog.Title>Delete Category</Dialog.Title>
 			<Dialog.Description>

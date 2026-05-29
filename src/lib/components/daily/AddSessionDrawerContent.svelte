@@ -47,7 +47,7 @@
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 
-	const activitiesQuery = $derived(userId ? getActivitiesForUser({ userId }) : null);
+	const activitiesQuery = $derived(userId ? getActivitiesForUser() : null);
 
 	function calendarDateToJSDate(calendarDate: CalendarDate, timeStr: string): Date {
 		const [hours, minutes] = timeStr.split(':').map(Number);
@@ -117,7 +117,6 @@
 
 			await createManualSession({
 				activityId: parseInt(selectedActivityId),
-				userId,
 				startedAt: startDateTime.toISOString(),
 				stoppedAt: endDateTime.toISOString(),
 				notes: notes.trim() || undefined

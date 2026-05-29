@@ -67,8 +67,7 @@
 		try {
 			await setActivityFavorite({
 				id: activity.id,
-				favorite: nextFavoriteState,
-				userId
+				favorite: nextFavoriteState
 			});
 
 			toast.success(
@@ -94,8 +93,7 @@
 		try {
 			await archiveActivity({
 				id: activity.id,
-				archived: !activity.archived,
-				userId
+				archived: !activity.archived
 			});
 
 			toast.success(`"${activity.name}" ${actionName}`);
@@ -116,10 +114,7 @@
 		const activityName = activity.name;
 
 		try {
-			await deleteActivity({
-				id: activity.id,
-				userId
-			});
+			await deleteActivity({ id: activity.id });
 
 			toast.success(`"${activityName}" deleted`);
 			deleteDialogOpen = false;
@@ -215,7 +210,7 @@
 
 <!-- Archive Confirmation Dialog -->
 <Dialog.Root bind:open={archiveDialogOpen}>
-	<Dialog.Content class="sm:max-w-[425px]">
+	<Dialog.Content class="sm:max-w-106.25">
 		<Dialog.Header>
 			<Dialog.Title>{activity.archived ? 'Unarchive' : 'Archive'} Activity</Dialog.Title>
 			<Dialog.Description>
@@ -242,7 +237,7 @@
 
 <!-- Delete Confirmation Dialog -->
 <Dialog.Root bind:open={deleteDialogOpen}>
-	<Dialog.Content class="sm:max-w-[425px]">
+	<Dialog.Content class="sm:max-w-106.25">
 		<Dialog.Header>
 			<Dialog.Title>Delete Activity</Dialog.Title>
 			<Dialog.Description>

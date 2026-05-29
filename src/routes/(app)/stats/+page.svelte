@@ -92,7 +92,6 @@
 		const startDate = getPeriodStart(selectedDate, selectedPeriod);
 		const endDate = getPeriodEnd(selectedDate, selectedPeriod);
 		return {
-			userId: data.user.id,
 			startDate: formatDateForAPI(startDate),
 			endDate: formatDateForAPI(endDate)
 		};

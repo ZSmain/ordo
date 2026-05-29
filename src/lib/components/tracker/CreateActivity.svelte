@@ -42,7 +42,7 @@
 	let isPending = $state(false);
 
 	// Get categories for selection
-	const categoriesQuery = $derived.by(() => getCategoriesWithActivities(userId));
+	const categoriesQuery = $derived.by(() => getCategoriesWithActivities());
 
 	// Convert categories to Select format
 	let selectCategories = $derived.by(() => {
@@ -61,7 +61,6 @@
 			const activityData = {
 				name: activityForm.name.trim(),
 				icon: activityForm.icon,
-				userId,
 				...(activityForm.dailyGoal && { dailyGoal: activityForm.dailyGoal }),
 				...(activityForm.weeklyGoal && { weeklyGoal: activityForm.weeklyGoal }),
 				...(activityForm.monthlyGoal && { monthlyGoal: activityForm.monthlyGoal }),

@@ -66,8 +66,7 @@
 				id: category.id,
 				name: categoryForm.name.trim(),
 				color: categoryForm.color,
-				icon: categoryForm.icon,
-				userId
+				icon: categoryForm.icon
 			});
 
 			// Close drawer
