@@ -210,7 +210,7 @@
 
 <!-- Archive Confirmation Dialog -->
 <Dialog.Root bind:open={archiveDialogOpen}>
-	<Dialog.Content class="sm:max-w-[425px]">
+	<Dialog.Content class="sm:max-w-106.25">
 		<Dialog.Header>
 			<Dialog.Title>{activity.archived ? 'Unarchive' : 'Archive'} Activity</Dialog.Title>
 			<Dialog.Description>
@@ -237,7 +237,7 @@
 
 <!-- Delete Confirmation Dialog -->
 <Dialog.Root bind:open={deleteDialogOpen}>
-	<Dialog.Content class="sm:max-w-[425px]">
+	<Dialog.Content class="sm:max-w-106.25">
 		<Dialog.Header>
 			<Dialog.Title>Delete Activity</Dialog.Title>
 			<Dialog.Description>
