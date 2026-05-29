@@ -75,8 +75,7 @@
 			error = null;
 
 			await deleteSession({
-				sessionId: session.id,
-				userId
+				sessionId: session.id
 			});
 
 			toast.success('Session deleted');

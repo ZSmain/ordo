@@ -236,7 +236,6 @@
 
 		const { startDate, endDate } = getDateRange(selectedPeriod);
 		return getActivityStatistics({
-			userId,
 			activityId: activity.id,
 			startDate,
 			endDate,
@@ -248,7 +247,6 @@
 		if (!open || !activity) return null;
 
 		return getActivityStatistics({
-			userId,
 			activityId: activity.id,
 			granularity: 'monthly'
 		});
@@ -258,7 +256,6 @@
 		if (!open || !activity) return null;
 
 		return getActivityStatistics({
-			userId,
 			activityId: activity.id,
 			startDate: calendarYearStartKey,
 			endDate: calendarYearTodayKey,

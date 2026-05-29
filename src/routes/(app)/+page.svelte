@@ -35,8 +35,8 @@
 	// Get user from page data
 	const user = $derived(page.data?.user);
 
-	// Query system caches by arguments, so same user.id returns cached instance
-	const categoriesQuery = $derived(user?.id ? getCategoriesWithActivities(user.id) : null);
+	// Guard the remote query behind authenticated page data
+	const categoriesQuery = $derived(user ? getCategoriesWithActivities() : null);
 
 	// Computed: selected activities from multiple categories
 	const selectedActivities = $derived.by(() =>

@@ -77,10 +77,7 @@
 		const categoryName = categoryToDelete.name;
 
 		try {
-			await deleteCategory({
-				id: categoryToDelete.id,
-				userId
-			});
+			await deleteCategory({ id: categoryToDelete.id });
 
 			toast.success(`"${categoryName}" deleted`);
 			deleteDialogOpen = false;

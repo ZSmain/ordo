@@ -67,8 +67,7 @@
 		try {
 			await setActivityFavorite({
 				id: activity.id,
-				favorite: nextFavoriteState,
-				userId
+				favorite: nextFavoriteState
 			});
 
 			toast.success(
@@ -94,8 +93,7 @@
 		try {
 			await archiveActivity({
 				id: activity.id,
-				archived: !activity.archived,
-				userId
+				archived: !activity.archived
 			});
 
 			toast.success(`"${activity.name}" ${actionName}`);
@@ -116,10 +114,7 @@
 		const activityName = activity.name;
 
 		try {
-			await deleteActivity({
-				id: activity.id,
-				userId
-			});
+			await deleteActivity({ id: activity.id });
 
 			toast.success(`"${activityName}" deleted`);
 			deleteDialogOpen = false;

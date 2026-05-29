@@ -1,22 +1,22 @@
-import { getRequestEvent, query } from '$app/server';
+import { query } from '$app/server';
 import {
 	getCategoriesForActivityId,
 	getCategoriesForActivityIds,
 	getRepresentativeCategory
 } from '$lib/server/activity-catalog';
+import { getRemoteContext } from '$lib/server/remote';
 import { activity, activityCategory, category, timeSession } from '$lib/server/db/schema';
 import { and, eq, gte, isNotNull, lt, sql, sum } from 'drizzle-orm';
 import * as v from 'valibot';
 
 export const getCategoryStats = query(
 	v.object({
-		userId: v.string(),
 		startDate: v.string(),
 		endDate: v.string()
 	}),
-	async ({ userId, startDate, endDate }) => {
-		const { locals } = getRequestEvent();
-		const db = locals.db;
+	async ({ startDate, endDate }) => {
+		const { db, user } = getRemoteContext();
+		const userId = user.id;
 
 		const start = new Date(startDate + 'T00:00:00.000Z');
 		const end = new Date(endDate + 'T23:59:59.999Z');
@@ -105,13 +105,12 @@ export const getCategoryStats = query(
 
 export const getActivityStats = query(
 	v.object({
-		userId: v.string(),
 		startDate: v.string(),
 		endDate: v.string()
 	}),
-	async ({ userId, startDate, endDate }) => {
-		const { locals } = getRequestEvent();
-		const db = locals.db;
+	async ({ startDate, endDate }) => {
+		const { db, user } = getRemoteContext();
+		const userId = user.id;
 
 		const start = new Date(startDate + 'T00:00:00.000Z');
 		const end = new Date(endDate + 'T23:59:59.999Z');
@@ -176,13 +175,12 @@ export const getActivityStats = query(
 
 export const getOverviewStats = query(
 	v.object({
-		userId: v.string(),
 		startDate: v.string(),
 		endDate: v.string()
 	}),
-	async ({ userId, startDate, endDate }) => {
-		const { locals } = getRequestEvent();
-		const db = locals.db;
+	async ({ startDate, endDate }) => {
+		const { db, user } = getRemoteContext();
+		const userId = user.id;
 
 		const start = new Date(startDate + 'T00:00:00.000Z');
 		const end = new Date(endDate + 'T23:59:59.999Z');
@@ -219,14 +217,13 @@ export const getOverviewStats = query(
 
 export const getSessionsForActivity = query(
 	v.object({
-		userId: v.string(),
 		activityId: v.number(),
 		startDate: v.string(),
 		endDate: v.string()
 	}),
-	async ({ userId, activityId, startDate, endDate }) => {
-		const { locals } = getRequestEvent();
-		const db = locals.db;
+	async ({ activityId, startDate, endDate }) => {
+		const { db, user } = getRemoteContext();
+		const userId = user.id;
 
 		const start = new Date(startDate + 'T00:00:00.000Z');
 		const end = new Date(endDate + 'T23:59:59.999Z');
@@ -278,15 +275,14 @@ export const getSessionsForActivity = query(
 
 export const getActivityStatistics = query(
 	v.object({
-		userId: v.string(),
 		activityId: v.number(),
 		startDate: v.optional(v.string()),
 		endDate: v.optional(v.string()),
 		granularity: v.picklist(['daily', 'weekly', 'monthly'])
 	}),
-	async ({ userId, activityId, startDate, endDate, granularity }) => {
-		const { locals } = getRequestEvent();
-		const db = locals.db;
+	async ({ activityId, startDate, endDate, granularity }) => {
+		const { db, user } = getRemoteContext();
+		const userId = user.id;
 
 		// Build date filters - if no dates provided, get all sessions
 		const dateFilters = [];

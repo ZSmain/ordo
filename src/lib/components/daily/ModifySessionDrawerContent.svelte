@@ -109,7 +109,6 @@
 
 			await updateSession({
 				sessionId: session.id,
-				userId,
 				startedAt: startDateTime.toISOString(),
 				stoppedAt: endDateTime.toISOString()
 			});

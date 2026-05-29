@@ -53,11 +53,10 @@
 
 		isPending = true;
 		try {
-			const categoryData: InsertCategory = {
+			const categoryData: Omit<InsertCategory, 'userId'> = {
 				name: categoryForm.name.trim(),
 				color: categoryForm.color,
-				icon: categoryForm.icon,
-				userId
+				icon: categoryForm.icon
 			};
 
 			await createCategory(categoryData);

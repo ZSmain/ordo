@@ -1,4 +1,5 @@
-import { command, getRequestEvent, query } from '$app/server';
+import { command, query, requested } from '$app/server';
+import { error } from '@sveltejs/kit';
 import {
 	getCategoriesForActivityId,
 	getCategoriesForActivityIds,
@@ -8,6 +9,7 @@ import {
 	type ActivityWithCategories,
 	type CategoryWithActivities
 } from '$lib/server/activity-catalog';
+import { getRemoteContext } from '$lib/server/remote';
 import type { InsertActivityCategory, SelectActivity, SelectCategory } from '$lib/server/db/schema';
 import {
 	activity,
@@ -17,103 +19,140 @@ import {
 	insertCategorySchema,
 	timeSession
 } from '$lib/server/db/schema';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import * as v from 'valibot';
 
-// Return all categories with their activities for the current user
-export const getCategoriesWithActivities = query(
-	v.string(), // userId
-	async (userId) => {
-		const { locals } = getRequestEvent();
-		const db = locals.db;
+const { ...insertCategoryEntries } = insertCategorySchema.entries;
+const { ...insertActivityEntries } = insertActivitySchema.entries;
 
-		// Get all categories for the user
-		const categories: SelectCategory[] = await db
-			.select()
-			.from(category)
-			.where(eq(category.userId, userId))
-			.all();
+async function ensureActivityBelongsToUser(
+	db: ReturnType<typeof getRemoteContext>['db'],
+	userId: string,
+	activityId: number
+) {
+	const existingActivity = await db
+		.select({ id: activity.id })
+		.from(activity)
+		.where(and(eq(activity.id, activityId), eq(activity.userId, userId)))
+		.get();
 
-		const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
-		type UserActivityWithCategories = ActivityWithCategories<SelectActivity>;
-		type UserCategoryWithActivities = CategoryWithActivities<UserActivityWithCategories>;
-
-		if (sortedCategories.length === 0) {
-			return [] as UserCategoryWithActivities[];
-		}
-
-		// Get all activities for the user first
-		const userActivities: SelectActivity[] = await db
-			.select()
-			.from(activity)
-			.where(eq(activity.userId, userId))
-			.all();
-
-		if (userActivities.length === 0) {
-			return sortedCategories.map((cat) => ({
-				...cat,
-				activities: [] as UserActivityWithCategories[]
-			})) satisfies UserCategoryWithActivities[];
-		}
-
-		const sortedUserActivities = [...userActivities].sort(
-			(a, b) => Number(b.favorite) - Number(a.favorite) || a.name.localeCompare(b.name)
-		);
-
-		const activityIds = sortedUserActivities.map((item) => item.id);
-		const categoriesByActivityId = await getCategoriesForActivityIds(db, activityIds);
-		const activitiesWithCategories = hydrateActivitiesWithCategories(
-			sortedUserActivities,
-			categoriesByActivityId
-		);
-
-		return groupActivitiesByCategory(sortedCategories, activitiesWithCategories);
+	if (!existingActivity) {
+		error(404, 'Activity not found');
 	}
-);
+}
+
+async function ensureCategoriesBelongToUser(
+	db: ReturnType<typeof getRemoteContext>['db'],
+	userId: string,
+	categoryIds: number[]
+) {
+	if (categoryIds.length === 0) {
+		return [] as number[];
+	}
+
+	const uniqueCategoryIds = [...new Set(categoryIds)];
+	const existingCategories = await db
+		.select({ id: category.id })
+		.from(category)
+		.where(and(eq(category.userId, userId), inArray(category.id, uniqueCategoryIds)))
+		.all();
+
+	if (existingCategories.length !== uniqueCategoryIds.length) {
+		error(404, 'One or more categories were not found');
+	}
+
+	return uniqueCategoryIds;
+}
+
+// Return all categories with their activities for the current user
+export const getCategoriesWithActivities = query(async () => {
+	const { db, user } = getRemoteContext();
+	const userId = user.id;
+
+	// Get all categories for the user
+	const categories: SelectCategory[] = await db
+		.select()
+		.from(category)
+		.where(eq(category.userId, userId))
+		.all();
+
+	const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
+	type UserActivityWithCategories = ActivityWithCategories<SelectActivity>;
+	type UserCategoryWithActivities = CategoryWithActivities<UserActivityWithCategories>;
+
+	if (sortedCategories.length === 0) {
+		return [] as UserCategoryWithActivities[];
+	}
+
+	// Get all activities for the user first
+	const userActivities: SelectActivity[] = await db
+		.select()
+		.from(activity)
+		.where(eq(activity.userId, userId))
+		.all();
+
+	if (userActivities.length === 0) {
+		return sortedCategories.map((cat) => ({
+			...cat,
+			activities: [] as UserActivityWithCategories[]
+		})) satisfies UserCategoryWithActivities[];
+	}
+
+	const sortedUserActivities = [...userActivities].sort(
+		(a, b) => Number(b.favorite) - Number(a.favorite) || a.name.localeCompare(b.name)
+	);
+
+	const activityIds = sortedUserActivities.map((item) => item.id);
+	const categoriesByActivityId = await getCategoriesForActivityIds(db, activityIds);
+	const activitiesWithCategories = hydrateActivitiesWithCategories(
+		sortedUserActivities,
+		categoriesByActivityId
+	);
+
+	return groupActivitiesByCategory(sortedCategories, activitiesWithCategories);
+});
 
 // Get currently active timer session for a user
-export const getActiveSession = query(
-	v.string(), // userId
-	async (userId) => {
-		// First get the active session with activity
-		const { locals } = getRequestEvent();
-		const db = locals.db;
+export const getActiveSession = query(async () => {
+	// First get the active session with activity
+	const { db, user } = getRemoteContext();
+	const userId = user.id;
 
-		const activeSession = await db
-			.select({
-				timeSession: timeSession,
-				activity: activity
-			})
-			.from(timeSession)
-			.innerJoin(activity, eq(timeSession.activityId, activity.id))
-			.where(and(eq(timeSession.userId, userId), eq(timeSession.isActive, true)))
-			.get();
+	const activeSession = await db
+		.select({
+			timeSession: timeSession,
+			activity: activity
+		})
+		.from(timeSession)
+		.innerJoin(activity, eq(timeSession.activityId, activity.id))
+		.where(and(eq(timeSession.userId, userId), eq(timeSession.isActive, true)))
+		.get();
 
-		if (!activeSession) {
-			return null;
-		}
-
-		const activityCategories = await getCategoriesForActivityId(db, activeSession.activity.id);
-
-		return {
-			session: activeSession.timeSession,
-			activity: activeSession.activity,
-			category: {
-				name: getRepresentativeCategory(activityCategories).name
-			}
-		};
+	if (!activeSession) {
+		return null;
 	}
-);
+
+	const activityCategories = await getCategoriesForActivityId(db, activeSession.activity.id);
+
+	return {
+		session: activeSession.timeSession,
+		activity: activeSession.activity,
+		category: {
+			name: getRepresentativeCategory(activityCategories).name
+		}
+	};
+});
 
 // Start timer session with activity ID
 export const startTimerSession = command(
 	v.object({
-		activityId: v.pipe(v.number(), v.minValue(1, 'Activity ID must be a positive number')),
-		userId: v.string()
+		activityId: v.pipe(v.number(), v.minValue(1, 'Activity ID must be a positive number'))
 	}),
-	async ({ activityId, userId }) => {
-		const { locals } = getRequestEvent();
-		const db = locals.db;
+	async ({ activityId }) => {
+		const { db, user } = getRemoteContext();
+		const userId = user.id;
+
+		await ensureActivityBelongsToUser(db, userId, activityId);
 
 		// First, stop any currently active sessions for this user
 		const activeSessions = await db
@@ -152,6 +191,8 @@ export const startTimerSession = command(
 			.returning()
 			.get();
 
+		await requested(getActiveSession, 1).refreshAll();
+
 		return newSession;
 	}
 );
@@ -159,17 +200,20 @@ export const startTimerSession = command(
 // Stop session timer with session ID
 export const stopTimerSession = command(
 	v.object({
-		sessionId: v.pipe(v.number(), v.minValue(1, 'Session ID must be a positive number')),
-		userId: v.string()
+		sessionId: v.pipe(v.number(), v.minValue(1, 'Session ID must be a positive number'))
 	}),
-	async ({ sessionId, userId }) => {
-		const { locals } = getRequestEvent();
-		const db = locals.db;
+	async ({ sessionId }) => {
+		const { db, user } = getRemoteContext();
+		const userId = user.id;
 
-		const session = await db.select().from(timeSession).where(eq(timeSession.id, sessionId)).get();
+		const session = await db
+			.select()
+			.from(timeSession)
+			.where(and(eq(timeSession.id, sessionId), eq(timeSession.userId, userId)))
+			.get();
 
-		if (!session || session.stoppedAt || session.userId !== userId || !session.isActive) {
-			throw new Error('Session not found, already stopped, not active, or unauthorized');
+		if (!session || session.stoppedAt || !session.isActive) {
+			error(404, 'Active session not found');
 		}
 
 		const stoppedAt = new Date();
@@ -187,28 +231,30 @@ export const stopTimerSession = command(
 			.returning()
 			.get();
 
+		await requested(getActiveSession, 1).refreshAll();
+
 		return updatedSession;
 	}
 );
 
 // Create a new category
-export const createCategory = command(
-	v.object({
-		...insertCategorySchema.entries,
-		userId: v.string()
-	}),
-	async (categoryData) => {
-		const { locals } = getRequestEvent();
-		const db = locals.db;
+export const createCategory = command(v.object(insertCategoryEntries), async (categoryData) => {
+	const { db, user } = getRemoteContext();
 
-		const newCategory = await db.insert(category).values(categoryData).returning().get();
+	const newCategory = await db
+		.insert(category)
+		.values({
+			...categoryData,
+			userId: user.id
+		})
+		.returning()
+		.get();
 
-		// Refresh the categories query to update UI
-		await getCategoriesWithActivities(categoryData.userId).refresh();
+	// Refresh the categories query to update UI
+	await getCategoriesWithActivities().refresh();
 
-		return newCategory;
-	}
-);
+	return newCategory;
+});
 
 // Update an existing category
 export const updateCategory = command(
@@ -233,12 +279,11 @@ export const updateCategory = command(
 				v.minLength(1, 'Icon is required'),
 				v.maxLength(10, 'Icon must be 10 characters or less')
 			)
-		),
-		userId: v.string()
+		)
 	}),
-	async ({ id, userId, ...updateData }) => {
-		const { locals } = getRequestEvent();
-		const db = locals.db;
+	async ({ id, ...updateData }) => {
+		const { db, user } = getRemoteContext();
+		const userId = user.id;
 
 		// Only include defined fields in the update
 		const fieldsToUpdate = Object.fromEntries(
@@ -255,16 +300,16 @@ export const updateCategory = command(
 				...fieldsToUpdate,
 				updatedAt: new Date()
 			})
-			.where(eq(category.id, id))
+			.where(and(eq(category.id, id), eq(category.userId, userId)))
 			.returning()
 			.get();
 
-		if (!updatedCategory || updatedCategory.userId !== userId) {
-			throw new Error('Category not found or unauthorized');
+		if (!updatedCategory) {
+			error(404, 'Category not found');
 		}
 
 		// Refresh the categories query to update UI
-		await getCategoriesWithActivities(userId).refresh();
+		await getCategoriesWithActivities().refresh();
 
 		return updatedCategory;
 	}
@@ -273,25 +318,32 @@ export const updateCategory = command(
 // Delete a category
 export const deleteCategory = command(
 	v.object({
-		id: v.pipe(v.number(), v.minValue(1, 'Category ID must be a positive number')),
-		userId: v.string()
+		id: v.pipe(v.number(), v.minValue(1, 'Category ID must be a positive number'))
 	}),
-	async ({ id, userId }) => {
-		const { locals } = getRequestEvent();
-		const db = locals.db;
+	async ({ id }) => {
+		const { db, user } = getRemoteContext();
+		const userId = user.id;
 
 		// First check if the category exists and belongs to the user
-		const existingCategory = await db.select().from(category).where(eq(category.id, id)).get();
+		const existingCategory = await db
+			.select()
+			.from(category)
+			.where(and(eq(category.id, id), eq(category.userId, userId)))
+			.get();
 
-		if (!existingCategory || existingCategory.userId !== userId) {
-			throw new Error('Category not found or unauthorized');
+		if (!existingCategory) {
+			error(404, 'Category not found');
 		}
 
 		// Delete the category (activities will be cascaded due to foreign key constraint)
-		const deletedCategory = await db.delete(category).where(eq(category.id, id)).returning().get();
+		const deletedCategory = await db
+			.delete(category)
+			.where(and(eq(category.id, id), eq(category.userId, userId)))
+			.returning()
+			.get();
 
 		// Refresh the categories query to update UI
-		await getCategoriesWithActivities(userId).refresh();
+		await getCategoriesWithActivities().refresh();
 
 		return deletedCategory;
 	}
@@ -300,32 +352,41 @@ export const deleteCategory = command(
 // Create a new activity
 export const createActivity = command(
 	v.object({
-		...insertActivitySchema.entries,
-		userId: v.string(),
+		...insertActivityEntries,
 		categoryIds: v.optional(v.array(v.number('Category ID must be a number')))
 	}),
 	async (activityData) => {
-		const { locals } = getRequestEvent();
-		const db = locals.db;
+		const { db, user } = getRemoteContext();
+		const userId = user.id;
 
 		// Destructure categoryIds from activityData
 		const { categoryIds, ...activityFields } = activityData;
+		const validatedCategoryIds = await ensureCategoriesBelongToUser(db, userId, categoryIds ?? []);
 
 		// Create the activity
-		const newActivity = await db.insert(activity).values(activityFields).returning().get();
+		const newActivity = await db
+			.insert(activity)
+			.values({
+				...activityFields,
+				userId
+			})
+			.returning()
+			.get();
 
 		// If categoryIds are provided, create the activity-category relationships
-		if (categoryIds && categoryIds.length > 0) {
-			const activityCategoryData: InsertActivityCategory[] = categoryIds.map((categoryId) => ({
-				activityId: newActivity.id,
-				categoryId
-			}));
+		if (validatedCategoryIds.length > 0) {
+			const activityCategoryData: InsertActivityCategory[] = validatedCategoryIds.map(
+				(categoryId) => ({
+					activityId: newActivity.id,
+					categoryId
+				})
+			);
 
 			await db.insert(activityCategory).values(activityCategoryData);
 		}
 
 		// Refresh the categories query to update UI
-		await getCategoriesWithActivities(activityData.userId).refresh();
+		await getCategoriesWithActivities().refresh();
 
 		return newActivity;
 	}
@@ -368,12 +429,11 @@ export const updateActivity = command(
 			)
 		),
 		archived: v.optional(v.boolean('Archived must be a boolean')),
-		userId: v.string(),
 		categoryIds: v.optional(v.array(v.number('Category ID must be a number')))
 	}),
-	async ({ id, userId, categoryIds, ...updateData }) => {
-		const { locals } = getRequestEvent();
-		const db = locals.db;
+	async ({ id, categoryIds, ...updateData }) => {
+		const { db, user } = getRemoteContext();
+		const userId = user.id;
 
 		// Only include defined fields in the update
 		const fieldsToUpdate = Object.fromEntries(
@@ -384,40 +444,54 @@ export const updateActivity = command(
 			throw new Error('No fields to update');
 		}
 
-		// Update the activity
-		const activityUpdate = await db
-			.update(activity)
-			.set({
-				...fieldsToUpdate,
-				updatedAt: new Date()
-			})
-			.where(eq(activity.id, id))
-			.returning()
+		const existingActivity = await db
+			.select()
+			.from(activity)
+			.where(and(eq(activity.id, id), eq(activity.userId, userId)))
 			.get();
 
-		if (!activityUpdate || activityUpdate.userId !== userId) {
-			throw new Error('Activity not found or unauthorized');
+		if (!existingActivity) {
+			error(404, 'Activity not found');
 		}
 
+		const validatedCategoryIds = categoryIds
+			? await ensureCategoriesBelongToUser(db, userId, categoryIds)
+			: null;
+
+		// Update the activity
+		const activityUpdate =
+			Object.keys(fieldsToUpdate).length > 0
+				? await db
+						.update(activity)
+						.set({
+							...fieldsToUpdate,
+							updatedAt: new Date()
+						})
+						.where(and(eq(activity.id, id), eq(activity.userId, userId)))
+						.returning()
+						.get()
+				: existingActivity;
+
 		// Update categories if provided
-		if (categoryIds) {
+		if (validatedCategoryIds) {
 			// First, delete existing category relationships
 			await db.delete(activityCategory).where(eq(activityCategory.activityId, id));
 
 			// Then, create new category relationships
-			if (categoryIds.length > 0) {
-				const activityCategoryData = categoryIds.map((categoryId) => ({
-					activityId: id,
-					categoryId,
-					userId
-				}));
+			if (validatedCategoryIds.length > 0) {
+				const activityCategoryData: InsertActivityCategory[] = validatedCategoryIds.map(
+					(categoryId) => ({
+						activityId: id,
+						categoryId
+					})
+				);
 
 				await db.insert(activityCategory).values(activityCategoryData);
 			}
 		}
 
 		// Refresh the categories query to update UI
-		await getCategoriesWithActivities(userId).refresh();
+		await getCategoriesWithActivities().refresh();
 
 		return activityUpdate;
 	}
@@ -427,12 +501,11 @@ export const updateActivity = command(
 export const setActivityFavorite = command(
 	v.object({
 		id: v.pipe(v.number(), v.minValue(1, 'Activity ID must be a positive number')),
-		favorite: v.boolean('Favorite must be a boolean'),
-		userId: v.string()
+		favorite: v.boolean('Favorite must be a boolean')
 	}),
-	async ({ id, favorite, userId }) => {
-		const { locals } = getRequestEvent();
-		const db = locals.db;
+	async ({ id, favorite }) => {
+		const { db, user } = getRemoteContext();
+		const userId = user.id;
 
 		const updatedActivity = await db
 			.update(activity)
@@ -440,15 +513,15 @@ export const setActivityFavorite = command(
 				favorite,
 				updatedAt: new Date()
 			})
-			.where(eq(activity.id, id))
+			.where(and(eq(activity.id, id), eq(activity.userId, userId)))
 			.returning()
 			.get();
 
-		if (!updatedActivity || updatedActivity.userId !== userId) {
-			throw new Error('Activity not found or unauthorized');
+		if (!updatedActivity) {
+			error(404, 'Activity not found');
 		}
 
-		await getCategoriesWithActivities(userId).refresh();
+		await getCategoriesWithActivities().refresh();
 
 		return updatedActivity;
 	}
@@ -458,12 +531,11 @@ export const setActivityFavorite = command(
 export const archiveActivity = command(
 	v.object({
 		id: v.pipe(v.number(), v.minValue(1, 'Activity ID must be a positive number')),
-		archived: v.boolean('Archived must be a boolean'),
-		userId: v.string()
+		archived: v.boolean('Archived must be a boolean')
 	}),
-	async ({ id, archived, userId }) => {
-		const { locals } = getRequestEvent();
-		const db = locals.db;
+	async ({ id, archived }) => {
+		const { db, user } = getRemoteContext();
+		const userId = user.id;
 
 		const updatedActivity = await db
 			.update(activity)
@@ -471,16 +543,16 @@ export const archiveActivity = command(
 				archived,
 				updatedAt: new Date()
 			})
-			.where(eq(activity.id, id))
+			.where(and(eq(activity.id, id), eq(activity.userId, userId)))
 			.returning()
 			.get();
 
-		if (!updatedActivity || updatedActivity.userId !== userId) {
-			throw new Error('Activity not found or unauthorized');
+		if (!updatedActivity) {
+			error(404, 'Activity not found');
 		}
 
 		// Refresh the categories query to update UI
-		await getCategoriesWithActivities(userId).refresh();
+		await getCategoriesWithActivities().refresh();
 
 		return updatedActivity;
 	}
@@ -489,25 +561,32 @@ export const archiveActivity = command(
 // Delete an activity
 export const deleteActivity = command(
 	v.object({
-		id: v.pipe(v.number(), v.minValue(1, 'Activity ID must be a positive number')),
-		userId: v.string()
+		id: v.pipe(v.number(), v.minValue(1, 'Activity ID must be a positive number'))
 	}),
-	async ({ id, userId }) => {
-		const { locals } = getRequestEvent();
-		const db = locals.db;
+	async ({ id }) => {
+		const { db, user } = getRemoteContext();
+		const userId = user.id;
 
 		// First check if the activity exists and belongs to the user
-		const existingActivity = await db.select().from(activity).where(eq(activity.id, id)).get();
+		const existingActivity = await db
+			.select()
+			.from(activity)
+			.where(and(eq(activity.id, id), eq(activity.userId, userId)))
+			.get();
 
-		if (!existingActivity || existingActivity.userId !== userId) {
-			throw new Error('Activity not found or unauthorized');
+		if (!existingActivity) {
+			error(404, 'Activity not found');
 		}
 
 		// Delete the activity (time sessions will be cascaded due to foreign key constraint)
-		const deletedActivity = await db.delete(activity).where(eq(activity.id, id)).returning().get();
+		const deletedActivity = await db
+			.delete(activity)
+			.where(and(eq(activity.id, id), eq(activity.userId, userId)))
+			.returning()
+			.get();
 
 		// Refresh the categories query to update UI
-		await getCategoriesWithActivities(userId).refresh();
+		await getCategoriesWithActivities().refresh();
 
 		return deletedActivity;
 	}

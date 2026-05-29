@@ -46,7 +46,6 @@
 	const sessionsQuery = $derived.by(() => {
 		if (!open || !activity) return null;
 		return getSessionsForActivity({
-			userId,
 			activityId: activity.id,
 			startDate,
 			endDate
