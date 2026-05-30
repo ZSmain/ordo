@@ -45,11 +45,10 @@
 	interface Props {
 		open: boolean;
 		activity: ActivityInfo | null;
-		userId: string;
 		onOpenChange?: (open: boolean) => void;
 	}
 
-	let { open = $bindable(), activity, userId, onOpenChange }: Props = $props();
+	let { open = $bindable(), activity, onOpenChange }: Props = $props();
 
 	type PeriodType = 'year' | 'month' | 'week' | 'last7' | 'all';
 	type GranularityType = 'daily' | 'weekly' | 'monthly';

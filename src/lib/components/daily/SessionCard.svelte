@@ -167,7 +167,6 @@
 <DeleteSessionDialog
 	bind:open={deleteDialogOpen}
 	{session}
-	{userId}
 	onOpenChange={(open) => (deleteDialogOpen = open)}
 	onSessionDeleted={() => onSessionUpdated?.()}
 />
@@ -176,6 +175,5 @@
 <ActivityStatisticsDrawer
 	bind:open={statisticsOpen}
 	activity={session.activity}
-	{userId}
 	onOpenChange={(open) => (statisticsOpen = open)}
 />

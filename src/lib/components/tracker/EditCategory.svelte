@@ -21,10 +21,9 @@
 		category: Category | null;
 		onOpenChange?: (open: boolean) => void;
 		onCategoryUpdated?: () => void;
-		userId: string;
 	}
 
-	let { open = $bindable(), category, onOpenChange, onCategoryUpdated, userId }: Props = $props();
+	let { open = $bindable(), category, onOpenChange, onCategoryUpdated }: Props = $props();
 
 	let categoryForm = $state({
 		name: '',
