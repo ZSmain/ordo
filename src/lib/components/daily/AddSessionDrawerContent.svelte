@@ -296,51 +296,28 @@
 					<Input type="time" bind:value={startTime} disabled={loading} class="w-28 text-center" />
 				</div>
 
-				<div class="rounded-lg bg-muted/30 p-2">
-					<div class="mb-2 text-center text-xs text-muted-foreground">Quick Adjust</div>
-					<div class="grid grid-cols-6 gap-1">
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('start', -30)}
-							disabled={loading}
-							class="px-2 text-xs">-30m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('start', -5)}
-							disabled={loading}
-							class="px-2 text-xs">-5m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('start', -1)}
-							disabled={loading}
-							class="px-2 text-xs">-1m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('start', 1)}
-							disabled={loading}
-							class="px-2 text-xs">+1m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('start', 5)}
-							disabled={loading}
-							class="px-2 text-xs">+5m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('start', 30)}
-							disabled={loading}
-							class="px-2 text-xs">+30m</Button
-						>
+				<div class="grid grid-cols-2 gap-4">
+					<div class="grid grid-cols-3 gap-1">
+						{#each [-30, -5, -1] as mins (mins)}
+							<Button
+								variant="outline"
+								size="sm"
+								onclick={() => adjustTime('start', mins)}
+								disabled={loading}
+								class="rounded-md px-2 text-xs">{mins}m</Button
+							>
+						{/each}
+					</div>
+					<div class="grid grid-cols-3 gap-1">
+						{#each [1, 5, 30] as mins (mins)}
+							<Button
+								variant="outline"
+								size="sm"
+								onclick={() => adjustTime('start', mins)}
+								disabled={loading}
+								class="rounded-md px-2 text-xs">+{mins}m</Button
+							>
+						{/each}
 					</div>
 				</div>
 			</div>
@@ -377,49 +354,30 @@
 
 				<div class="rounded-lg bg-muted/30 p-2">
 					<div class="mb-2 text-center text-xs text-muted-foreground">Quick Adjust</div>
-					<div class="grid grid-cols-6 gap-1">
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('end', -30)}
-							disabled={loading}
-							class="px-2 text-xs">-30m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('end', -5)}
-							disabled={loading}
-							class="px-2 text-xs">-5m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('end', -1)}
-							disabled={loading}
-							class="px-2 text-xs">-1m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('end', 1)}
-							disabled={loading}
-							class="px-2 text-xs">+1m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('end', 5)}
-							disabled={loading}
-							class="px-2 text-xs">+5m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('end', 30)}
-							disabled={loading}
-							class="px-2 text-xs">+30m</Button
-						>
+
+					<div class="grid grid-cols-2 gap-4">
+						<div class="grid grid-cols-3 gap-1">
+							{#each [-30, -5, -1] as mins (mins)}
+								<Button
+									variant="outline"
+									size="sm"
+									onclick={() => adjustTime('end', mins)}
+									disabled={loading}
+									class="rounded-md px-2 text-xs">{mins}m</Button
+								>
+							{/each}
+						</div>
+						<div class="grid grid-cols-3 gap-1">
+							{#each [1, 5, 30] as mins (mins)}
+								<Button
+									variant="outline"
+									size="sm"
+									onclick={() => adjustTime('end', mins)}
+									disabled={loading}
+									class="rounded-md px-2 text-xs">+{mins}m</Button
+								>
+							{/each}
+						</div>
 					</div>
 				</div>
 			</div>
