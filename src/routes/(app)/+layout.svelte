@@ -167,7 +167,9 @@
 
 	<!-- Main content area with proper scrolling -->
 	<main class="h-full flex-1 overflow-y-auto">
-		{@render children?.()}
+		<div class="relative mx-auto h-full w-full max-w-5xl flex flex-col">
+			{@render children?.()}
+		</div>
 	</main>
 
 	<!-- Bottom Navigation - Fixed (Mobile only) -->

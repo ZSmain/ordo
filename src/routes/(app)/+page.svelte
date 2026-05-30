@@ -113,7 +113,7 @@
 	<title>Ordo - Timer</title>
 </svelte:head>
 
-<ScrollArea class="p-4">
+<ScrollArea class="h-full flex-1 p-4">
 	{#if timerStore.current.isActive}
 		<Timer onStop={stopTimer} />
 	{:else if (categoriesQuery?.current?.length ?? 0) > 0}

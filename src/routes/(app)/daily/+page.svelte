@@ -131,13 +131,13 @@
 
 	<div
 		class={[
-			'grid h-full',
+			'relative mx-auto w-full max-w-2xl grid h-full',
 			sessions.length > 0 ? 'grid-rows-[auto_1fr_auto]' : 'grid-rows-[1fr_auto]'
 		]}
 	>
 		<!-- Total duration summary -->
 		{#if sessions.length > 0}
-			<div class="container mx-auto max-w-2xl p-4 pb-0">
+			<div class="p-4 pb-0">
 				<div class="rounded-lg bg-muted/50 p-4">
 					<div class="text-center">
 						<p class="text-sm text-muted-foreground">Total time tracked</p>
@@ -153,7 +153,7 @@
 		<!-- Content area -->
 		<div class="overflow-hidden">
 			<ScrollArea class="h-full">
-				<div class="container mx-auto max-w-2xl p-4">
+				<div class="p-4">
 					<!-- Sessions list -->
 					<div class="space-y-4">
 						{#if sessions.length === 0}
@@ -179,7 +179,7 @@
 
 		<!-- Date navigation -->
 		<div class="border-t p-1.5 backdrop-blur-sm">
-			<div class="container mx-auto flex max-w-2xl items-center justify-between">
+			<div class="flex items-center justify-between">
 				<Button variant="ghost" size="icon" onclick={goToPreviousDay}>
 					<ChevronLeft class="size-4" />
 				</Button>
@@ -211,20 +211,22 @@
 				</Button>
 			</div>
 		</div>
+
+		<!-- Floating Add Button -->
+		<div class="absolute bottom-16 right-6 z-50 pointer-events-none">
+			<div class="pointer-events-auto">
+				<Button
+					size="lg"
+					class="h-14 w-14 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl"
+					onclick={() => (addSessionOpen = true)}
+					aria-label="Add session"
+				>
+					<Plus class="h-6 w-6" />
+				</Button>
+			</div>
+		</div>
 	</div>
 </svelte:boundary>
-
-<!-- Floating Add Button -->
-<div class="fixed right-6 bottom-32 z-50">
-	<Button
-		size="lg"
-		class="h-14 w-14 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl"
-		onclick={() => (addSessionOpen = true)}
-		aria-label="Add session"
-	>
-		<Plus class="h-6 w-6" />
-	</Button>
-</div>
 
 <!-- Add Session Drawer -->
 {#if data.user}
