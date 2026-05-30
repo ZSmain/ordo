@@ -20,7 +20,6 @@
 				icon: string;
 			};
 		};
-		userId: string;
 		onOpenChange: (open: boolean) => void;
 		onSessionUpdated: () => void;
 	}
@@ -33,7 +32,7 @@
 		return date.toTimeString().slice(0, 5);
 	}
 
-	let { session, userId, onOpenChange, onSessionUpdated }: Props = $props();
+	let { session, onOpenChange, onSessionUpdated }: Props = $props();
 
 	function getInitialSession() {
 		return session;
