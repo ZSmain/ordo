@@ -60,7 +60,7 @@
 	function stopTimer() {
 		if (!user?.id) return;
 
-		void trackerSessionController.stop(user.id);
+		void trackerSessionController.stop();
 	}
 
 	// Handle activity selection
@@ -77,13 +77,13 @@
 
 	function handleVisibilityChange() {
 		if (document.visibilityState === 'visible' && user?.id) {
-			void trackerSessionController.reconcile(user.id);
+			void trackerSessionController.reconcile();
 		}
 	}
 
 	onMount(() => {
 		if (user?.id) {
-			void trackerSessionController.reconcile(user.id);
+			void trackerSessionController.reconcile();
 		}
 	});
 
@@ -113,7 +113,7 @@
 	<title>Ordo - Timer</title>
 </svelte:head>
 
-<ScrollArea class="p-4">
+<ScrollArea class="h-full flex-1 p-4">
 	{#if timerStore.current.isActive}
 		<Timer onStop={stopTimer} />
 	{:else if (categoriesQuery?.current?.length ?? 0) > 0}
