@@ -60,7 +60,7 @@
 	function stopTimer() {
 		if (!user?.id) return;
 
-		void trackerSessionController.stop(user.id);
+		void trackerSessionController.stop();
 	}
 
 	// Handle activity selection
@@ -77,13 +77,13 @@
 
 	function handleVisibilityChange() {
 		if (document.visibilityState === 'visible' && user?.id) {
-			void trackerSessionController.reconcile(user.id);
+			void trackerSessionController.reconcile();
 		}
 	}
 
 	onMount(() => {
 		if (user?.id) {
-			void trackerSessionController.reconcile(user.id);
+			void trackerSessionController.reconcile();
 		}
 	});
 
