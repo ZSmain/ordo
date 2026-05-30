@@ -193,7 +193,7 @@
 </script>
 
 <div class="flex items-center justify-between">
-	<Button variant="ghost" size="icon" onclick={goToPrevious}>
+	<Button variant="outline" size="icon" onclick={goToPrevious}>
 		<ChevronLeft class="size-4" />
 	</Button>
 
@@ -218,7 +218,7 @@
 		{/if}
 	</div>
 
-	<Button variant="ghost" size="icon" onclick={goToNext} disabled={!canGoToNext()}>
+	<Button variant="outline" size="icon" onclick={goToNext} disabled={!canGoToNext()}>
 		<ChevronRight class="size-4" />
 	</Button>
 </div>
