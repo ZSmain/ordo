@@ -208,7 +208,6 @@
 	bind:open={editCategoryOpen}
 	category={categoryToEdit}
 	onCategoryUpdated={handleCategoryUpdated}
-	{userId}
 />
 
 <!-- Delete Category Confirmation Dialog -->

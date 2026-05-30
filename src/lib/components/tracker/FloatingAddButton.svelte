@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { CreateActivity, CreateCategory } from '$lib/components/tracker';
 	import { Button } from '$lib/components/ui/button';
+	import { CircleCheckBig, LayoutGrid } from '@lucide/svelte';
 
 	interface Props {
 		userId: string;
@@ -36,9 +37,7 @@
 </script>
 
 <!-- Floating Add Button -->
-<div
-	class="absolute bottom-6 right-6 z-50 pointer-events-none"
->
+<div class="pointer-events-none absolute right-6 bottom-6 z-50">
 	<div class="pointer-events-auto flex flex-col items-end gap-3">
 		<!-- Expanded Action Buttons -->
 		{#if isExpanded}
@@ -49,7 +48,9 @@
 					class="whitespace-nowrap shadow-lg transition-shadow hover:shadow-xl"
 					onclick={openCategoryForm}
 				>
-					<span class="mr-2">📁</span>
+					<span class="mr-2">
+						<LayoutGrid />
+					</span>
 					Create Category
 				</Button>
 				<Button
@@ -58,7 +59,9 @@
 					class="whitespace-nowrap shadow-lg transition-shadow hover:shadow-xl"
 					onclick={openActivityForm}
 				>
-					<span class="mr-2">⚡</span>
+					<span class="mr-2">
+						<CircleCheckBig />
+					</span>
 					Create Activity
 				</Button>
 			</div>

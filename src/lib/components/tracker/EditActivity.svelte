@@ -22,10 +22,9 @@
 		activity: TrackerActivity | null;
 		onOpenChange?: (open: boolean) => void;
 		onActivityUpdated?: () => void;
-		userId: string;
 	}
 
-	let { open = $bindable(), activity, onOpenChange, onActivityUpdated, userId }: Props = $props();
+	let { open = $bindable(), activity, onOpenChange, onActivityUpdated }: Props = $props();
 
 	let activityForm = $state({
 		name: '',

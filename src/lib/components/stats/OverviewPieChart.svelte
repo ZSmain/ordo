@@ -5,15 +5,6 @@
 	import TrendingUpIcon from '@lucide/svelte/icons/trending-up';
 	import { PieChart, Text } from 'layerchart';
 
-	interface CategoryStat {
-		categoryId: number;
-		categoryName: string;
-		categoryColor: string;
-		categoryIcon: string;
-		totalDuration: number;
-		sessionCount: number;
-	}
-
 	interface ActivityStat {
 		activityId: number;
 		activityName: string;
@@ -80,11 +71,11 @@
 	</Card.Header>
 	<Card.Content class="flex-1 pb-2">
 		{#if chartData.length === 0}
-			<div class="flex h-[250px] items-center justify-center">
+			<div class="flex h-62.5 items-center justify-center">
 				<p class="text-muted-foreground">No data available for this period</p>
 			</div>
 		{:else}
-			<Chart.Container config={chartConfig} class="mx-auto aspect-square max-h-[250px]">
+			<Chart.Container config={chartConfig} class="mx-auto aspect-square max-h-62.5">
 				<PieChart
 					data={chartData}
 					key="category"
