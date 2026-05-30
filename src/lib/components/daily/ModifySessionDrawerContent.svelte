@@ -191,7 +191,7 @@
 		</Drawer.Title>
 	</Drawer.Header>
 
-	<div class="px-4 pb-4">
+	<div class="px-4 pb-2">
 		<div class="rounded-lg bg-muted/50 p-2 text-center">
 			<div class="mb-1 flex items-center justify-center gap-2">
 				<Clock class="h-4 w-4 text-muted-foreground" />
@@ -207,14 +207,14 @@
 	</div>
 
 	<div class="min-h-0 flex-1 overflow-y-auto">
-		<div class="space-y-6 px-4 pb-8">
+		<div class="space-y-2 px-4">
 			{#if error}
 				<div class="rounded-md bg-destructive/10 p-3">
 					<p class="text-sm text-destructive">{error}</p>
 				</div>
 			{/if}
 
-			<div class="space-y-4">
+			<div class="rounded-lg bg-muted/50 p-2">
 				<div class="text-center">
 					<Label class="text-sm font-medium text-muted-foreground">START TIME</Label>
 				</div>
@@ -245,54 +245,58 @@
 
 				<div class="rounded-lg bg-muted/30 p-2">
 					<div class="mb-2 text-center text-xs text-muted-foreground">Quick Adjust</div>
-					<div class="grid grid-cols-6 gap-1">
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('start', -30)}
-							disabled={loading}
-							class="px-2 text-xs">-30m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('start', -5)}
-							disabled={loading}
-							class="px-2 text-xs">-5m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('start', -1)}
-							disabled={loading}
-							class="px-2 text-xs">-1m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('start', 1)}
-							disabled={loading}
-							class="px-2 text-xs">+1m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('start', 5)}
-							disabled={loading}
-							class="px-2 text-xs">+5m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('start', 30)}
-							disabled={loading}
-							class="px-2 text-xs">+30m</Button
-						>
+					<div class="grid grid-cols-2 gap-4">
+						<div class="grid grid-cols-3 gap-1">
+							<Button
+								variant="outline"
+								size="sm"
+								onclick={() => adjustTime('start', -30)}
+								disabled={loading}
+								class="rounded-md text-xs">-30m</Button
+							>
+							<Button
+								variant="outline"
+								size="sm"
+								onclick={() => adjustTime('start', -5)}
+								disabled={loading}
+								class="rounded-md text-xs">-5m</Button
+							>
+							<Button
+								variant="outline"
+								size="sm"
+								onclick={() => adjustTime('start', -1)}
+								disabled={loading}
+								class="rounded-md text-xs">-1m</Button
+							>
+						</div>
+						<div class="grid grid-cols-3 gap-1">
+							<Button
+								variant="outline"
+								size="sm"
+								onclick={() => adjustTime('start', 1)}
+								disabled={loading}
+								class="rounded-md text-xs">+1m</Button
+							>
+							<Button
+								variant="outline"
+								size="sm"
+								onclick={() => adjustTime('start', 5)}
+								disabled={loading}
+								class="rounded-md text-xs">+5m</Button
+							>
+							<Button
+								variant="outline"
+								size="sm"
+								onclick={() => adjustTime('start', 30)}
+								disabled={loading}
+								class="rounded-md text-xs">+30m</Button
+							>
+						</div>
 					</div>
 				</div>
 			</div>
 
-			<div class="space-y-4">
+			<div class="space-y-2 rounded-lg bg-muted/50 p-2">
 				<div class="text-center">
 					<Label class="text-sm font-medium text-muted-foreground">END TIME</Label>
 				</div>
@@ -323,49 +327,54 @@
 
 				<div class="rounded-lg bg-muted/30 p-2">
 					<div class="mb-2 text-center text-xs text-muted-foreground">Quick Adjust</div>
-					<div class="grid grid-cols-6 gap-1">
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('end', -30)}
-							disabled={loading}
-							class="px-2 text-xs">-30m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('end', -5)}
-							disabled={loading}
-							class="px-2 text-xs">-5m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('end', -1)}
-							disabled={loading}
-							class="px-2 text-xs">-1m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('end', 1)}
-							disabled={loading}
-							class="px-2 text-xs">+1m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('end', 5)}
-							disabled={loading}
-							class="px-2 text-xs">+5m</Button
-						>
-						<Button
-							variant="outline"
-							size="sm"
-							onclick={() => adjustTime('end', 30)}
-							disabled={loading}
-							class="px-2 text-xs">+30m</Button
-						>
+
+					<div class="grid grid-cols-2 gap-4">
+						<div class="grid grid-cols-3 gap-1">
+							<Button
+								variant="outline"
+								size="sm"
+								onclick={() => adjustTime('end', -30)}
+								disabled={loading}
+								class="rounded-md px-2 text-xs">-30m</Button
+							>
+							<Button
+								variant="outline"
+								size="sm"
+								onclick={() => adjustTime('end', -5)}
+								disabled={loading}
+								class="rounded-md px-2 text-xs">-5m</Button
+							>
+							<Button
+								variant="outline"
+								size="sm"
+								onclick={() => adjustTime('end', -1)}
+								disabled={loading}
+								class="rounded-md px-2 text-xs">-1m</Button
+							>
+						</div>
+						<div class="grid grid-cols-3 gap-1">
+							<Button
+								variant="outline"
+								size="sm"
+								onclick={() => adjustTime('end', 1)}
+								disabled={loading}
+								class="rounded-md px-2 text-xs">+1m</Button
+							>
+							<Button
+								variant="outline"
+								size="sm"
+								onclick={() => adjustTime('end', 5)}
+								disabled={loading}
+								class="rounded-md px-2 text-xs">+5m</Button
+							>
+							<Button
+								variant="outline"
+								size="sm"
+								onclick={() => adjustTime('end', 30)}
+								disabled={loading}
+								class="rounded-md px-2 text-xs">+30m</Button
+							>
+						</div>
 					</div>
 				</div>
 			</div>
