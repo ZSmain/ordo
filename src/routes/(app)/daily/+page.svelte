@@ -121,7 +121,7 @@
 		</div>
 	{/snippet}
 
-	{#snippet failed(_error)}
+	{#snippet failed()}
 		<div class="flex h-full items-center justify-center">
 			<p class="text-destructive">Failed to load sessions. Please try again.</p>
 		</div>
@@ -131,7 +131,7 @@
 
 	<div
 		class={[
-			'relative mx-auto w-full max-w-2xl grid h-full',
+			'relative mx-auto grid h-full w-full max-w-2xl',
 			sessions.length > 0 ? 'grid-rows-[auto_1fr_auto]' : 'grid-rows-[1fr_auto]'
 		]}
 	>
@@ -180,7 +180,7 @@
 		<!-- Date navigation -->
 		<div class="border-t p-1.5 backdrop-blur-sm">
 			<div class="flex items-center justify-between">
-				<Button variant="ghost" size="icon" onclick={goToPreviousDay}>
+				<Button variant="outline" size="icon" onclick={goToPreviousDay}>
 					<ChevronLeft class="size-4" />
 				</Button>
 
@@ -206,14 +206,14 @@
 					</Dialog.Content>
 				</Dialog.Root>
 
-				<Button variant="ghost" size="icon" onclick={goToNextDay} disabled={!canGoToNextDay()}>
+				<Button variant="outline" size="icon" onclick={goToNextDay} disabled={!canGoToNextDay()}>
 					<ChevronRight class="size-4" />
 				</Button>
 			</div>
 		</div>
 
 		<!-- Floating Add Button -->
-		<div class="absolute bottom-16 right-6 z-50 pointer-events-none">
+		<div class="pointer-events-none absolute right-6 bottom-16 z-50">
 			<div class="pointer-events-auto">
 				<Button
 					size="lg"

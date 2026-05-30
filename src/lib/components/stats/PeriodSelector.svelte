@@ -3,6 +3,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date';
 	import { ChevronLeft, ChevronRight } from '@lucide/svelte';
+	import { SvelteDate } from 'svelte/reactivity';
 
 	type PeriodType = 'day' | 'week' | 'month' | 'year';
 
@@ -92,38 +93,46 @@
 
 	function getPeriodStart(date: CalendarDate, period: PeriodType): CalendarDate {
 		switch (period) {
-			case 'day':
+			case 'day': {
 				return date;
-			case 'week':
+			}
+			case 'week': {
 				// Start of week (Monday)
 				const jsDate = date.toDate(getLocalTimeZone());
 				const dayOfWeek = jsDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
 				const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday = 0 days to subtract
 				return date.subtract({ days: daysToSubtract });
-			case 'month':
+			}
+			case 'month': {
 				return new CalendarDate(date.year, date.month, 1);
-			case 'year':
+			}
+			case 'year': {
 				return new CalendarDate(date.year, 1, 1);
+			}
 		}
 	}
 
 	function getPeriodEnd(date: CalendarDate, period: PeriodType): CalendarDate {
 		switch (period) {
-			case 'day':
+			case 'day': {
 				return date;
-			case 'week':
+			}
+			case 'week': {
 				// End of week (Sunday)
 				const jsDate = date.toDate(getLocalTimeZone());
 				const dayOfWeek = jsDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
 				const daysToAdd = dayOfWeek === 0 ? 0 : 7 - dayOfWeek; // Sunday = 0 days to add
 				return date.add({ days: daysToAdd });
-			case 'month':
+			}
+			case 'month': {
 				// Last day of month
 				const nextMonth = date.month === 12 ? 1 : date.month + 1;
 				const yearForNextMonth = date.month === 12 ? date.year + 1 : date.year;
 				return new CalendarDate(yearForNextMonth, nextMonth, 1).subtract({ days: 1 });
-			case 'year':
+			}
+			case 'year': {
 				return new CalendarDate(date.year, 12, 31);
+			}
 		}
 	}
 
@@ -132,11 +141,11 @@
 		const todayDate = new Date();
 
 		switch (period) {
-			case 'day':
+			case 'day': {
 				if (jsDate.toDateString() === todayDate.toDateString()) {
 					return 'Today';
 				}
-				const yesterday = new Date();
+				const yesterday = new SvelteDate();
 				yesterday.setDate(todayDate.getDate() - 1);
 				if (jsDate.toDateString() === yesterday.toDateString()) {
 					return 'Yesterday';
@@ -147,8 +156,8 @@
 					day: 'numeric',
 					year: 'numeric'
 				});
-
-			case 'week':
+			}
+			case 'week': {
 				const weekStart = getPeriodStart(date, 'week');
 				const weekEnd = getPeriodEnd(date, 'week');
 				const startJS = new Date(weekStart.year, weekStart.month - 1, weekStart.day);
@@ -159,15 +168,16 @@
 				} else {
 					return `${startJS.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endJS.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 				}
-
-			case 'month':
+			}
+			case 'month': {
 				return jsDate.toLocaleDateString('en-US', {
 					month: 'long',
 					year: 'numeric'
 				});
-
-			case 'year':
+			}
+			case 'year': {
 				return date.year.toString();
+			}
 		}
 	}
 
@@ -178,22 +188,26 @@
 	function isToday(): boolean {
 		const todayDate = today(getLocalTimeZone());
 		switch (selectedPeriod) {
-			case 'day':
+			case 'day': {
 				return selectedDate.compare(todayDate) === 0;
-			case 'week':
+			}
+			case 'week': {
 				const weekStart = getPeriodStart(selectedDate, 'week');
 				const weekEnd = getPeriodEnd(selectedDate, 'week');
 				return todayDate.compare(weekStart) >= 0 && todayDate.compare(weekEnd) <= 0;
-			case 'month':
+			}
+			case 'month': {
 				return selectedDate.year === todayDate.year && selectedDate.month === todayDate.month;
-			case 'year':
+			}
+			case 'year': {
 				return selectedDate.year === todayDate.year;
+			}
 		}
 	}
 </script>
 
 <div class="flex items-center justify-between">
-	<Button variant="ghost" size="icon" onclick={goToPrevious}>
+	<Button variant="outline" size="icon" onclick={goToPrevious}>
 		<ChevronLeft class="size-4" />
 	</Button>
 
@@ -218,7 +232,7 @@
 		{/if}
 	</div>
 
-	<Button variant="ghost" size="icon" onclick={goToNext} disabled={!canGoToNext()}>
+	<Button variant="outline" size="icon" onclick={goToNext} disabled={!canGoToNext()}>
 		<ChevronRight class="size-4" />
 	</Button>
 </div>

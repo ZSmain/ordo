@@ -17,12 +17,11 @@
 				icon: string;
 			};
 		};
-		userId: string;
 		onOpenChange: (open: boolean) => void;
 		onSessionDeleted: () => void;
 	}
 
-	let { open = $bindable(), session, userId, onOpenChange, onSessionDeleted }: Props = $props();
+	let { open = $bindable(), session, onOpenChange, onSessionDeleted }: Props = $props();
 
 	let loading = $state(false);
 	let error = $state<string | null>(null);
