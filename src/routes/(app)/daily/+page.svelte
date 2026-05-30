@@ -121,7 +121,7 @@
 		</div>
 	{/snippet}
 
-	{#snippet failed(_error)}
+	{#snippet failed()}
 		<div class="flex h-full items-center justify-center">
 			<p class="text-destructive">Failed to load sessions. Please try again.</p>
 		</div>
