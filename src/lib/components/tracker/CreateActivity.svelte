@@ -59,6 +59,7 @@
 		isPending = true;
 		try {
 			const activityData = {
+				userId,
 				name: activityForm.name.trim(),
 				icon: activityForm.icon,
 				...(activityForm.dailyGoal && { dailyGoal: activityForm.dailyGoal }),
