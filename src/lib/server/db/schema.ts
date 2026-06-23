@@ -1,5 +1,6 @@
 import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-valibot';
+import { timestamps } from './columns.helpers';
 import * as v from 'valibot';
 
 export const category = sqliteTable('category', {
@@ -10,12 +11,8 @@ export const category = sqliteTable('category', {
 	userId: text('user_id')
 		.notNull()
 		.references(() => user.id, { onDelete: 'cascade' }),
-	createdAt: integer('created_at', { mode: 'timestamp' })
-		.$defaultFn(() => new Date())
-		.notNull(),
-	updatedAt: integer('updated_at', { mode: 'timestamp' })
-		.$defaultFn(() => new Date())
-		.notNull()
+
+	...timestamps
 });
 
 export const activity = sqliteTable('activity', {
@@ -30,12 +27,8 @@ export const activity = sqliteTable('activity', {
 	userId: text('user_id')
 		.notNull()
 		.references(() => user.id, { onDelete: 'cascade' }),
-	createdAt: integer('created_at', { mode: 'timestamp' })
-		.$defaultFn(() => new Date())
-		.notNull(),
-	updatedAt: integer('updated_at', { mode: 'timestamp' })
-		.$defaultFn(() => new Date())
-		.notNull()
+
+	...timestamps
 });
 
 // Junction table for many-to-many relationship between activities and categories
@@ -49,12 +42,8 @@ export const activityCategory = sqliteTable(
 		categoryId: integer('category_id')
 			.notNull()
 			.references(() => category.id, { onDelete: 'cascade' }),
-		createdAt: integer('created_at', { mode: 'timestamp' })
-			.$defaultFn(() => new Date())
-			.notNull(),
-		updatedAt: integer('updated_at', { mode: 'timestamp' })
-			.$defaultFn(() => new Date())
-			.notNull()
+
+		...timestamps
 	},
 	(table) => ({
 		uniqueActivityCategory: unique().on(table.activityId, table.categoryId)
@@ -76,12 +65,8 @@ export const timeSession = sqliteTable('time_session', {
 	duration: integer('duration'), // in seconds, calculated when session ends
 	isActive: integer('is_active', { mode: 'boolean' }).default(true).notNull(), // tracks if timer is currently running
 	notes: text('notes'), // optional notes for the time session
-	createdAt: integer('created_at', { mode: 'timestamp' })
-		.$defaultFn(() => new Date())
-		.notNull(),
-	updatedAt: integer('updated_at', { mode: 'timestamp' })
-		.$defaultFn(() => new Date())
-		.notNull()
+
+	...timestamps
 });
 
 // Category validation schemas
@@ -207,12 +192,8 @@ export const user = sqliteTable('user', {
 		.$defaultFn(() => false)
 		.notNull(),
 	image: text('image'),
-	createdAt: integer('created_at', { mode: 'timestamp' })
-		.$defaultFn(() => new Date())
-		.notNull(),
-	updatedAt: integer('updated_at', { mode: 'timestamp' })
-		.$defaultFn(() => new Date())
-		.notNull()
+
+	...timestamps
 });
 
 export const session = sqliteTable('session', {
