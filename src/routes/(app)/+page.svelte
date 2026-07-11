@@ -13,14 +13,13 @@
 	} from '$lib/components/tracker';
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
 	import { Separator } from '$lib/components/ui/separator';
-	import * as Tabs from '$lib/components/ui/tabs';
 	import {
 		selectionStore,
 		trackerSessionController,
 		timerStore,
-		trackerTabPersistedState,
-		type TrackerTab
+		trackerTabPersistedState
 	} from '$lib/stores';
+	import { Star } from '@lucide/svelte';
 	import {
 		projectFavoriteActivities,
 		projectSelectedActivities
@@ -30,7 +29,13 @@
 	// State for create dialogs triggered from empty states
 	let showCreateCategory = $state(false);
 	let showCreateActivity = $state(false);
-	let activeTab = $state<TrackerTab>(trackerTabPersistedState.current);
+
+	const showFavorites = $derived(trackerTabPersistedState.current === 'favorites');
+
+	function toggleFavorites() {
+		trackerTabPersistedState.current =
+			trackerTabPersistedState.current === 'favorites' ? 'activities' : 'favorites';
+	}
 
 	// Get user from page data
 	const user = $derived(page.data?.user);
@@ -82,20 +87,15 @@
 	}
 
 	onMount(() => {
+		// One-time migration from the old localStorage flag to the shared tab store
+		const legacy = localStorage.getItem('ordo-show-favorites');
+		if (legacy !== null && localStorage.getItem('ordo-tracker-tab') === null) {
+			trackerTabPersistedState.current = legacy === 'true' ? 'favorites' : 'activities';
+			localStorage.removeItem('ordo-show-favorites');
+		}
+
 		if (user?.id) {
 			void trackerSessionController.reconcile();
-		}
-	});
-
-	$effect(() => {
-		if (trackerTabPersistedState.current !== activeTab) {
-			trackerTabPersistedState.current = activeTab;
-		}
-	});
-
-	$effect(() => {
-		if (activeTab !== trackerTabPersistedState.current) {
-			activeTab = trackerTabPersistedState.current;
 		}
 	});
 
@@ -131,56 +131,69 @@
 		<!-- Empty state for new users with no categories -->
 		<EmptyState type="no-categories" onCreateCategory={() => (showCreateCategory = true)} />
 	{:else}
-		<Tabs.Root bind:value={activeTab} class="mt-4 w-full">
-			<Tabs.List class="grid w-full grid-cols-2 rounded-lg bg-muted p-1">
-				<Tabs.Trigger value="activities" class="rounded-md data-[state=active]:bg-background">
-					Activities
-				</Tabs.Trigger>
-				<Tabs.Trigger value="favorites" class="rounded-md data-[state=active]:bg-background">
-					Favorites
-				</Tabs.Trigger>
-			</Tabs.List>
+		<div class="star-wrapper relative mt-8">
+			<CategorySelector
+				categories={categoriesQuery?.current || []}
+				selectedCategoryIds={selectionStore.current.selectedCategoryIds}
+				filterMode={selectionStore.current.filterMode}
+				onFilterModeChange={handleFilterModeChange}
+				onClearSelection={handleClearCategorySelection}
+				onSelectedCategoryIdsChange={handleCategorySelectionChange}
+				loading={categoriesQuery?.loading || false}
+				error={categoriesQuery?.error}
+				userId={user?.id || ''}
+				{showFavorites}
+			/>
 
-			<Tabs.Content value="activities" class="mt-0">
-				<!-- Categories -->
-				<CategorySelector
-					categories={categoriesQuery?.current || []}
-					selectedCategoryIds={selectionStore.current.selectedCategoryIds}
-					filterMode={selectionStore.current.filterMode}
-					onFilterModeChange={handleFilterModeChange}
-					onClearSelection={handleClearCategorySelection}
-					onSelectedCategoryIdsChange={handleCategorySelectionChange}
-					loading={categoriesQuery?.loading || false}
-					error={categoriesQuery?.error}
-					userId={user?.id || ''}
+			<!--
+				Star tab is always a circle sitting in the card's top-edge notch.
+				Outline star when categories are shown, filled star when favorites are shown.
+			-->
+			<button
+				type="button"
+				onclick={toggleFavorites}
+				class="star-tab absolute z-10 flex size-12 items-center justify-center border border-border bg-card shadow-md
+					transition-[transform,box-shadow,color] duration-300 ease-out
+					hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2
+					focus-visible:ring-primary focus-visible:outline-none active:scale-95"
+				style="top: -24px; right: 32px;"
+				aria-expanded={!showFavorites}
+				aria-controls="categories-grid"
+				aria-pressed={showFavorites}
+				aria-label={showFavorites ? 'Show categories' : 'Show favorites'}
+			>
+				<Star
+					class="size-5 transition-[fill,color,stroke] duration-300 ease-out {showFavorites
+						? 'fill-primary text-primary'
+						: 'fill-none text-muted-foreground'}"
 				/>
+			</button>
 
-				<!-- Activities for Selected Categories -->
-				{#if selectionStore.current.selectedCategoryIds.length === 0}
-					<Separator class="my-4" />
-					<EmptyState type="no-selection" />
-				{:else if !hasActivitiesInSelection}
-					<Separator class="my-4" />
-					<EmptyState type="no-activities" onCreateActivity={() => (showCreateActivity = true)} />
+			<div class="content-panel">
+				<Separator class="my-4" />
+				{#if !showFavorites}
+					{#if selectionStore.current.selectedCategoryIds.length === 0}
+						<EmptyState type="no-selection" />
+					{:else if !hasActivitiesInSelection}
+						<EmptyState type="no-activities" onCreateActivity={() => (showCreateActivity = true)} />
+					{:else}
+						<ActivityList
+							activities={selectedActivities}
+							onActivitySelect={handleActivitySelect}
+							userId={user?.id || ''}
+							currentActivityId={timerStore.current.activityId}
+						/>
+					{/if}
 				{:else}
-					<ActivityList
-						activities={selectedActivities}
+					<FavoriteActivities
+						activities={favoriteActivities}
 						onActivitySelect={handleActivitySelect}
 						userId={user?.id || ''}
 						currentActivityId={timerStore.current.activityId}
 					/>
 				{/if}
-			</Tabs.Content>
-
-			<Tabs.Content value="favorites" class="mt-0">
-				<FavoriteActivities
-					activities={favoriteActivities}
-					onActivitySelect={handleActivitySelect}
-					userId={user?.id || ''}
-					currentActivityId={timerStore.current.activityId}
-				/>
-			</Tabs.Content>
-		</Tabs.Root>
+			</div>
+		</div>
 	{/if}
 </ScrollArea>
 
@@ -199,3 +212,34 @@
 	userId={user?.id || ''}
 	onActivityCreated={() => (showCreateActivity = false)}
 />
+
+<style>
+	/* Circular bite out of the card top edge so the star tab sits in a notch */
+	.star-wrapper :global(.category-panel) {
+		-webkit-mask-image:
+			radial-gradient(circle 28px at right 52px top 0, #000 99%, transparent 100%),
+			linear-gradient(#000, #000);
+		-webkit-mask-repeat: no-repeat;
+		-webkit-mask-composite: xor;
+		mask-image:
+			radial-gradient(circle 28px at right 52px top 0, #000 99%, transparent 100%),
+			linear-gradient(#000, #000);
+		mask-repeat: no-repeat;
+		mask-composite: exclude;
+	}
+
+	.star-tab {
+		border-radius: 9999px;
+	}
+
+	.content-panel {
+		transition: opacity 0.25s ease;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.star-tab,
+		.content-panel {
+			transition: none;
+		}
+	}
+</style>
