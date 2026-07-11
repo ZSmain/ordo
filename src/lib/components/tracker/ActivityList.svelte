@@ -49,7 +49,6 @@
 </script>
 
 {#if activities && activities.length > 0}
-	<Separator class="my-4" />
 	<div class="mt-4 space-y-3">
 		<div class="flex items-center justify-between gap-2">
 			<h2 class="text-lg font-semibold text-foreground">Activities</h2>
@@ -112,7 +111,6 @@
 		{/if}
 	</div>
 {:else}
-	<Separator class="my-4" />
 	<div class="mt-4 py-8 text-center">
 		<p class="text-muted-foreground">Select a category to view activities</p>
 	</div>

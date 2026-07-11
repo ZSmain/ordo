@@ -24,6 +24,8 @@
 		error?: Error | null;
 		onSelectedCategoryIdsChange?: (categoryIds: string[]) => void;
 		userId?: string;
+		/** When true, category pills collapse so favorites can use the vertical space. */
+		showFavorites?: boolean;
 	}
 
 	let {
@@ -35,7 +37,8 @@
 		loading = false,
 		error = null,
 		onSelectedCategoryIdsChange,
-		userId = ''
+		userId = '',
+		showFavorites = false
 	}: Props = $props();
 
 	let editCategoryOpen = $state(false);
@@ -52,24 +55,20 @@
 		onClearSelection?.();
 	}
 
-	// Check if a category is selected
 	function isSelected(categoryId: number): boolean {
 		return selectedCategoryIds.includes(String(categoryId));
 	}
 
-	// Handle modify category
 	function handleModifyCategory(category: Category) {
 		categoryToEdit = category;
 		editCategoryOpen = true;
 	}
 
-	// Handle delete category
 	function handleDeleteCategory(category: Category) {
 		categoryToDelete = category;
 		deleteDialogOpen = true;
 	}
 
-	// Confirm delete category
 	async function confirmDeleteCategory() {
 		if (!userId || !categoryToDelete || isDeleting) return;
 
@@ -90,23 +89,26 @@
 		}
 	}
 
-	// Handle category updated
 	function handleCategoryUpdated() {
 		editCategoryOpen = false;
 		categoryToEdit = null;
 	}
+
+	const hasCategories = $derived((categories?.length ?? 0) > 0);
+	const showFilterControls = $derived(
+		!showFavorites && selectedCategoryIds.length > 0 && hasCategories
+	);
 </script>
 
-<div class="mt-4 space-y-2 px-1">
+<div class="space-y-2 px-1">
 	{#if error}
 		<div class="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-center">
 			<p class="text-sm font-medium text-foreground">Failed to load categories</p>
 			<p class="mt-1 text-xs text-muted-foreground">Please try refreshing the page</p>
 		</div>
 	{:else if loading}
-		<!-- Skeleton loading state -->
-		<Card class="py-4 shadow-none">
-			<CardContent class="px-4">
+		<Card class="category-panel py-4 pt-7 pr-7 shadow-none">
+			<CardContent class="px-4 pr-7">
 				<div class="space-y-4">
 					<Skeleton class="h-5 w-24" />
 					<div class="flex flex-wrap gap-2">
@@ -117,17 +119,28 @@
 				</div>
 			</CardContent>
 		</Card>
-	{:else if !categories || categories.length === 0}
+	{:else if !hasCategories && !showFavorites}
 		<div class="mt-4 text-center text-xs text-muted-foreground">No categories yet</div>
 	{:else}
-		<Card class="py-4 shadow-none">
-			<CardContent class="px-4">
+		<Card
+			class="category-panel py-4 pr-7 shadow-none transition-[padding] duration-300 ease-out {showFavorites
+				? 'pt-6'
+				: 'pt-7'}"
+			data-collapsed={showFavorites ? 'true' : 'false'}
+		>
+			<CardContent class="px-4 pr-7">
 				<form>
 					<Field.Group>
-						<Field.Set class="gap-4">
-							<div class="flex items-center justify-between gap-3">
-								<Field.Legend>Categories</Field.Legend>
-								{#if selectedCategoryIds.length > 0}
+						<Field.Set class="gap-0">
+							<div
+								class="flex items-center justify-between gap-3 transition-[margin] duration-300 ease-out {showFavorites
+									? 'mb-0'
+									: 'mb-4'}"
+							>
+								<Field.Legend class="mb-0">
+									{showFavorites ? 'Favorites' : 'Categories'}
+								</Field.Legend>
+								{#if showFilterControls}
 									<div class="flex flex-wrap items-center justify-end gap-2">
 										{#if selectedCategoryIds.length > 1}
 											<div class="flex items-center gap-2">
@@ -155,46 +168,62 @@
 									</div>
 								{/if}
 							</div>
-							<ToggleGroup
-								type="multiple"
-								value={selectedCategoryIds}
-								onValueChange={handleSelectedCategoryIdsChange}
-								aria-label="Categories"
-								class="flex w-full flex-row flex-wrap gap-2 rounded-none"
+
+							<!-- Collapsible category pills: grid 1fr → 0fr keeps height animation smooth -->
+							<div
+								id="categories-grid"
+								class="categories-collapse"
+								class:collapsed={showFavorites}
+								aria-hidden={showFavorites}
+								inert={showFavorites}
 							>
-								{#each categories as category, index (category.id + '-' + index)}
-									<ContextMenu.Root>
-										<ContextMenu.Trigger>
-											<ToggleGroupItem
-												value={String(category.id)}
-												class="h-auto rounded-full border-0 px-3 py-1.5 text-sm font-normal shadow-none transition-all duration-100 ease-linear"
-												style="background-color: {isSelected(category.id)
-													? category.color + '40'
-													: category.color + '10'}"
-											>
-												<div class="flex items-center gap-1.5">
-													<span class="text-sm">{category.icon}</span>
-													<span class="text-nowrap">{category.name}</span>
-												</div>
-											</ToggleGroupItem>
-										</ContextMenu.Trigger>
-										<ContextMenu.Content>
-											<ContextMenu.Item onclick={() => handleModifyCategory(category)}>
-												<PencilLine class="mr-2 h-4 w-4" />
-												Modify
-											</ContextMenu.Item>
-											<ContextMenu.Separator />
-											<ContextMenu.Item
-												onclick={() => handleDeleteCategory(category)}
-												class="text-destructive focus:text-destructive"
-											>
-												<Trash2 class="mr-2 h-4 w-4" />
-												Delete
-											</ContextMenu.Item>
-										</ContextMenu.Content>
-									</ContextMenu.Root>
-								{/each}
-							</ToggleGroup>
+								<div class="categories-collapse-inner">
+									{#if hasCategories}
+										<ToggleGroup
+											type="multiple"
+											value={selectedCategoryIds}
+											onValueChange={handleSelectedCategoryIdsChange}
+											aria-label="Categories"
+											class="flex w-full flex-row flex-wrap gap-2 rounded-none"
+										>
+											{#each categories as category, index (category.id + '-' + index)}
+												<ContextMenu.Root>
+													<ContextMenu.Trigger>
+														<ToggleGroupItem
+															value={String(category.id)}
+															class="h-auto rounded-full border-0 px-3 py-1.5 text-sm font-normal shadow-none transition-all duration-100 ease-linear"
+															style="background-color: {isSelected(category.id)
+																? category.color + '40'
+																: category.color + '10'}"
+														>
+															<div class="flex items-center gap-1.5">
+																<span class="text-sm">{category.icon}</span>
+																<span class="text-nowrap">{category.name}</span>
+															</div>
+														</ToggleGroupItem>
+													</ContextMenu.Trigger>
+													<ContextMenu.Content>
+														<ContextMenu.Item onclick={() => handleModifyCategory(category)}>
+															<PencilLine class="mr-2 h-4 w-4" />
+															Modify
+														</ContextMenu.Item>
+														<ContextMenu.Separator />
+														<ContextMenu.Item
+															onclick={() => handleDeleteCategory(category)}
+															class="text-destructive focus:text-destructive"
+														>
+															<Trash2 class="mr-2 h-4 w-4" />
+															Delete
+														</ContextMenu.Item>
+													</ContextMenu.Content>
+												</ContextMenu.Root>
+											{/each}
+										</ToggleGroup>
+									{:else}
+										<p class="text-xs text-muted-foreground">No categories yet</p>
+									{/if}
+								</div>
+							</div>
 						</Field.Set>
 					</Field.Group>
 				</form>
@@ -230,3 +259,34 @@
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>
+
+<style>
+	/* Animate height via grid-template-rows (stable cross-browser alternative to max-height hacks) */
+	.categories-collapse {
+		display: grid;
+		grid-template-rows: 1fr;
+		opacity: 1;
+		transition:
+			grid-template-rows 0.4s ease,
+			opacity 0.3s ease,
+			margin-top 0.3s ease;
+	}
+
+	.categories-collapse.collapsed {
+		grid-template-rows: 0fr;
+		opacity: 0;
+		margin-top: 0;
+		pointer-events: none;
+	}
+
+	.categories-collapse-inner {
+		overflow: hidden;
+		min-height: 0;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.categories-collapse {
+			transition: none;
+		}
+	}
+</style>
