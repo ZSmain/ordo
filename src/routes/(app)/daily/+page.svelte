@@ -165,11 +165,7 @@
 							</div>
 						{:else}
 							{#each sessions as session (session.id)}
-								<SessionCard
-									{session}
-									userId={data.user.id}
-									onSessionUpdated={handleSessionUpdated}
-								/>
+								<SessionCard {session} onSessionUpdated={handleSessionUpdated} />
 							{/each}
 						{/if}
 					</div>

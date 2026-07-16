@@ -51,19 +51,22 @@
 		}));
 	});
 
+	/** Prefer latest scheduled goals (includes pending tomorrow change) for editing. */
+	function applyGoalsToForm(source: NonNullable<typeof activity>) {
+		const goals = source.latestGoals ?? source;
+		activityForm.dailyGoal = goals.dailyGoal || undefined;
+		activityForm.weeklyGoal = goals.weeklyGoal || undefined;
+		activityForm.monthlyGoal = goals.monthlyGoal || undefined;
+	}
+
 	// Initialize form when activity changes
 	$effect(() => {
 		if (activity) {
 			activityForm.name = activity.name;
 			activityForm.icon = activity.icon;
-			activityForm.dailyGoal = activity.dailyGoal || undefined;
-			activityForm.weeklyGoal = activity.weeklyGoal || undefined;
-			activityForm.monthlyGoal = activity.monthlyGoal || undefined;
-
-			// Initialize selected categories from the activity's categories
+			applyGoalsToForm(activity);
 			selectedCategoryIds = activity.categories?.map((cat) => cat.id.toString()) || [];
 		} else {
-			// Reset form when activity is null
 			resetForm();
 		}
 	});
@@ -78,17 +81,14 @@
 				id: activity.id,
 				name: activityForm.name.trim(),
 				icon: activityForm.icon,
-				dailyGoal: activityForm.dailyGoal,
-				weeklyGoal: activityForm.weeklyGoal,
-				monthlyGoal: activityForm.monthlyGoal,
+				dailyGoal: activityForm.dailyGoal ?? null,
+				weeklyGoal: activityForm.weeklyGoal ?? null,
+				monthlyGoal: activityForm.monthlyGoal ?? null,
 				categoryIds: selectedCategoryIds.map((id) => parseInt(id))
 			});
 
-			// Close drawer
 			open = false;
 			onOpenChange?.(false);
-
-			// Notify parent component
 			onActivityUpdated?.();
 		} catch (error) {
 			console.error('Failed to update activity:', error);
@@ -102,9 +102,7 @@
 		if (activity) {
 			activityForm.name = activity.name;
 			activityForm.icon = activity.icon;
-			activityForm.dailyGoal = activity.dailyGoal || undefined;
-			activityForm.weeklyGoal = activity.weeklyGoal || undefined;
-			activityForm.monthlyGoal = activity.monthlyGoal || undefined;
+			applyGoalsToForm(activity);
 		}
 		selectedCategoryIds = [];
 	}
@@ -181,9 +179,10 @@
 					</Select.Root>
 				</div>
 
-				<!-- Goals in a compact grid -->
+				<!-- Goals in a compact grid — changes take effect tomorrow -->
 				<div class="space-y-2">
 					<Label>Goals (minutes)</Label>
+					<p class="text-xs text-muted-foreground">Changes take effect tomorrow.</p>
 					<div class="grid grid-cols-3 gap-2">
 						<div class="space-y-1">
 							<span class="text-xs text-muted-foreground">Daily</span>

@@ -33,6 +33,8 @@
 		border: string;
 		tooltip: string;
 		isActive: boolean;
+		/** null = no daily goal; true = hit; false = miss */
+		goalHit: boolean | null;
 	}
 
 	interface CalendarHeatmapMonth {
@@ -219,7 +221,11 @@
 		});
 	}
 
-	function formatCalendarCellTooltip(date: Date, duration: number): string {
+	function formatCalendarCellTooltip(
+		date: Date,
+		duration: number,
+		goalHit: boolean | null
+	): string {
 		const dateLabel = date.toLocaleDateString('en-US', {
 			month: 'short',
 			day: 'numeric',
@@ -227,7 +233,20 @@
 			timeZone: 'UTC'
 		});
 
-		return duration > 0 ? `${dateLabel}: ${formatDuration(duration)}` : `${dateLabel}: No activity`;
+		const timePart =
+			duration > 0 ? `${dateLabel}: ${formatDuration(duration)}` : `${dateLabel}: No activity`;
+
+		if (goalHit === null) return timePart;
+		return `${timePart} · Goal ${goalHit ? 'hit' : 'miss'}`;
+	}
+
+	function goalProgressLabel(
+		durationSeconds: number,
+		goalMinutes: number | null | undefined
+	): string {
+		const tracked = formatDuration(durationSeconds);
+		if (goalMinutes == null || goalMinutes <= 0) return tracked;
+		return `${tracked} / ${formatDuration(goalMinutes * 60)}`;
 	}
 
 	let statisticsQuery = $derived.by(() => {
@@ -385,11 +404,20 @@
 		return `From ${formatCalendarSummaryDate(calendarVisibleStart)}`;
 	});
 
+	let calendarGoalHits = $derived(
+		(calendarStatisticsQuery?.current?.goalSummary?.dailyGoalHits ?? {}) as Record<string, boolean>
+	);
+
+	let calendarGoalSummary = $derived(calendarStatisticsQuery?.current?.goalSummary ?? null);
+
 	let calendarMonthSections = $derived.by(() => {
-		if (!calendarVisibleStart || calendarChartData.length === 0) {
+		// Render the year grid even with no sessions so goal misses still show when goals exist
+		const hasGoalHits = Object.keys(calendarGoalHits).length > 0;
+		if (!calendarVisibleStart && calendarChartData.length === 0 && !hasGoalHits) {
 			return [] as CalendarHeatmapMonth[];
 		}
 
+		const visibleStart = calendarVisibleStart ?? calendarYearStart;
 		const durationByDate = new Map(
 			calendarChartData.map((entry) => [formatDate(entry.date), entry.duration])
 		);
@@ -397,7 +425,7 @@
 
 		for (
 			let monthCursor = new Date(
-				Date.UTC(calendarVisibleStart.getUTCFullYear(), calendarVisibleStart.getUTCMonth(), 1)
+				Date.UTC(visibleStart.getUTCFullYear(), visibleStart.getUTCMonth(), 1)
 			);
 			monthCursor.getTime() <= todayUtc.getTime();
 			monthCursor = new Date(
@@ -410,7 +438,7 @@
 			const monthEnd = new Date(
 				Date.UTC(monthCursor.getUTCFullYear(), monthCursor.getUTCMonth() + 1, 0)
 			);
-			const visibleMonthStart = maxDate(monthStart, calendarVisibleStart);
+			const visibleMonthStart = maxDate(monthStart, visibleStart);
 			const visibleMonthEnd = minDate(monthEnd, todayUtc);
 			const gridStart = startOfUtcWeek(visibleMonthStart);
 			const gridEnd = endOfUtcWeek(visibleMonthEnd);
@@ -423,6 +451,7 @@
 			) {
 				const key = formatDate(day);
 				const duration = durationByDate.get(key) ?? 0;
+				const goalHit = key in calendarGoalHits ? calendarGoalHits[key] : null;
 
 				cells.push({
 					key,
@@ -432,8 +461,9 @@
 					duration,
 					fill: getCalendarCellFill(duration),
 					border: getCalendarCellBorder(duration),
-					tooltip: formatCalendarCellTooltip(day, duration),
-					isActive: duration > 0
+					tooltip: formatCalendarCellTooltip(day, duration, goalHit),
+					isActive: duration > 0,
+					goalHit
 				});
 			}
 
@@ -523,13 +553,10 @@
 							</div>
 						{:else}
 							{@const statistics = statisticsQuery.current}
-							{#if statistics && statistics.totalSessions === 0}
-								<div class="py-8 text-center">
-									<p class="text-muted-foreground">No data recorded for this period.</p>
-								</div>
-							{:else if statistics}
+							{#if statistics}
 								{@const chartData = statistics.chartData}
-								{@const hasCalendarData = calendarChartData.length > 0}
+								{@const hasCalendarData =
+									calendarChartData.length > 0 || calendarMonthSections.length > 0}
 
 								<div class="rounded-lg border bg-card p-4">
 									{#if calendarStatisticsQuery?.loading || activityLifetimeQuery?.loading}
@@ -587,11 +614,20 @@
 																>
 																	{#each month.cells as cell (cell.key)}
 																		<div
-																			class="rounded-sm border"
+																			class="relative rounded-sm border"
 																			style={`grid-column: ${cell.column}; grid-row: ${cell.row}; width: ${calendarCellSize}px; height: ${calendarCellSize}px; background-color: ${cell.fill}; border-color: ${cell.border}; opacity: ${cell.isActive ? 1 : 0.72};`}
 																			title={cell.tooltip}
 																			aria-label={cell.tooltip}
-																		></div>
+																		>
+																			{#if cell.goalHit !== null}
+																				<span
+																					class="pointer-events-none absolute -top-0.5 -right-0.5 block h-1.5 w-1.5 rounded-full ring-1 ring-background {cell.goalHit
+																						? 'bg-emerald-500'
+																						: 'bg-rose-500'}"
+																					aria-hidden="true"
+																				></span>
+																			{/if}
+																		</div>
 																	{/each}
 																</div>
 															</div>
@@ -607,6 +643,20 @@
 											<span>{formatDuration(calendarTrackedDuration)} tracked</span>
 											<span>{formatDuration(calendarMaxDuration)} peak day</span>
 										</div>
+										{#if Object.keys(calendarGoalHits).length > 0}
+											<div
+												class="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground"
+											>
+												<span class="inline-flex items-center gap-1.5">
+													<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+													Goal hit
+												</span>
+												<span class="inline-flex items-center gap-1.5">
+													<span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+													Goal miss
+												</span>
+											</div>
+										{/if}
 									{:else}
 										<div class="py-8 text-center">
 											<p class="text-sm text-muted-foreground">
@@ -615,6 +665,75 @@
 										</div>
 									{/if}
 								</div>
+
+								<!-- Goal summary: current week & month -->
+								{#if calendarGoalSummary && (calendarGoalSummary.activeGoal || calendarGoalSummary.week.dailyGoalDays > 0 || calendarGoalSummary.month.dailyGoalDays > 0 || calendarGoalSummary.week.goalMinutes != null || calendarGoalSummary.month.goalMinutes != null)}
+									<div class="rounded-lg border bg-card p-4">
+										<h3 class="mb-3 text-sm font-medium text-muted-foreground">Goals</h3>
+										<div class="grid gap-3 sm:grid-cols-2">
+											<div class="rounded-lg bg-muted/50 p-3">
+												<div class="flex items-center justify-between gap-2">
+													<p class="text-xs font-medium text-muted-foreground">This week</p>
+													{#if calendarGoalSummary.week.goalHit !== null}
+														<span
+															class="rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase {calendarGoalSummary
+																.week.goalHit
+																? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
+																: 'bg-rose-500/15 text-rose-700 dark:text-rose-400'}"
+														>
+															{calendarGoalSummary.week.goalHit ? 'Hit' : 'Miss'}
+														</span>
+													{/if}
+												</div>
+												<p class="mt-1 text-sm font-semibold tabular-nums">
+													{goalProgressLabel(
+														calendarGoalSummary.week.durationSeconds,
+														calendarGoalSummary.week.goalMinutes
+													)}
+												</p>
+												{#if calendarGoalSummary.week.dailyGoalDays > 0}
+													<p class="mt-1 text-xs text-muted-foreground">
+														{calendarGoalSummary.week.dailyHits}/{calendarGoalSummary.week
+															.dailyGoalDays} daily goals hit
+													</p>
+												{/if}
+											</div>
+											<div class="rounded-lg bg-muted/50 p-3">
+												<div class="flex items-center justify-between gap-2">
+													<p class="text-xs font-medium text-muted-foreground">This month</p>
+													{#if calendarGoalSummary.month.goalHit !== null}
+														<span
+															class="rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase {calendarGoalSummary
+																.month.goalHit
+																? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
+																: 'bg-rose-500/15 text-rose-700 dark:text-rose-400'}"
+														>
+															{calendarGoalSummary.month.goalHit ? 'Hit' : 'Miss'}
+														</span>
+													{/if}
+												</div>
+												<p class="mt-1 text-sm font-semibold tabular-nums">
+													{goalProgressLabel(
+														calendarGoalSummary.month.durationSeconds,
+														calendarGoalSummary.month.goalMinutes
+													)}
+												</p>
+												{#if calendarGoalSummary.month.dailyGoalDays > 0}
+													<p class="mt-1 text-xs text-muted-foreground">
+														{calendarGoalSummary.month.dailyHits}/{calendarGoalSummary.month
+															.dailyGoalDays} daily goals hit
+													</p>
+												{/if}
+											</div>
+										</div>
+									</div>
+								{/if}
+
+								{#if statistics.totalSessions === 0 && chartData.length === 0}
+									<div class="py-4 text-center">
+										<p class="text-muted-foreground">No data recorded for this period.</p>
+									</div>
+								{/if}
 
 								<!-- Bar Chart -->
 								{#if chartData.length > 0}
@@ -668,63 +787,65 @@
 									</div>
 								{/if}
 
-								<!-- Record Length -->
-								<div class="rounded-lg border bg-card p-4">
-									<h3 class="mb-3 text-sm font-medium text-muted-foreground">Record Length</h3>
-									<div class="grid grid-cols-3 gap-3">
-										<div class="rounded-lg bg-muted/50 p-3 text-center">
-											<p class="text-lg font-semibold">
-												{formatDuration(statistics.shortestSession)}
-											</p>
-											<p class="text-xs text-muted-foreground">Shortest</p>
-										</div>
-										<div class="rounded-lg bg-muted/50 p-3 text-center">
-											<p class="text-lg font-semibold">
-												{formatDuration(statistics.averageSession)}
-											</p>
-											<p class="text-xs text-muted-foreground">Average</p>
-										</div>
-										<div class="rounded-lg bg-muted/50 p-3 text-center">
-											<p class="text-lg font-semibold">
-												{formatDuration(statistics.longestSession)}
-											</p>
-											<p class="text-xs text-muted-foreground">Longest</p>
+								{#if statistics.totalSessions > 0}
+									<!-- Record Length -->
+									<div class="rounded-lg border bg-card p-4">
+										<h3 class="mb-3 text-sm font-medium text-muted-foreground">Record Length</h3>
+										<div class="grid grid-cols-3 gap-3">
+											<div class="rounded-lg bg-muted/50 p-3 text-center">
+												<p class="text-lg font-semibold">
+													{formatDuration(statistics.shortestSession)}
+												</p>
+												<p class="text-xs text-muted-foreground">Shortest</p>
+											</div>
+											<div class="rounded-lg bg-muted/50 p-3 text-center">
+												<p class="text-lg font-semibold">
+													{formatDuration(statistics.averageSession)}
+												</p>
+												<p class="text-xs text-muted-foreground">Average</p>
+											</div>
+											<div class="rounded-lg bg-muted/50 p-3 text-center">
+												<p class="text-lg font-semibold">
+													{formatDuration(statistics.longestSession)}
+												</p>
+												<p class="text-xs text-muted-foreground">Longest</p>
+											</div>
 										</div>
 									</div>
-								</div>
 
-								<!-- Record Time -->
-								<div class="rounded-lg border bg-card p-4">
-									<h3 class="mb-3 text-sm font-medium text-muted-foreground">Record Time</h3>
-									<div class="grid grid-cols-2 gap-3">
-										<div class="flex items-center gap-3">
-											<div
-												class="flex h-9 w-9 items-center justify-center rounded-lg bg-green-500/10"
-											>
-												<Timer class="h-4 w-4 text-green-600" />
+									<!-- Record Time -->
+									<div class="rounded-lg border bg-card p-4">
+										<h3 class="mb-3 text-sm font-medium text-muted-foreground">Record Time</h3>
+										<div class="grid grid-cols-2 gap-3">
+											<div class="flex items-center gap-3">
+												<div
+													class="flex h-9 w-9 items-center justify-center rounded-lg bg-green-500/10"
+												>
+													<Timer class="h-4 w-4 text-green-600" />
+												</div>
+												<div>
+													<p class="text-sm font-medium">
+														{formatDateTime(statistics.firstSession)}
+													</p>
+													<p class="text-xs text-muted-foreground">First Record</p>
+												</div>
 											</div>
-											<div>
-												<p class="text-sm font-medium">
-													{formatDateTime(statistics.firstSession)}
-												</p>
-												<p class="text-xs text-muted-foreground">First Record</p>
-											</div>
-										</div>
-										<div class="flex items-center gap-3">
-											<div
-												class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10"
-											>
-												<Timer class="h-4 w-4 text-blue-600" />
-											</div>
-											<div>
-												<p class="text-sm font-medium">
-													{formatDateTime(statistics.lastSession)}
-												</p>
-												<p class="text-xs text-muted-foreground">Last Record</p>
+											<div class="flex items-center gap-3">
+												<div
+													class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10"
+												>
+													<Timer class="h-4 w-4 text-blue-600" />
+												</div>
+												<div>
+													<p class="text-sm font-medium">
+														{formatDateTime(statistics.lastSession)}
+													</p>
+													<p class="text-xs text-muted-foreground">Last Record</p>
+												</div>
 											</div>
 										</div>
 									</div>
-								</div>
+								{/if}
 							{/if}
 						{/if}
 					{:else}

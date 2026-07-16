@@ -13,18 +13,17 @@
 				icon: string;
 			};
 		};
-		userId: string;
 		onOpenChange: (open: boolean) => void;
 		onSessionUpdated: () => void;
 	}
 
-	let { open = $bindable(), session, userId, onOpenChange, onSessionUpdated }: Props = $props();
+	let { open = $bindable(), session, onOpenChange, onSessionUpdated }: Props = $props();
 </script>
 
 <Drawer.Root {open} {onOpenChange}>
 	{#if open}
 		<Drawer.Content>
-			<ModifySessionDrawerContent {session} {userId} {onOpenChange} {onSessionUpdated} />
+			<ModifySessionDrawerContent {session} {onOpenChange} {onSessionUpdated} />
 		</Drawer.Content>
 	{/if}
 </Drawer.Root>

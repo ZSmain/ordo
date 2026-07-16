@@ -24,11 +24,10 @@
 				icon: string;
 			}>;
 		};
-		userId: string;
 		onSessionUpdated?: () => void;
 	}
 
-	let { session, userId, onSessionUpdated }: Props = $props();
+	let { session, onSessionUpdated }: Props = $props();
 
 	let modifyDialogOpen = $state(false);
 	let deleteDialogOpen = $state(false);
@@ -159,7 +158,6 @@
 <ModifySessionDrawer
 	bind:open={modifyDialogOpen}
 	{session}
-	{userId}
 	onOpenChange={(open) => (modifyDialogOpen = open)}
 	onSessionUpdated={() => onSessionUpdated?.()}
 />

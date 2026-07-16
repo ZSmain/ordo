@@ -156,7 +156,11 @@
 				</div>
 				{#if activity.dailyGoal}
 					<div class="text-xs text-muted-foreground">
-						Goal: {activity.dailyGoal}min
+						Goal: {activity.dailyGoal} min/day
+					</div>
+				{:else if activity.latestGoals?.dailyGoal}
+					<div class="text-xs text-muted-foreground">
+						Goal from tomorrow: {activity.latestGoals.dailyGoal} min/day
 					</div>
 				{/if}
 			</div>
@@ -193,18 +197,12 @@
 </ContextMenu.Root>
 
 <!-- Edit Activity Drawer -->
-<EditActivity
-	bind:open={editActivityOpen}
-	{activity}
-	onActivityUpdated={handleActivityUpdated}
-	{userId}
-/>
+<EditActivity bind:open={editActivityOpen} {activity} onActivityUpdated={handleActivityUpdated} />
 
 <!-- Activity Statistics Drawer -->
 <ActivityStatisticsDrawer
 	bind:open={statisticsOpen}
 	activity={{ id: activity.id, name: activity.name, icon: activity.icon }}
-	{userId}
 	onOpenChange={(open) => (statisticsOpen = open)}
 />
 

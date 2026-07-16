@@ -3,10 +3,20 @@ import type { SelectActivity, SelectCategory } from '$lib/server/db/schema';
 
 export type TrackerActivityCategory = Pick<SelectCategory, 'id' | 'name' | 'color' | 'icon'>;
 
-export type TrackerActivity = Pick<
-	SelectActivity,
-	'id' | 'name' | 'icon' | 'dailyGoal' | 'weeklyGoal' | 'monthlyGoal' | 'favorite' | 'archived'
-> & {
+/** Active (or latest form) goal values in minutes. Null = no goal for that period. */
+export type TrackerActivityGoals = {
+	dailyGoal: number | null;
+	weeklyGoal: number | null;
+	monthlyGoal: number | null;
+};
+
+export type TrackerActivity = Pick<SelectActivity, 'id' | 'name' | 'icon' | 'favorite' | 'archived'> & {
+	/** Goals currently in effect for today (for display). */
+	dailyGoal: number | null;
+	weeklyGoal: number | null;
+	monthlyGoal: number | null;
+	/** Latest scheduled goals including pending tomorrow change (for edit forms). */
+	latestGoals: TrackerActivityGoals | null;
 	categories: TrackerActivityCategory[];
 };
 

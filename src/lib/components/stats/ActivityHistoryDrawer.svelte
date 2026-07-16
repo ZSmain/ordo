@@ -15,13 +15,12 @@
 	interface Props {
 		open: boolean;
 		activity: ActivityInfo | null;
-		userId: string;
 		startDate: string;
 		endDate: string;
 		onOpenChange: (open: boolean) => void;
 	}
 
-	let { open = $bindable(), activity, userId, startDate, endDate, onOpenChange }: Props = $props();
+	let { open = $bindable(), activity, startDate, endDate, onOpenChange }: Props = $props();
 
 	interface Session {
 		id: number;
@@ -155,7 +154,7 @@
 										<h4 class="mb-2 text-sm font-medium text-muted-foreground">{date}</h4>
 										<div class="space-y-1">
 											{#each dateSessions as session (session.id)}
-												<SessionCard {session} {userId} onSessionUpdated={handleSessionUpdated} />
+												<SessionCard {session} onSessionUpdated={handleSessionUpdated} />
 											{/each}
 										</div>
 									</div>

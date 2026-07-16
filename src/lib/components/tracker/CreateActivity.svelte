@@ -170,6 +170,7 @@
 
 				<div class="space-y-2">
 					<Label>Goals (optional, in minutes)</Label>
+					<p class="text-xs text-muted-foreground">Goals take effect tomorrow.</p>
 					<div class="grid grid-cols-3 gap-2">
 						<div class="space-y-1">
 							<Label for="daily-goal" class="text-xs">Daily</Label>

@@ -202,7 +202,6 @@
 	<ActivityStatisticsDrawer
 		bind:open={statisticsDrawerOpen}
 		activity={selectedActivity}
-		userId={data.user.id}
 		onOpenChange={(open) => (statisticsDrawerOpen = open)}
 	/>
 {/if}

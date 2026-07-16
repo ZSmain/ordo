@@ -1,13 +1,45 @@
 import { query } from '$app/server';
 import {
+	dailyGoalHitsForRange,
+	evaluateMonth,
+	evaluateWeek,
+	getActiveGoal,
+	toDateKey,
+	todayDateKey,
+	type GoalHistoryEntry,
+	type PeriodGoalSummary
+} from '$lib/goals';
+import {
 	getCategoriesForActivityId,
 	getCategoriesForActivityIds,
 	getRepresentativeCategory
 } from '$lib/server/activity-catalog';
-import { getRemoteContext } from '$lib/server/remote';
 import { activity, activityCategory, category, timeSession } from '$lib/server/db/schema';
+import { loadGoalHistoryForActivity, type GoalHistoryRow } from '$lib/server/goals';
+import { getRemoteContext } from '$lib/server/remote';
 import { and, eq, gte, isNotNull, lt, sql, sum } from 'drizzle-orm';
 import * as v from 'valibot';
+
+function toGoalHistoryEntries(rows: GoalHistoryRow[]): GoalHistoryEntry[] {
+	return rows.map((row) => ({
+		startDate: row.startDate,
+		dailyGoal: row.dailyGoal,
+		weeklyGoal: row.weeklyGoal,
+		monthlyGoal: row.monthlyGoal
+	}));
+}
+
+function periodSummaryPayload(summary: PeriodGoalSummary) {
+	return {
+		start: summary.start,
+		end: summary.end,
+		durationSeconds: summary.durationSeconds,
+		goalMinutes: summary.goalMinutes,
+		goalHit: summary.goalHit,
+		dailyHits: summary.dailyHits,
+		dailyGoalDays: summary.dailyGoalDays
+	};
+}
 
 export const getCategoryStats = query(
 	v.object({
@@ -295,25 +327,52 @@ export const getActivityStatistics = query(
 			dateFilters.push(lt(timeSession.startedAt, end));
 		}
 
-		// Get all sessions for this activity within the date range
-		const sessions = await db
-			.select({
-				id: timeSession.id,
-				startedAt: timeSession.startedAt,
-				stoppedAt: timeSession.stoppedAt,
-				duration: timeSession.duration
-			})
-			.from(timeSession)
-			.where(
-				and(
-					eq(timeSession.userId, userId),
-					eq(timeSession.activityId, activityId),
-					isNotNull(timeSession.stoppedAt),
-					...dateFilters
+		const [sessions, goalHistoryRows] = await Promise.all([
+			db
+				.select({
+					id: timeSession.id,
+					startedAt: timeSession.startedAt,
+					stoppedAt: timeSession.stoppedAt,
+					duration: timeSession.duration
+				})
+				.from(timeSession)
+				.where(
+					and(
+						eq(timeSession.userId, userId),
+						eq(timeSession.activityId, activityId),
+						isNotNull(timeSession.stoppedAt),
+						...dateFilters
+					)
 				)
+				.orderBy(sql`${timeSession.startedAt} ASC`)
+				.all(),
+			loadGoalHistoryForActivity(db, activityId)
+		]);
+
+		const goalHistory = toGoalHistoryEntries(goalHistoryRows);
+		const sessionsForGoals = sessions.map((session: (typeof sessions)[number]) => ({
+			startedAt: session.startedAt,
+			duration: session.duration,
+			isActive: false as const
+		}));
+
+		const today = todayDateKey();
+		const goalHitsStart =
+			startDate ?? (sessions[0] ? toDateKey(new Date(sessions[0].startedAt)) : today);
+		const goalHitsEnd = endDate ?? today;
+
+		const goalSummary = {
+			activeGoal: getActiveGoal(goalHistory, today),
+			week: periodSummaryPayload(evaluateWeek(goalHistory, sessionsForGoals, today)),
+			month: periodSummaryPayload(evaluateMonth(goalHistory, sessionsForGoals, today)),
+			/** dateKey → hit (true) / miss (false). Days without a daily goal are omitted. */
+			dailyGoalHits: dailyGoalHitsForRange(
+				goalHistory,
+				sessionsForGoals,
+				goalHitsStart,
+				goalHitsEnd
 			)
-			.orderBy(sql`${timeSession.startedAt} ASC`)
-			.all();
+		};
 
 		if (sessions.length === 0) {
 			return {
@@ -324,7 +383,8 @@ export const getActivityStatistics = query(
 				averageSession: null,
 				longestSession: null,
 				firstSession: null,
-				lastSession: null
+				lastSession: null,
+				goalSummary
 			};
 		}
 
@@ -421,7 +481,8 @@ export const getActivityStatistics = query(
 			averageSession,
 			longestSession,
 			firstSession,
-			lastSession
+			lastSession,
+			goalSummary
 		};
 	}
 );
