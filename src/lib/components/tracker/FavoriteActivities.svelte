@@ -32,6 +32,7 @@
 					{onActivitySelect}
 					{userId}
 					{currentActivityId}
+					showFavoriteStar={false}
 				/>
 			{/each}
 		</div>

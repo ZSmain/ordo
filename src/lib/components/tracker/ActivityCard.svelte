@@ -4,7 +4,6 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as ContextMenu from '$lib/components/ui/context-menu';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import { Label } from '$lib/components/ui/label';
 	import type { TrackerActivity } from '$lib/tracker/activity-projection';
 	import { Archive, ChartBar, Pause, PencilLine, Play, Star, Trash2 } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
@@ -17,6 +16,7 @@
 		onActivitySelect?: (activityId: number, categoryName: string, activityName: string) => void;
 		userId?: string;
 		currentActivityId?: number | null;
+		showFavoriteStar?: boolean;
 	}
 
 	let {
@@ -25,7 +25,8 @@
 		categoryName,
 		onActivitySelect,
 		userId = '',
-		currentActivityId
+		currentActivityId,
+		showFavoriteStar = true
 	}: Props = $props();
 
 	let editActivityOpen = $state(false);
@@ -134,42 +135,59 @@
 
 <ContextMenu.Root>
 	<ContextMenu.Trigger>
-		<Label
-			class="flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors hover:bg-input/10 {activity.archived
+		<button
+			type="button"
+			class="relative flex min-h-24 w-full items-start gap-3 overflow-hidden rounded-xl border p-3 text-left transition-colors duration-200 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-[var(--category-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none {activity.archived
 				? 'opacity-60'
-				: ''} {isRunning ? 'border-primary bg-primary/5' : ''}"
-			style="background-color: {categoryColor}10"
+				: ''} {isRunning
+				? 'border-[color-mix(in_oklab,var(--category-color)_55%,var(--border))] bg-[color-mix(in_oklab,var(--category-color)_7%,var(--card))] ring-1 ring-[color-mix(in_oklab,var(--category-color)_30%,transparent)]'
+				: 'border-border bg-card'}"
+			style="--category-color: {categoryColor}"
 			onclick={handleClick}
+			aria-pressed={isRunning}
+			aria-label={isRunning ? `Pause ${activity.name}` : `Start ${activity.name}`}
 		>
-			<div class="grid gap-1 font-normal">
-				<div class="text-sm font-medium">
-					{activity.name}
-					{#if activity.favorite}
-						<Star class="ml-1 inline h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+			<span
+				class="grid size-10 shrink-0 place-items-center rounded-lg bg-[color-mix(in_oklab,var(--category-color)_12%,transparent)] text-xl leading-none"
+				aria-hidden="true"
+			>
+				{activity.icon}
+			</span>
+
+			<span class="grid min-w-0 flex-1 gap-0.5">
+				<span class="flex items-center gap-1 text-sm font-medium text-foreground">
+					<span class="truncate">{activity.name}</span>
+					{#if activity.favorite && showFavoriteStar}
+						<Star class="size-3.5 shrink-0 fill-amber-400 text-amber-400" aria-hidden="true" />
 					{/if}
 					{#if activity.archived}
-						<span class="ml-1 text-xs text-muted-foreground">(Archived)</span>
+						<span class="text-xs font-normal text-muted-foreground">(Archived)</span>
 					{/if}
-				</div>
-				<div class="text-lg leading-snug">
-					{activity.icon}
-				</div>
+				</span>
 				{#if activity.dailyGoal}
-					<div class="text-xs text-muted-foreground">
+					<span class="text-xs text-muted-foreground">
 						Goal: {activity.dailyGoal} min/day
-					</div>
+					</span>
 				{:else if activity.latestGoals?.dailyGoal}
-					<div class="text-xs text-muted-foreground">
+					<span class="text-xs text-muted-foreground">
 						Goal from tomorrow: {activity.latestGoals.dailyGoal} min/day
-					</div>
+					</span>
 				{/if}
-			</div>
-			{#if isRunning}
-				<Pause class="ml-auto h-4 w-4 text-primary" />
-			{:else}
-				<Play class="ml-auto h-4 w-4 text-muted-foreground" />
-			{/if}
-		</Label>
+			</span>
+
+			<span class="relative size-4 shrink-0 self-start text-muted-foreground" aria-hidden="true">
+				<Play
+					class="absolute inset-0 m-auto size-4 transition-all duration-200 {isRunning
+						? 'scale-50 opacity-0'
+						: 'opacity-100'}"
+				/>
+				<Pause
+					class="absolute inset-0 m-auto size-4 text-[color-mix(in_oklab,var(--category-color)_65%,black)] transition-all duration-200 {isRunning
+						? 'opacity-100'
+						: 'scale-50 opacity-0'}"
+				/>
+			</span>
+		</button>
 	</ContextMenu.Trigger>
 	<ContextMenu.Content>
 		<ContextMenu.Item onclick={handleModifyActivity}>
