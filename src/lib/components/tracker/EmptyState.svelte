@@ -16,12 +16,9 @@
 		<div class="mb-4 rounded-full bg-primary/10 p-4">
 			<FolderPlus class="h-8 w-8 text-primary" />
 		</div>
-		<h3 class="mb-2 text-lg font-semibold text-foreground">Welcome to Ordo!</h3>
-		<p class="mb-1 max-w-sm text-sm text-muted-foreground">
-			Start by creating a category to organize your activities.
-		</p>
+		<h3 class="mb-2 text-lg font-semibold text-foreground">Welcome to Ordo</h3>
 		<p class="mb-6 max-w-sm text-sm text-muted-foreground">
-			Categories help you group related activities like "Work", "Exercise", or "Learning".
+			Create a category to group the activities you want to track.
 		</p>
 		{#if onCreateCategory}
 			<Button onclick={onCreateCategory}>
@@ -39,7 +36,7 @@
 			<ul class="space-y-1.5 text-xs text-muted-foreground">
 				<li class="flex items-start gap-2">
 					<span class="text-primary">•</span>
-					Right-click or long-press categories and activities to edit or delete them
+					Right-click or long-press an item to edit or delete it
 				</li>
 				<li class="flex items-start gap-2">
 					<span class="text-primary">•</span>

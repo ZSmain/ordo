@@ -15,11 +15,11 @@
 			</div>
 			<Card.Title class="text-2xl">
 				{#if page.status === 404}
-					Page Not Found
+					Page not found
 				{:else if page.status === 401}
-					Authentication Required
+					Authentication required
 				{:else}
-					Something Went Wrong
+					Something went wrong
 				{/if}
 			</Card.Title>
 			<Card.Description class="text-muted-foreground">
