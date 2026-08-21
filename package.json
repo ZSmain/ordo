@@ -70,13 +70,5 @@
 		"drizzle-valibot": "^0.4.2",
 		"runed": "^0.37.1",
 		"valibot": "^1.4.2"
-	},
-	"pnpm": {
-		"onlyBuiltDependencies": [
-			"@tailwindcss/oxide",
-			"esbuild",
-			"sharp",
-			"workerd"
-		]
 	}
 }
