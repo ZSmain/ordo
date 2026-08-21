@@ -12,17 +12,27 @@
 	let isExpanded = $state(false);
 	let showCategoryForm = $state(false);
 	let showActivityForm = $state(false);
+	let container = $state<HTMLDivElement | null>(null);
 
 	function toggleExpanded() {
 		isExpanded = !isExpanded;
 	}
 
+	function handleOutsideClick(event: PointerEvent) {
+		if (!isExpanded) return;
+		if (container && !container.contains(event.target as Node)) {
+			isExpanded = false;
+		}
+	}
+
 	function openCategoryForm() {
 		showCategoryForm = true;
+		isExpanded = false;
 	}
 
 	function openActivityForm() {
 		showActivityForm = true;
+		isExpanded = false;
 	}
 
 	function handleCategoryCreated() {
@@ -36,8 +46,10 @@
 	}
 </script>
 
+<svelte:window onpointerdown={handleOutsideClick} />
+
 <!-- Floating Add Button -->
-<div class="pointer-events-none absolute right-6 bottom-6 z-50">
+<div bind:this={container} class="pointer-events-none absolute right-6 bottom-6 z-50">
 	<div class="pointer-events-auto flex flex-col items-end gap-3">
 		<!-- Expanded Action Buttons -->
 		{#if isExpanded}
