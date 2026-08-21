@@ -58,7 +58,7 @@
 <Dialog.Root {open} {onOpenChange}>
 	<Dialog.Content class="sm:max-w-md">
 		<Dialog.Header>
-			<Dialog.Title class="flex items-center gap-2 text-red-600">
+			<Dialog.Title class="flex items-center gap-2 text-destructive">
 				<Trash2 class="h-5 w-5" />
 				Delete Session
 			</Dialog.Title>
@@ -69,8 +69,8 @@
 
 		<div class="space-y-4">
 			{#if error}
-				<div class="rounded-md bg-red-50 p-3">
-					<p class="text-sm text-red-800">{error}</p>
+				<div class="rounded-md bg-destructive/10 p-3">
+					<p class="text-sm text-destructive">{error}</p>
 				</div>
 			{/if}
 

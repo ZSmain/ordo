@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { CreateActivity, CreateCategory } from '$lib/components/tracker';
 	import { Button } from '$lib/components/ui/button';
-	import { CircleCheckBig, LayoutGrid } from '@lucide/svelte';
+	import { LayoutGrid, Plus } from '@lucide/svelte';
 
 	interface Props {
 		userId: string;
@@ -60,7 +60,7 @@
 					onclick={openActivityForm}
 				>
 					<span class="mr-2">
-						<CircleCheckBig />
+						<Plus />
 					</span>
 					Create Activity
 				</Button>

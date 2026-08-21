@@ -549,7 +549,7 @@
 							</div>
 						{:else if statisticsQuery.error}
 							<div class="py-8 text-center">
-								<p class="text-red-500">Failed to load statistics</p>
+								<p class="text-destructive">Failed to load statistics</p>
 							</div>
 						{:else}
 							{@const statistics = statisticsQuery.current}
@@ -565,7 +565,7 @@
 										</div>
 									{:else if calendarStatisticsQuery?.error}
 										<div class="py-8 text-center">
-											<p class="text-sm text-red-500">Failed to load yearly activity.</p>
+											<p class="text-sm text-destructive">Failed to load yearly activity.</p>
 										</div>
 									{:else if hasCalendarData}
 										<div class="mb-4">

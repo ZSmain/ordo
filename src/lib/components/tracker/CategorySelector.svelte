@@ -241,7 +241,7 @@
 
 <!-- Delete Category Confirmation Dialog -->
 <Dialog.Root bind:open={deleteDialogOpen}>
-	<Dialog.Content class="sm:max-w-106.25">
+	<Dialog.Content class="sm:max-w-md">
 		<Dialog.Header>
 			<Dialog.Title>Delete Category</Dialog.Title>
 			<Dialog.Description>

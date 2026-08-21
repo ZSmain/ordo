@@ -68,7 +68,7 @@
 				<div>
 					<div class="mb-2 flex items-center gap-2">
 						<div
-							class="font-small flex h-6 w-6 items-center justify-center rounded-full text-xs text-white"
+							class="flex h-6 w-6 items-center justify-center rounded-full text-xs text-white"
 							style="background-color: {group.category.color}"
 						>
 							{group.category.icon}

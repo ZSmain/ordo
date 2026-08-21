@@ -8,6 +8,7 @@
 	import * as Popover from '$lib/components/ui/popover';
 	import { CalendarDate, getLocalTimeZone } from '@internationalized/date';
 	import { ChevronDown, Clock } from '@lucide/svelte';
+	import { formatDuration } from '$lib/time';
 	import { toast } from 'svelte-sonner';
 
 	interface Props {
@@ -177,7 +178,7 @@
 				{formatDuration(currentDuration)}
 			</div>
 			{#if currentDuration === null && startDateValue && endDateValue}
-				<div class="mt-1 text-xs text-red-500">End time must be after start time</div>
+				<div class="mt-1 text-xs text-destructive">End time must be after start time</div>
 			{/if}
 		</div>
 	</div>

@@ -114,7 +114,7 @@
 
 				{#snippet failed()}
 					<div class="py-8 text-center">
-						<p class="text-red-500">Failed to load session history</p>
+						<p class="text-destructive">Failed to load session history</p>
 					</div>
 				{/snippet}
 

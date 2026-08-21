@@ -207,7 +207,7 @@
 			{activity.archived ? 'Unarchive' : 'Archive'}
 		</ContextMenu.Item>
 		<ContextMenu.Separator />
-		<ContextMenu.Item onclick={handleDeleteActivity} class="text-red-600 focus:text-red-600">
+		<ContextMenu.Item onclick={handleDeleteActivity} class="text-destructive focus:text-destructive">
 			<Trash2 class="mr-2 h-4 w-4" />
 			Delete
 		</ContextMenu.Item>
@@ -226,7 +226,7 @@
 
 <!-- Archive Confirmation Dialog -->
 <Dialog.Root bind:open={archiveDialogOpen}>
-	<Dialog.Content class="sm:max-w-106.25">
+	<Dialog.Content class="sm:max-w-md">
 		<Dialog.Header>
 			<Dialog.Title>{activity.archived ? 'Unarchive' : 'Archive'} Activity</Dialog.Title>
 			<Dialog.Description>
@@ -253,7 +253,7 @@
 
 <!-- Delete Confirmation Dialog -->
 <Dialog.Root bind:open={deleteDialogOpen}>
-	<Dialog.Content class="sm:max-w-106.25">
+	<Dialog.Content class="sm:max-w-md">
 		<Dialog.Header>
 			<Dialog.Title>Delete Activity</Dialog.Title>
 			<Dialog.Description>

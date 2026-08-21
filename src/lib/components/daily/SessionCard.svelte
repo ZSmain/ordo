@@ -105,7 +105,7 @@
 		<ContextMenu.Separator />
 		<ContextMenu.Item
 			onclick={() => (deleteDialogOpen = true)}
-			class="text-red-600 focus:text-red-600"
+			class="text-destructive focus:text-destructive"
 		>
 			<Trash2 class="mr-2 h-4 w-4" />
 			Delete

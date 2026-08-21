@@ -139,7 +139,7 @@
 
 					{#snippet failed()}
 						<div class="py-8 text-center">
-							<p class="text-red-500">Failed to load statistics. Please try again.</p>
+							<p class="text-destructive">Failed to load statistics. Please try again.</p>
 						</div>
 					{/snippet}
 
