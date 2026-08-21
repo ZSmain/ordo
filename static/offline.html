@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="robots" content="noindex" />
+		<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+		<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+		<title>You're offline</title>
+		<style>
+			/* Matches the app's shadcn theme tokens (see src/routes/layout.css).
+			   Uses prefers-color-scheme since this page runs outside the app. */
+			:root {
+				color-scheme: light dark;
+				--background: oklch(0.963 0.002 197.1);
+				--card: oklch(1 0 0);
+				--foreground: oklch(0.148 0.004 228.8);
+				--muted-foreground: oklch(0.56 0.021 213.5);
+				--border: oklch(0.925 0.005 214.3);
+				--primary: oklch(0.511 0.096 186.391);
+				--primary-foreground: oklch(0.984 0.014 180.72);
+				--radius: 0.625rem;
+			}
+			@media (prefers-color-scheme: dark) {
+				:root {
+					--background: oklch(0.148 0.004 228.8);
+					--card: oklch(0.218 0.008 223.9);
+					--foreground: oklch(0.987 0.002 197.1);
+					--muted-foreground: oklch(0.723 0.014 214.4);
+					--border: oklch(1 0 0 / 10%);
+					--primary: oklch(0.437 0.078 188.216);
+				}
+			}
+			* {
+				box-sizing: border-box;
+				margin: 0;
+			}
+			body {
+				min-height: 100dvh;
+				display: grid;
+				place-items: center;
+				padding: 1rem;
+				background: var(--background);
+				color: var(--foreground);
+				font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+				line-height: 1.5;
+			}
+			.card {
+				width: 100%;
+				max-width: 28rem;
+				padding: 2rem;
+				text-align: center;
+				background: var(--card);
+				border: 1px solid var(--border);
+				border-radius: calc(var(--radius) * 1.8);
+			}
+			.icon {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				width: 4rem;
+				height: 4rem;
+				margin: 0 auto 1rem;
+				border-radius: 9999px;
+				background: color-mix(in oklab, var(--muted-foreground) 10%, transparent);
+			}
+			h1 {
+				font-size: 1.5rem;
+				font-weight: 600;
+				letter-spacing: -0.01em;
+			}
+			p {
+				margin-top: 0.5rem;
+				font-size: 0.875rem;
+				color: var(--muted-foreground);
+			}
+			button {
+				margin-top: 1.5rem;
+				padding: 0.5rem 1.25rem;
+				font: inherit;
+				font-size: 0.875rem;
+				font-weight: 500;
+				color: var(--primary-foreground);
+				background: var(--primary);
+				border: none;
+				border-radius: var(--radius);
+				cursor: pointer;
+			}
+			button:hover {
+				opacity: 0.9;
+			}
+		</style>
+	</head>
+	<body>
+		<main class="card">
+			<div class="icon">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="32"
+					height="32"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true"
+				>
+					<path d="m2 2 20 20" />
+					<path d="M5.782 5.782A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.307-.193" />
+					<path d="M21.532 16.5A4.5 4.5 0 0 0 17.5 10h-1.79A7.008 7.008 0 0 0 10 5.07" />
+				</svg>
+			</div>
+			<h1>You're offline</h1>
+			<p>Check your internet connection and try again.</p>
+			<button type="button" onclick="location.reload()">Try again</button>
+		</main>
+		<script>
+			// Reload automatically once the connection is back
+			addEventListener('online', () => location.reload());
+		</script>
+	</body>
+</html>
