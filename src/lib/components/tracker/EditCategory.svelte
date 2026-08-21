@@ -133,7 +133,7 @@
 							<Button
 								variant="ghost"
 								size="icon"
-								class="h-8 w-8 rounded-full border-2 p-0 transition-all hover:scale-110 {categoryForm.color ===
+								class="h-8 w-8 rounded-full border-2 p-0 transition-colors {categoryForm.color ===
 								color.hex
 									? 'border-foreground ring-2 ring-foreground/20'
 									: 'border-transparent'}"

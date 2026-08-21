@@ -32,3 +32,26 @@ export function formatDuration(seconds: number | null | undefined) {
 
 	return parts.join(' ');
 }
+
+export function formatTimeRange(
+	startedAt: Date | string,
+	stoppedAt: Date | string | null
+): string {
+	const start = new Date(startedAt).toLocaleTimeString('en-US', {
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: false
+	});
+
+	if (!stoppedAt) {
+		return `${start} - ongoing`;
+	}
+
+	const end = new Date(stoppedAt).toLocaleTimeString('en-US', {
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: false
+	});
+
+	return `${start} - ${end}`;
+}

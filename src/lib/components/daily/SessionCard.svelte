@@ -3,6 +3,7 @@
 	import { ActivityStatisticsDrawer } from '$lib/components/stats';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as ContextMenu from '$lib/components/ui/context-menu';
+	import { formatDuration, formatTimeRange } from '$lib/time';
 	import { ChartBar, PencilLine, Trash2 } from '@lucide/svelte';
 
 	interface Props {
@@ -24,64 +25,23 @@
 				icon: string;
 			}>;
 		};
-		userId: string;
 		onSessionUpdated?: () => void;
 	}
 
-	let { session, userId, onSessionUpdated }: Props = $props();
+	let { session, onSessionUpdated }: Props = $props();
 
 	let modifyDialogOpen = $state(false);
 	let deleteDialogOpen = $state(false);
 	let statisticsOpen = $state(false);
-
-	function formatTimeRange(startedAt: Date, stoppedAt: Date | null) {
-		const start = new Date(startedAt).toLocaleTimeString('en-US', {
-			hour: '2-digit',
-			minute: '2-digit',
-			hour12: false
-		});
-
-		if (!stoppedAt) return `${start} - ongoing`;
-
-		const end = new Date(stoppedAt).toLocaleTimeString('en-US', {
-			hour: '2-digit',
-			minute: '2-digit',
-			hour12: false
-		});
-
-		return `${start} - ${end}`;
-	}
-
-	function formatDuration(seconds: number | null) {
-		if (!seconds) return '0s';
-
-		const hours = Math.floor(seconds / 3600);
-		const minutes = Math.floor((seconds % 3600) / 60);
-		const remainingSeconds = seconds % 60;
-
-		if (hours > 0) {
-			if (minutes === 0 && remainingSeconds === 0) return `${hours}h`;
-			if (remainingSeconds === 0) return `${hours}h ${minutes}m`;
-			return `${hours}h ${minutes}m ${remainingSeconds}s`;
-		}
-
-		if (minutes === 0) {
-			return `${remainingSeconds}s`;
-		}
-
-		if (remainingSeconds === 0) {
-			return `${minutes}m`;
-		}
-
-		return `${minutes}m ${remainingSeconds}s`;
-	}
 </script>
 
 <ContextMenu.Root>
 	<ContextMenu.Trigger>
 		<div
 			class="mb-1.5 rounded-lg border p-1 transition-colors hover:opacity-90"
-			style="background-color: {session.categories[0]?.color || '#gray'}10"
+			style="background-color: {session.categories[0]
+				? session.categories[0].color + '10'
+				: 'var(--muted)'}"
 		>
 			<div class="flex items-start justify-between gap-2">
 				<div class="flex flex-1 items-center gap-3">
@@ -136,20 +96,20 @@
 	</ContextMenu.Trigger>
 
 	<ContextMenu.Content>
-		<ContextMenu.Item onclick={() => (modifyDialogOpen = true)}>
-			<PencilLine class="mr-2 h-4 w-4" />
+		<ContextMenu.Item onSelect={() => (modifyDialogOpen = true)}>
+			<PencilLine />
 			Modify
 		</ContextMenu.Item>
-		<ContextMenu.Item onclick={() => (statisticsOpen = true)}>
-			<ChartBar class="mr-2 h-4 w-4" />
+		<ContextMenu.Item onSelect={() => (statisticsOpen = true)}>
+			<ChartBar />
 			Statistics
 		</ContextMenu.Item>
 		<ContextMenu.Separator />
 		<ContextMenu.Item
-			onclick={() => (deleteDialogOpen = true)}
-			class="text-red-600 focus:text-red-600"
+			onSelect={() => (deleteDialogOpen = true)}
+			class="text-destructive focus:text-destructive"
 		>
-			<Trash2 class="mr-2 h-4 w-4" />
+			<Trash2 />
 			Delete
 		</ContextMenu.Item>
 	</ContextMenu.Content>
@@ -159,7 +119,6 @@
 <ModifySessionDrawer
 	bind:open={modifyDialogOpen}
 	{session}
-	{userId}
 	onOpenChange={(open) => (modifyDialogOpen = open)}
 	onSessionUpdated={() => onSessionUpdated?.()}
 />

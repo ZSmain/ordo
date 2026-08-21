@@ -1,5 +1,4 @@
 import { command, query, requested } from '$app/server';
-import { error } from '@sveltejs/kit';
 import {
 	getCategoriesForActivityId,
 	getCategoriesForActivityIds,
@@ -9,21 +8,49 @@ import {
 	type ActivityWithCategories,
 	type CategoryWithActivities
 } from '$lib/server/activity-catalog';
-import { getRemoteContext } from '$lib/server/remote';
 import type { InsertActivityCategory, SelectActivity, SelectCategory } from '$lib/server/db/schema';
 import {
 	activity,
 	activityCategory,
+	activityGoalFieldsSchema,
 	category,
 	insertActivitySchema,
 	insertCategorySchema,
 	timeSession
 } from '$lib/server/db/schema';
+import {
+	activeGoalsForToday,
+	latestGoalValues,
+	loadGoalHistoryForActivities,
+	setActivityGoalsEffectiveTomorrow
+} from '$lib/server/goals';
+import { getRemoteContext } from '$lib/server/remote';
+import type { TrackerActivityGoals } from '$lib/tracker/activity-projection';
+import { error } from '@sveltejs/kit';
 import { and, eq, inArray } from 'drizzle-orm';
 import * as v from 'valibot';
 
 const { ...insertCategoryEntries } = insertCategorySchema.entries;
 const { ...insertActivityEntries } = insertActivitySchema.entries;
+const optionalGoalMinutes = activityGoalFieldsSchema.entries.dailyGoal;
+
+/** Coerce form/API goal input into minutes or null (invalid / empty → null). */
+function sanitizeGoalMinutes(value: number | null | undefined): number | null {
+	if (value == null || Number.isNaN(value) || value <= 0) return null;
+	return value;
+}
+
+function sanitizeGoalFields(goals: {
+	dailyGoal?: number | null;
+	weeklyGoal?: number | null;
+	monthlyGoal?: number | null;
+}): TrackerActivityGoals {
+	return {
+		dailyGoal: sanitizeGoalMinutes(goals.dailyGoal),
+		weeklyGoal: sanitizeGoalMinutes(goals.weeklyGoal),
+		monthlyGoal: sanitizeGoalMinutes(goals.monthlyGoal)
+	};
+}
 
 async function ensureActivityBelongsToUser(
 	db: ReturnType<typeof getRemoteContext>['db'],
@@ -77,7 +104,11 @@ export const getCategoriesWithActivities = query(async () => {
 		.all();
 
 	const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
-	type UserActivityWithCategories = ActivityWithCategories<SelectActivity>;
+
+	type ActivityWithGoals = SelectActivity & TrackerActivityGoals & {
+		latestGoals: TrackerActivityGoals | null;
+	};
+	type UserActivityWithCategories = ActivityWithCategories<ActivityWithGoals>;
 	type UserCategoryWithActivities = CategoryWithActivities<UserActivityWithCategories>;
 
 	if (sortedCategories.length === 0) {
@@ -103,9 +134,27 @@ export const getCategoriesWithActivities = query(async () => {
 	);
 
 	const activityIds = sortedUserActivities.map((item) => item.id);
-	const categoriesByActivityId = await getCategoriesForActivityIds(db, activityIds);
+	const [categoriesByActivityId, goalsByActivityId] = await Promise.all([
+		getCategoriesForActivityIds(db, activityIds),
+		loadGoalHistoryForActivities(db, activityIds)
+	]);
+
+	const activitiesWithGoals: ActivityWithGoals[] = sortedUserActivities.map((item) => {
+		const history = goalsByActivityId.get(item.id) ?? [];
+		const active = activeGoalsForToday(history);
+		const latest = latestGoalValues(history);
+
+		return {
+			...item,
+			dailyGoal: active?.dailyGoal ?? null,
+			weeklyGoal: active?.weeklyGoal ?? null,
+			monthlyGoal: active?.monthlyGoal ?? null,
+			latestGoals: latest
+		};
+	});
+
 	const activitiesWithCategories = hydrateActivitiesWithCategories(
-		sortedUserActivities,
+		activitiesWithGoals,
 		categoriesByActivityId
 	);
 
@@ -353,17 +402,19 @@ export const deleteCategory = command(
 export const createActivity = command(
 	v.object({
 		...insertActivityEntries,
-		categoryIds: v.optional(v.array(v.number('Category ID must be a number')))
+		categoryIds: v.optional(v.array(v.number('Category ID must be a number'))),
+		dailyGoal: optionalGoalMinutes,
+		weeklyGoal: optionalGoalMinutes,
+		monthlyGoal: optionalGoalMinutes
 	}),
 	async (activityData) => {
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
-		// Destructure categoryIds from activityData
-		const { categoryIds, ...activityFields } = activityData;
+		const { categoryIds, dailyGoal, weeklyGoal, monthlyGoal, ...activityFields } = activityData;
 		const validatedCategoryIds = await ensureCategoriesBelongToUser(db, userId, categoryIds ?? []);
 
-		// Create the activity
+		// Create the activity (goals live in goal_history)
 		const newActivity = await db
 			.insert(activity)
 			.values({
@@ -384,6 +435,13 @@ export const createActivity = command(
 
 			await db.insert(activityCategory).values(activityCategoryData);
 		}
+
+		// Goals take effect tomorrow
+		await setActivityGoalsEffectiveTomorrow(
+			db,
+			newActivity.id,
+			sanitizeGoalFields({ dailyGoal, weeklyGoal, monthlyGoal })
+		);
 
 		// Refresh the categories query to update UI
 		await getCategoriesWithActivities().refresh();
@@ -410,37 +468,25 @@ export const updateActivity = command(
 				v.maxLength(10, 'Icon must be 10 characters or less')
 			)
 		),
-		dailyGoal: v.optional(
-			v.pipe(
-				v.number('Daily goal must be a number'),
-				v.minValue(1, 'Daily goal must be at least 1 minute')
-			)
-		),
-		weeklyGoal: v.optional(
-			v.pipe(
-				v.number('Weekly goal must be a number'),
-				v.minValue(1, 'Weekly goal must be at least 1 minute')
-			)
-		),
-		monthlyGoal: v.optional(
-			v.pipe(
-				v.number('Monthly goal must be a number'),
-				v.minValue(1, 'Monthly goal must be at least 1 minute')
-			)
-		),
+		dailyGoal: optionalGoalMinutes,
+		weeklyGoal: optionalGoalMinutes,
+		monthlyGoal: optionalGoalMinutes,
 		archived: v.optional(v.boolean('Archived must be a boolean')),
 		categoryIds: v.optional(v.array(v.number('Category ID must be a number')))
 	}),
-	async ({ id, categoryIds, ...updateData }) => {
+	async ({ id, categoryIds, dailyGoal, weeklyGoal, monthlyGoal, ...updateData }) => {
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
-		// Only include defined fields in the update
+		const goalsProvided =
+			dailyGoal !== undefined || weeklyGoal !== undefined || monthlyGoal !== undefined;
+
+		// Only include defined activity fields in the update
 		const fieldsToUpdate = Object.fromEntries(
 			Object.entries(updateData).filter(([, value]) => value !== undefined)
 		);
 
-		if (Object.keys(fieldsToUpdate).length === 0 && !categoryIds) {
+		if (Object.keys(fieldsToUpdate).length === 0 && !categoryIds && !goalsProvided) {
 			throw new Error('No fields to update');
 		}
 
@@ -488,6 +534,15 @@ export const updateActivity = command(
 
 				await db.insert(activityCategory).values(activityCategoryData);
 			}
+		}
+
+		// Goal changes take effect tomorrow (history table)
+		if (goalsProvided) {
+			await setActivityGoalsEffectiveTomorrow(
+				db,
+				id,
+				sanitizeGoalFields({ dailyGoal, weeklyGoal, monthlyGoal })
+			);
 		}
 
 		// Refresh the categories query to update UI

@@ -60,7 +60,7 @@
 
 							{#if form?.action === 'signInSocial' && form.message}
 								<div
-									class="rounded-md bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400"
+									class="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
 								>
 									{form.message}
 								</div>
@@ -87,7 +87,7 @@
 										required
 									/>
 									{#each form?.errors?.email ?? [] as message, index (`${message}-${index}`)}
-										<p class="text-sm text-red-600 dark:text-red-400">{message}</p>
+										<p class="text-sm text-destructive">{message}</p>
 									{/each}
 								</div>
 								<div class="grid gap-3">
@@ -102,13 +102,13 @@
 										required
 									/>
 									{#each form?.errors?.password ?? [] as message, index (`${message}-${index}`)}
-										<p class="text-sm text-red-600 dark:text-red-400">{message}</p>
+										<p class="text-sm text-destructive">{message}</p>
 									{/each}
 								</div>
 
 								{#if form?.action === 'signInEmail' && form.message}
 									<div
-										class="rounded-md bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400"
+										class="rounded-md bg-destructive/10 p-3 text-sm text-destructive"
 									>
 										{form.message}
 									</div>

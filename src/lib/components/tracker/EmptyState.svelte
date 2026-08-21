@@ -16,16 +16,13 @@
 		<div class="mb-4 rounded-full bg-primary/10 p-4">
 			<FolderPlus class="h-8 w-8 text-primary" />
 		</div>
-		<h3 class="mb-2 text-lg font-semibold text-foreground">Welcome to Ordo!</h3>
-		<p class="mb-1 max-w-sm text-sm text-muted-foreground">
-			Start by creating a category to organize your activities.
-		</p>
+		<h3 class="mb-2 text-lg font-semibold text-foreground">Welcome to Ordo</h3>
 		<p class="mb-6 max-w-sm text-sm text-muted-foreground">
-			Categories help you group related activities like "Work", "Exercise", or "Learning".
+			Create a category to group the activities you want to track.
 		</p>
 		{#if onCreateCategory}
 			<Button onclick={onCreateCategory}>
-				<Plus class="mr-2 h-4 w-4" />
+				<Plus />
 				Create your first category
 			</Button>
 		{/if}
@@ -38,15 +35,15 @@
 			</div>
 			<ul class="space-y-1.5 text-xs text-muted-foreground">
 				<li class="flex items-start gap-2">
-					<span class="text-primary">•</span>
-					Right-click or long-press categories and activities to edit or delete them
+					<span>•</span>
+					Right-click or long-press an item to edit or delete it
 				</li>
 				<li class="flex items-start gap-2">
-					<span class="text-primary">•</span>
+					<span>•</span>
 					Activities can belong to multiple categories
 				</li>
 				<li class="flex items-start gap-2">
-					<span class="text-primary">•</span>
+					<span>•</span>
 					Set daily goals to track your progress
 				</li>
 			</ul>
@@ -63,7 +60,7 @@
 		</p>
 		{#if onCreateActivity}
 			<Button variant="secondary" size="sm" onclick={onCreateActivity}>
-				<Plus class="mr-2 h-4 w-4" />
+				<Plus />
 				Create activity
 			</Button>
 		{/if}

@@ -6,7 +6,7 @@
 </script>
 
 <div class="flex min-h-screen items-center justify-center bg-muted p-4">
-	<Card.Root class="w-full max-w-md shadow-xl">
+	<Card.Root class="w-full max-w-md">
 		<Card.Header class="text-center">
 			<div
 				class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10"
@@ -15,9 +15,9 @@
 			</div>
 			<Card.Title class="text-2xl">
 				{#if page.status === 404}
-					Page Not Found
+					Page not found
 				{:else}
-					Something Went Wrong
+					Something went wrong
 				{/if}
 			</Card.Title>
 			<Card.Description class="text-muted-foreground">
@@ -25,11 +25,7 @@
 			</Card.Description>
 		</Card.Header>
 		<Card.Content class="text-center">
-			<span
-				class="inline-block rounded-full bg-destructive/10 px-3 py-1 text-sm font-medium text-destructive"
-			>
-				Error {page.status}
-			</span>
+			<p class="text-sm text-muted-foreground">Error code: {page.status}</p>
 		</Card.Content>
 		<Card.Footer class="justify-center">
 			<Button href="/" variant="default">Back to Home</Button>

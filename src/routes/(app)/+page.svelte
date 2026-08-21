@@ -155,7 +155,7 @@
 				class="star-tab absolute z-10 flex size-12 items-center justify-center border border-border bg-card shadow-md
 					transition-[transform,box-shadow,color] duration-300 ease-out
 					hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2
-					focus-visible:ring-primary focus-visible:outline-none active:scale-95"
+					focus-visible:ring-primary focus-visible:outline-none active:scale-[0.96]"
 				style="top: -24px; right: 32px;"
 				aria-expanded={!showFavorites}
 				aria-controls="categories-grid"

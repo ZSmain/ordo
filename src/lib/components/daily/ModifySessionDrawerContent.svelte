@@ -8,6 +8,7 @@
 	import * as Popover from '$lib/components/ui/popover';
 	import { CalendarDate, getLocalTimeZone } from '@internationalized/date';
 	import { ChevronDown, Clock } from '@lucide/svelte';
+	import { formatDuration } from '$lib/time';
 	import { toast } from 'svelte-sonner';
 
 	interface Props {
@@ -146,29 +147,6 @@
 		}
 	});
 
-	function formatDuration(seconds: number | null): string {
-		if (!seconds || seconds <= 0) return '0m';
-
-		const hours = Math.floor(seconds / 3600);
-		const minutes = Math.floor((seconds % 3600) / 60);
-		const remainingSeconds = seconds % 60;
-
-		if (hours > 0) {
-			if (minutes === 0 && remainingSeconds === 0) return `${hours}h`;
-			if (remainingSeconds === 0) return `${hours}h ${minutes}m`;
-			return `${hours}h ${minutes}m ${remainingSeconds}s`;
-		}
-
-		if (minutes > 0) {
-			if (remainingSeconds === 0) {
-				return `${minutes}m`;
-			}
-			return `${minutes}m ${remainingSeconds}s`;
-		}
-
-		return `${remainingSeconds}s`;
-	}
-
 	function getDurationColor(duration: number | null): string {
 		if (!duration || duration <= 0) return 'text-muted-foreground';
 		if (duration < 300) return 'text-orange-600';
@@ -200,7 +178,7 @@
 				{formatDuration(currentDuration)}
 			</div>
 			{#if currentDuration === null && startDateValue && endDateValue}
-				<div class="mt-1 text-xs text-red-500">End time must be after start time</div>
+				<div class="mt-1 text-xs text-destructive">End time must be after start time</div>
 			{/if}
 		</div>
 	</div>

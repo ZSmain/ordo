@@ -2,7 +2,6 @@
 	import * as Card from '$lib/components/ui/card/index.js';
 	import * as Chart from '$lib/components/ui/chart/index.js';
 	import { formatDuration } from '$lib/time';
-	import TrendingUpIcon from '@lucide/svelte/icons/trending-up';
 	import { PieChart, Text } from 'layerchart';
 
 	interface ActivityStat {
@@ -117,20 +116,10 @@
 			</Chart.Container>
 		{/if}
 	</Card.Content>
-	<Card.Footer class="flex-col gap-2 pt-2 text-sm">
-		<div class="grid w-full grid-cols-2 gap-2">
-			<div class="flex items-center gap-2 leading-none font-medium">
-				<TrendingUpIcon class="size-4" />
-				<span class="text-xs">
-					{activities.length} activities tracked
-				</span>
-			</div>
-			<div class="flex items-center gap-2 leading-none font-medium">
-				<span class="text-xs">{totalSessions} total sessions</span>
-			</div>
-		</div>
-		<div class="text-center leading-none text-muted-foreground">
-			Time spent on different activities {period}
+	<Card.Footer class="pt-2 text-sm">
+		<div class="flex w-full items-center justify-between leading-none text-muted-foreground">
+			<span class="text-xs">{activities.length} activities</span>
+			<span class="text-xs">{totalSessions} sessions</span>
 		</div>
 	</Card.Footer>
 </Card.Root>

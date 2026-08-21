@@ -55,10 +55,6 @@
 		onClearSelection?.();
 	}
 
-	function isSelected(categoryId: number): boolean {
-		return selectedCategoryIds.includes(String(categoryId));
-	}
-
 	function handleModifyCategory(category: Category) {
 		categoryToEdit = category;
 		editCategoryOpen = true;
@@ -184,6 +180,7 @@
 											value={selectedCategoryIds}
 											onValueChange={handleSelectedCategoryIdsChange}
 											aria-label="Categories"
+											spacing={2}
 											class="flex w-full flex-row flex-wrap gap-2 rounded-none"
 										>
 											{#each categories as category, index (category.id + '-' + index)}
@@ -191,10 +188,7 @@
 													<ContextMenu.Trigger>
 														<ToggleGroupItem
 															value={String(category.id)}
-															class="h-auto rounded-full border-0 px-3 py-1.5 text-sm font-normal shadow-none transition-all duration-100 ease-linear"
-															style="background-color: {isSelected(category.id)
-																? category.color + '40'
-																: category.color + '10'}"
+															class="h-auto rounded-md border-0 bg-secondary px-3 py-1.5 text-sm font-normal shadow-none transition-colors duration-150 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
 														>
 															<div class="flex items-center gap-1.5">
 																<span class="text-sm">{category.icon}</span>
@@ -203,16 +197,16 @@
 														</ToggleGroupItem>
 													</ContextMenu.Trigger>
 													<ContextMenu.Content>
-														<ContextMenu.Item onclick={() => handleModifyCategory(category)}>
-															<PencilLine class="mr-2 h-4 w-4" />
+														<ContextMenu.Item onSelect={() => handleModifyCategory(category)}>
+															<PencilLine />
 															Modify
 														</ContextMenu.Item>
 														<ContextMenu.Separator />
 														<ContextMenu.Item
-															onclick={() => handleDeleteCategory(category)}
+															onSelect={() => handleDeleteCategory(category)}
 															class="text-destructive focus:text-destructive"
 														>
-															<Trash2 class="mr-2 h-4 w-4" />
+															<Trash2 />
 															Delete
 														</ContextMenu.Item>
 													</ContextMenu.Content>
@@ -241,7 +235,7 @@
 
 <!-- Delete Category Confirmation Dialog -->
 <Dialog.Root bind:open={deleteDialogOpen}>
-	<Dialog.Content class="sm:max-w-106.25">
+	<Dialog.Content class="sm:max-w-md">
 		<Dialog.Header>
 			<Dialog.Title>Delete Category</Dialog.Title>
 			<Dialog.Description>
