@@ -190,25 +190,25 @@
 		</button>
 	</ContextMenu.Trigger>
 	<ContextMenu.Content>
-		<ContextMenu.Item onclick={handleModifyActivity}>
+		<ContextMenu.Item onSelect={handleModifyActivity}>
 			<PencilLine />
 			Modify
 		</ContextMenu.Item>
-		<ContextMenu.Item onclick={() => (statisticsOpen = true)}>
+		<ContextMenu.Item onSelect={() => (statisticsOpen = true)}>
 			<ChartBar />
 			Statistics
 		</ContextMenu.Item>
-		<ContextMenu.Item onclick={handleToggleFavorite} disabled={isUpdatingFavorite}>
+		<ContextMenu.Item onSelect={handleToggleFavorite} disabled={isUpdatingFavorite}>
 			<Star />
 			{activity.favorite ? 'Remove from favorites' : 'Add to favorites'}
 		</ContextMenu.Item>
-		<ContextMenu.Item onclick={handleArchiveActivity}>
+		<ContextMenu.Item onSelect={handleArchiveActivity}>
 			<Archive />
 			{activity.archived ? 'Unarchive' : 'Archive'}
 		</ContextMenu.Item>
 		<ContextMenu.Separator />
 		<ContextMenu.Item
-			onclick={handleDeleteActivity}
+			onSelect={handleDeleteActivity}
 			class="text-destructive focus:text-destructive"
 		>
 			<Trash2 />

@@ -96,17 +96,17 @@
 	</ContextMenu.Trigger>
 
 	<ContextMenu.Content>
-		<ContextMenu.Item onclick={() => (modifyDialogOpen = true)}>
+		<ContextMenu.Item onSelect={() => (modifyDialogOpen = true)}>
 			<PencilLine />
 			Modify
 		</ContextMenu.Item>
-		<ContextMenu.Item onclick={() => (statisticsOpen = true)}>
+		<ContextMenu.Item onSelect={() => (statisticsOpen = true)}>
 			<ChartBar />
 			Statistics
 		</ContextMenu.Item>
 		<ContextMenu.Separator />
 		<ContextMenu.Item
-			onclick={() => (deleteDialogOpen = true)}
+			onSelect={() => (deleteDialogOpen = true)}
 			class="text-destructive focus:text-destructive"
 		>
 			<Trash2 />

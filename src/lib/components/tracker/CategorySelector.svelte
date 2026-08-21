@@ -203,13 +203,13 @@
 														</ToggleGroupItem>
 													</ContextMenu.Trigger>
 													<ContextMenu.Content>
-														<ContextMenu.Item onclick={() => handleModifyCategory(category)}>
+														<ContextMenu.Item onSelect={() => handleModifyCategory(category)}>
 															<PencilLine />
 															Modify
 														</ContextMenu.Item>
 														<ContextMenu.Separator />
 														<ContextMenu.Item
-															onclick={() => handleDeleteCategory(category)}
+															onSelect={() => handleDeleteCategory(category)}
 															class="text-destructive focus:text-destructive"
 														>
 															<Trash2 />
