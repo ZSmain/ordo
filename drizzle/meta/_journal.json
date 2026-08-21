@@ -78,6 +78,13 @@
       "when": 1784195635976,
       "tag": "0010_burly_santa_claus",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1787325567366,
+      "tag": "0011_lowly_catseye",
+      "breakpoints": true
     }
   ]
 }
