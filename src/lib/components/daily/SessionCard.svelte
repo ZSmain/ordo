@@ -3,6 +3,7 @@
 	import { ActivityStatisticsDrawer } from '$lib/components/stats';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as ContextMenu from '$lib/components/ui/context-menu';
+	import { formatDuration, formatTimeRange } from '$lib/time';
 	import { ChartBar, PencilLine, Trash2 } from '@lucide/svelte';
 
 	interface Props {
@@ -32,48 +33,6 @@
 	let modifyDialogOpen = $state(false);
 	let deleteDialogOpen = $state(false);
 	let statisticsOpen = $state(false);
-
-	function formatTimeRange(startedAt: Date, stoppedAt: Date | null) {
-		const start = new Date(startedAt).toLocaleTimeString('en-US', {
-			hour: '2-digit',
-			minute: '2-digit',
-			hour12: false
-		});
-
-		if (!stoppedAt) return `${start} - ongoing`;
-
-		const end = new Date(stoppedAt).toLocaleTimeString('en-US', {
-			hour: '2-digit',
-			minute: '2-digit',
-			hour12: false
-		});
-
-		return `${start} - ${end}`;
-	}
-
-	function formatDuration(seconds: number | null) {
-		if (!seconds) return '0s';
-
-		const hours = Math.floor(seconds / 3600);
-		const minutes = Math.floor((seconds % 3600) / 60);
-		const remainingSeconds = seconds % 60;
-
-		if (hours > 0) {
-			if (minutes === 0 && remainingSeconds === 0) return `${hours}h`;
-			if (remainingSeconds === 0) return `${hours}h ${minutes}m`;
-			return `${hours}h ${minutes}m ${remainingSeconds}s`;
-		}
-
-		if (minutes === 0) {
-			return `${remainingSeconds}s`;
-		}
-
-		if (remainingSeconds === 0) {
-			return `${minutes}m`;
-		}
-
-		return `${minutes}m ${remainingSeconds}s`;
-	}
 </script>
 
 <ContextMenu.Root>

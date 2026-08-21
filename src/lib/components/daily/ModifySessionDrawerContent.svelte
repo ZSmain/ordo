@@ -146,29 +146,6 @@
 		}
 	});
 
-	function formatDuration(seconds: number | null): string {
-		if (!seconds || seconds <= 0) return '0m';
-
-		const hours = Math.floor(seconds / 3600);
-		const minutes = Math.floor((seconds % 3600) / 60);
-		const remainingSeconds = seconds % 60;
-
-		if (hours > 0) {
-			if (minutes === 0 && remainingSeconds === 0) return `${hours}h`;
-			if (remainingSeconds === 0) return `${hours}h ${minutes}m`;
-			return `${hours}h ${minutes}m ${remainingSeconds}s`;
-		}
-
-		if (minutes > 0) {
-			if (remainingSeconds === 0) {
-				return `${minutes}m`;
-			}
-			return `${minutes}m ${remainingSeconds}s`;
-		}
-
-		return `${remainingSeconds}s`;
-	}
-
 	function getDurationColor(duration: number | null): string {
 		if (!duration || duration <= 0) return 'text-muted-foreground';
 		if (duration < 300) return 'text-orange-600';

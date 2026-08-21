@@ -7,6 +7,7 @@
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
 	import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date';
 	import { CalendarIcon, ChevronLeft, ChevronRight, Plus } from '@lucide/svelte';
+	import { formatDuration } from '$lib/time';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -91,17 +92,6 @@
 	// Calculate total duration for the day
 	function getTotalDuration(sessions: { duration: number | null }[]) {
 		return sessions.reduce((total, session) => total + (session.duration || 0), 0);
-	}
-
-	function formatDuration(seconds: number) {
-		const hours = Math.floor(seconds / 3600);
-		const minutes = Math.floor((seconds % 3600) / 60);
-
-		if (hours === 0) {
-			return `${minutes}m`;
-		}
-
-		return `${hours}h ${minutes}m`;
 	}
 
 	// Refresh sessions after create/update/delete

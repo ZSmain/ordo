@@ -2,6 +2,7 @@
 	import { deleteSession } from '$lib/api/daily.remote';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import { formatDuration, formatTimeRange } from '$lib/time';
 	import { Trash2 } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 
@@ -25,48 +26,6 @@
 
 	let loading = $state(false);
 	let error = $state<string | null>(null);
-
-	function formatTimeRange(startedAt: Date, stoppedAt: Date | null) {
-		const start = new Date(startedAt).toLocaleTimeString('en-US', {
-			hour: '2-digit',
-			minute: '2-digit',
-			hour12: false
-		});
-
-		if (!stoppedAt) return `${start} - ongoing`;
-
-		const end = new Date(stoppedAt).toLocaleTimeString('en-US', {
-			hour: '2-digit',
-			minute: '2-digit',
-			hour12: false
-		});
-
-		return `${start} - ${end}`;
-	}
-
-	function formatDuration(seconds: number | null) {
-		if (!seconds) return '0s';
-
-		const hours = Math.floor(seconds / 3600);
-		const minutes = Math.floor((seconds % 3600) / 60);
-		const remainingSeconds = seconds % 60;
-
-		if (hours > 0) {
-			if (minutes === 0 && remainingSeconds === 0) return `${hours}h`;
-			if (remainingSeconds === 0) return `${hours}h ${minutes}m`;
-			return `${hours}h ${minutes}m ${remainingSeconds}s`;
-		}
-
-		if (minutes === 0) {
-			return `${remainingSeconds}s`;
-		}
-
-		if (remainingSeconds === 0) {
-			return `${minutes}m`;
-		}
-
-		return `${minutes}m ${remainingSeconds}s`;
-	}
 
 	async function handleDelete() {
 		try {
