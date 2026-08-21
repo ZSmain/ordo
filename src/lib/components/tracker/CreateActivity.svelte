@@ -12,7 +12,7 @@
 	} from '$lib/components/ui/drawer';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import * as Select from '$lib/components/ui/select';
+	import { ToggleGroup, ToggleGroupItem } from '$lib/components/ui/toggle-group';
 	import { DEFAULT_ACTIVITY_EMOJI } from '$lib/constants/emojis';
 	import { toast } from 'svelte-sonner';
 
@@ -36,22 +36,13 @@
 		monthlyGoal: undefined as number | undefined
 	});
 
-	// Category selection using Select component
+	// Category selection using ToggleGroup
 	let selectedCategoryIds = $state<string[]>([]);
 
 	let isPending = $state(false);
 
 	// Get categories for selection
 	const categoriesQuery = $derived.by(() => getCategoriesWithActivities());
-
-	// Convert categories to Select format
-	let selectCategories = $derived.by(() => {
-		if (!categoriesQuery.current) return [];
-		return categoriesQuery.current.map((category) => ({
-			value: category.id.toString(),
-			label: `${category.icon} ${category.name}`
-		}));
-	});
 
 	async function handleCreateActivity() {
 		if (!activityForm.name.trim() || selectedCategoryIds.length === 0 || isPending) return;
@@ -129,38 +120,32 @@
 
 				<div class="space-y-2">
 					<Label for="activity-category">Categories</Label>
-					<Select.Root type="multiple" bind:value={selectedCategoryIds}>
-						<Select.Trigger class="w-full">
-							{#if selectedCategoryIds.length === 0}
-								<span class="text-muted-foreground">Select categories</span>
-							{:else}
-								<div class="flex flex-wrap gap-1">
-									{#each selectedCategoryIds as categoryId (categoryId)}
-										{#if categoriesQuery.current}
-											{@const category = categoriesQuery.current.find(
-												(c) => c.id.toString() === categoryId
-											)}
-											{#if category}
-												<span
-													class="inline-flex items-center gap-1 rounded bg-secondary px-2 py-1 text-xs"
-												>
-													{category.icon}
-													{category.name}
-												</span>
-											{/if}
-										{/if}
-									{/each}
-								</div>
-							{/if}
-						</Select.Trigger>
-						<Select.Content>
-							{#each selectCategories as category (category.value)}
-								<Select.Item value={category.value} label={category.label}>
-									{category.label}
-								</Select.Item>
+					{#if categoriesQuery.current?.length}
+						<ToggleGroup
+							type="multiple"
+							bind:value={selectedCategoryIds}
+							aria-label="Categories"
+							class="flex w-full flex-row flex-wrap gap-2 rounded-none"
+						>
+							{#each categoriesQuery.current as category (category.id)}
+								<ToggleGroupItem
+									value={String(category.id)}
+									aria-label={`Toggle ${category.name}`}
+									class="h-auto rounded-full border-0 px-3 py-1.5 text-sm font-normal shadow-none transition-colors duration-150"
+									style="background-color: {selectedCategoryIds.includes(String(category.id))
+										? category.color + '40'
+										: category.color + '10'}"
+								>
+									<div class="flex items-center gap-1.5">
+										<span class="text-sm">{category.icon}</span>
+										<span class="text-nowrap">{category.name}</span>
+									</div>
+								</ToggleGroupItem>
 							{/each}
-						</Select.Content>
-					</Select.Root>
+						</ToggleGroup>
+					{:else}
+						<p class="text-xs text-muted-foreground">No categories yet</p>
+					{/if}
 				</div>
 
 				<div class="space-y-2">
