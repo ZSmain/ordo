@@ -31,28 +31,35 @@ export const session = table('session', {
 		.references(() => user.id, { onDelete: 'cascade' })
 });
 
-export const account = table('account', {
-	id: t.text('id').primaryKey(),
-	accountId: t.text('account_id').notNull(),
-	providerId: t.text('provider_id').notNull(),
-	userId: t
-		.text('user_id')
-		.notNull()
-		.references(() => user.id, { onDelete: 'cascade' }),
-	accessToken: t.text('access_token'),
-	refreshToken: t.text('refresh_token'),
-	idToken: t.text('id_token'),
-	accessTokenExpiresAt: t.integer('access_token_expires_at', {
-		mode: 'timestamp'
-	}),
-	refreshTokenExpiresAt: t.integer('refresh_token_expires_at', {
-		mode: 'timestamp'
-	}),
-	scope: t.text('scope'),
-	password: t.text('password'),
-	createdAt: t.integer('created_at', { mode: 'timestamp' }).notNull(),
-	updatedAt: t.integer('updated_at', { mode: 'timestamp' }).notNull()
-});
+export const account = table(
+	'account',
+	{
+		id: t.text('id').primaryKey(),
+		accountId: t.text('account_id').notNull(),
+		// Required by better-auth 1.7: accounts are identified by (issuer, accountId).
+		// Credential accounts use 'local:credential'; Google uses 'https://accounts.google.com'.
+		issuer: t.text('issuer'),
+		providerId: t.text('provider_id').notNull(),
+		userId: t
+			.text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		accessToken: t.text('access_token'),
+		refreshToken: t.text('refresh_token'),
+		idToken: t.text('id_token'),
+		accessTokenExpiresAt: t.integer('access_token_expires_at', {
+			mode: 'timestamp'
+		}),
+		refreshTokenExpiresAt: t.integer('refresh_token_expires_at', {
+			mode: 'timestamp'
+		}),
+		scope: t.text('scope'),
+		password: t.text('password'),
+		createdAt: t.integer('created_at', { mode: 'timestamp' }).notNull(),
+		updatedAt: t.integer('updated_at', { mode: 'timestamp' }).notNull()
+	},
+	(table) => [t.uniqueIndex('account_issuer_account_id_unique').on(table.issuer, table.accountId)]
+);
 
 export const verification = table('verification', {
 	id: t.text('id').primaryKey(),

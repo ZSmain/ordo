@@ -6,27 +6,28 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { betterAuth } from 'better-auth/minimal';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 
-const authConfig = {
-	baseURL: env.ORIGIN,
-	secret: env.BETTER_AUTH_SECRET,
-	emailAndPassword: {
-		enabled: true,
-		password: passwordHasher
-	},
-	socialProviders: {
-		google: {
-			clientId: env.GOOGLE_CLIENT_ID,
-			clientSecret: env.GOOGLE_CLIENT_SECRET
-		}
-	},
-	plugins: [
-		sveltekitCookies(getRequestEvent) // make sure this is the last plugin in the array
-	]
-} satisfies Omit<Parameters<typeof betterAuth>[0], 'database'>;
+const authConfig = () =>
+	({
+		baseURL: env.ORIGIN,
+		secret: env.BETTER_AUTH_SECRET,
+		emailAndPassword: {
+			enabled: true,
+			password: passwordHasher
+		},
+		socialProviders: {
+			google: {
+				clientId: env.GOOGLE_CLIENT_ID,
+				clientSecret: env.GOOGLE_CLIENT_SECRET
+			}
+		},
+		plugins: [
+			sveltekitCookies(getRequestEvent) // make sure this is the last plugin in the array
+		]
+	}) satisfies Omit<Parameters<typeof betterAuth>[0], 'database'>;
 
 export function createAuth(db: DrizzleClient) {
 	return betterAuth({
-		...authConfig,
+		...authConfig(),
 		database: drizzleAdapter(db, { provider: 'sqlite' })
 	});
 }
