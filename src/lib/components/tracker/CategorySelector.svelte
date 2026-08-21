@@ -191,7 +191,7 @@
 													<ContextMenu.Trigger>
 														<ToggleGroupItem
 															value={String(category.id)}
-															class="h-auto rounded-full border-0 px-3 py-1.5 text-sm font-normal shadow-none transition-all duration-100 ease-linear"
+															class="h-auto rounded-full border-0 px-3 py-1.5 text-sm font-normal shadow-none transition-colors duration-150"
 															style="background-color: {isSelected(category.id)
 																? category.color + '40'
 																: category.color + '10'}"
@@ -204,7 +204,7 @@
 													</ContextMenu.Trigger>
 													<ContextMenu.Content>
 														<ContextMenu.Item onclick={() => handleModifyCategory(category)}>
-															<PencilLine class="mr-2 h-4 w-4" />
+															<PencilLine />
 															Modify
 														</ContextMenu.Item>
 														<ContextMenu.Separator />
@@ -212,7 +212,7 @@
 															onclick={() => handleDeleteCategory(category)}
 															class="text-destructive focus:text-destructive"
 														>
-															<Trash2 class="mr-2 h-4 w-4" />
+															<Trash2 />
 															Delete
 														</ContextMenu.Item>
 													</ContextMenu.Content>

@@ -6,7 +6,7 @@
 </script>
 
 <div class="flex min-h-screen items-center justify-center bg-muted p-4">
-	<Card.Root class="w-full max-w-md shadow-xl">
+	<Card.Root class="w-full max-w-md">
 		<Card.Header class="text-center">
 			<div
 				class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10"
@@ -31,21 +31,17 @@
 			</Card.Description>
 		</Card.Header>
 		<Card.Content class="text-center">
-			<span
-				class="inline-block rounded-full bg-destructive/10 px-3 py-1 text-sm font-medium text-destructive"
-			>
-				Error {page.status}
-			</span>
+			<p class="text-sm text-muted-foreground">Error code: {page.status}</p>
 		</Card.Content>
 		<Card.Footer class="justify-center gap-2">
 			{#if page.status === 401}
 				<Button href="/login" variant="default">
-					<LogIn class="mr-2 h-4 w-4" />
+					<LogIn />
 					Log In
 				</Button>
 			{:else}
 				<Button href="/" variant="default">
-					<House class="mr-2 h-4 w-4" />
+					<House />
 					Back to Home
 				</Button>
 			{/if}

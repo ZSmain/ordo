@@ -163,12 +163,10 @@
 						</div>
 					{:else}
 						<div class="space-y-6">
-							<div class="grid gap-6 lg:grid-cols-3">
-								<OverviewPieChart
-									activities={activityStats}
-									period={getPeriodLabel(selectedDate, selectedPeriod)}
-								/>
-							</div>
+							<OverviewPieChart
+								activities={activityStats}
+								period={getPeriodLabel(selectedDate, selectedPeriod)}
+							/>
 
 							<div class="grid gap-6 lg:grid-cols-2">
 								<CategoryStatsCard categories={categoryStats} />
@@ -185,7 +183,7 @@
 	</div>
 
 	<!-- Date navigation -->
-	<div class="border-t p-1.5 backdrop-blur-sm">
+	<div class="border-t p-1.5">
 		<div class="container mx-auto max-w-4xl">
 			<PeriodSelector
 				{selectedPeriod}

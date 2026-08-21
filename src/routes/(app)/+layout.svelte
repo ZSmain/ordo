@@ -21,17 +21,15 @@
 		class="hidden h-full w-18 shrink-0 flex-col items-center justify-between border-r border-border bg-card py-6 md:flex lg:hidden"
 	>
 		<div class="flex flex-col items-center gap-6">
-			<div
-				class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform duration-300 hover:scale-105"
-			>
-				<Timer class="h-5 w-5 animate-pulse" />
+			<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+				<Timer class="h-5 w-5" />
 			</div>
 
 			<div class="flex flex-col items-center gap-3">
 				<a
 					href={resolve('/')}
 					class={[
-						'flex h-14 w-14 flex-col items-center justify-center gap-1 rounded-xl transition-all duration-200',
+						'flex h-14 w-14 flex-col items-center justify-center gap-1 rounded-xl transition-colors',
 						page.url.pathname === '/'
 							? 'bg-primary/10 font-semibold text-primary'
 							: 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -46,7 +44,7 @@
 				<a
 					href={resolve('/daily')}
 					class={[
-						'flex h-14 w-14 flex-col items-center justify-center gap-1 rounded-xl transition-all duration-200',
+						'flex h-14 w-14 flex-col items-center justify-center gap-1 rounded-xl transition-colors',
 						page.url.pathname === '/daily'
 							? 'bg-primary/10 font-semibold text-primary'
 							: 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -61,7 +59,7 @@
 				<a
 					href={resolve('/stats')}
 					class={[
-						'flex h-14 w-14 flex-col items-center justify-center gap-1 rounded-xl transition-all duration-200',
+						'flex h-14 w-14 flex-col items-center justify-center gap-1 rounded-xl transition-colors',
 						page.url.pathname === '/stats'
 							? 'bg-primary/10 font-semibold text-primary'
 							: 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -79,7 +77,7 @@
 			<a
 				href={resolve('/settings')}
 				class={[
-					'flex h-14 w-14 flex-col items-center justify-center gap-1 rounded-xl transition-all duration-200',
+					'flex h-14 w-14 flex-col items-center justify-center gap-1 rounded-xl transition-colors',
 					page.url.pathname === '/settings'
 						? 'bg-primary/10 font-semibold text-primary'
 						: 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -109,7 +107,7 @@
 				<a
 					href={resolve('/')}
 					class={[
-						'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+						'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
 						page.url.pathname === '/'
 							? 'bg-primary/10 font-semibold text-primary'
 							: 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -123,7 +121,7 @@
 				<a
 					href={resolve('/daily')}
 					class={[
-						'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+						'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
 						page.url.pathname === '/daily'
 							? 'bg-primary/10 font-semibold text-primary'
 							: 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -137,7 +135,7 @@
 				<a
 					href={resolve('/stats')}
 					class={[
-						'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+						'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
 						page.url.pathname === '/stats'
 							? 'bg-primary/10 font-semibold text-primary'
 							: 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -151,7 +149,7 @@
 				<a
 					href={resolve('/settings')}
 					class={[
-						'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+						'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
 						page.url.pathname === '/settings'
 							? 'bg-primary/10 font-semibold text-primary'
 							: 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -167,7 +165,7 @@
 
 	<!-- Main content area with proper scrolling -->
 	<main class="h-full flex-1 overflow-y-auto">
-		<div class="relative mx-auto h-full w-full max-w-5xl flex flex-col">
+		<div class="relative mx-auto flex h-full w-full max-w-5xl flex-col">
 			{@render children?.()}
 		</div>
 	</main>

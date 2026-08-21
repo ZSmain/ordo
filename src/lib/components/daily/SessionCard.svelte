@@ -39,7 +39,9 @@
 	<ContextMenu.Trigger>
 		<div
 			class="mb-1.5 rounded-lg border p-1 transition-colors hover:opacity-90"
-			style="background-color: {session.categories[0]?.color || '#gray'}10"
+			style="background-color: {session.categories[0]
+				? session.categories[0].color + '10'
+				: 'var(--muted)'}"
 		>
 			<div class="flex items-start justify-between gap-2">
 				<div class="flex flex-1 items-center gap-3">
@@ -95,11 +97,11 @@
 
 	<ContextMenu.Content>
 		<ContextMenu.Item onclick={() => (modifyDialogOpen = true)}>
-			<PencilLine class="mr-2 h-4 w-4" />
+			<PencilLine />
 			Modify
 		</ContextMenu.Item>
 		<ContextMenu.Item onclick={() => (statisticsOpen = true)}>
-			<ChartBar class="mr-2 h-4 w-4" />
+			<ChartBar />
 			Statistics
 		</ContextMenu.Item>
 		<ContextMenu.Separator />
@@ -107,7 +109,7 @@
 			onclick={() => (deleteDialogOpen = true)}
 			class="text-destructive focus:text-destructive"
 		>
-			<Trash2 class="mr-2 h-4 w-4" />
+			<Trash2 />
 			Delete
 		</ContextMenu.Item>
 	</ContextMenu.Content>

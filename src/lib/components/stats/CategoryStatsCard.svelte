@@ -57,7 +57,7 @@
 				</div>
 				<div class="h-2 rounded-full bg-muted">
 					<div
-						class="h-2 rounded-full transition-all duration-300"
+						class="h-2 rounded-full transition-[width] duration-300 ease-out"
 						style="background-color: {category.categoryColor}; width: {getPercentage(
 							category.totalDuration
 						)}%"

@@ -22,7 +22,7 @@
 		</p>
 		{#if onCreateCategory}
 			<Button onclick={onCreateCategory}>
-				<Plus class="mr-2 h-4 w-4" />
+				<Plus />
 				Create your first category
 			</Button>
 		{/if}
@@ -35,15 +35,15 @@
 			</div>
 			<ul class="space-y-1.5 text-xs text-muted-foreground">
 				<li class="flex items-start gap-2">
-					<span class="text-primary">•</span>
+					<span>•</span>
 					Right-click or long-press an item to edit or delete it
 				</li>
 				<li class="flex items-start gap-2">
-					<span class="text-primary">•</span>
+					<span>•</span>
 					Activities can belong to multiple categories
 				</li>
 				<li class="flex items-start gap-2">
-					<span class="text-primary">•</span>
+					<span>•</span>
 					Set daily goals to track your progress
 				</li>
 			</ul>
@@ -60,7 +60,7 @@
 		</p>
 		{#if onCreateActivity}
 			<Button variant="secondary" size="sm" onclick={onCreateActivity}>
-				<Plus class="mr-2 h-4 w-4" />
+				<Plus />
 				Create activity
 			</Button>
 		{/if}

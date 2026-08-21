@@ -68,7 +68,7 @@
 	<Popover.Trigger>
 		<Button
 			variant="outline"
-			class="h-9 w-9 rounded-md text-lg transition-all hover:border-primary {className}"
+			class="h-9 w-9 rounded-md text-lg transition-colors hover:border-primary {className}"
 			aria-label="Select icon"
 		>
 			{value}

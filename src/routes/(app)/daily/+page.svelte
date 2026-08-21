@@ -164,7 +164,7 @@
 		</div>
 
 		<!-- Date navigation -->
-		<div class="border-t p-1.5 backdrop-blur-sm">
+		<div class="border-t p-1.5">
 			<div class="flex items-center justify-between">
 				<Button variant="outline" size="icon" onclick={goToPreviousDay}>
 					<ChevronLeft class="size-4" />
@@ -203,7 +203,7 @@
 			<div class="pointer-events-auto">
 				<Button
 					size="lg"
-					class="h-14 w-14 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl"
+					class="h-14 w-14 rounded-full shadow-lg"
 					onclick={() => (addSessionOpen = true)}
 					aria-label="Add session"
 				>

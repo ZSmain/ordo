@@ -45,23 +45,19 @@
 				<Button
 					variant="secondary"
 					size="sm"
-					class="whitespace-nowrap shadow-lg transition-shadow hover:shadow-xl"
+					class="whitespace-nowrap shadow-md"
 					onclick={openCategoryForm}
 				>
-					<span class="mr-2">
-						<LayoutGrid />
-					</span>
+					<LayoutGrid />
 					Create Category
 				</Button>
 				<Button
 					variant="secondary"
 					size="sm"
-					class="whitespace-nowrap shadow-lg transition-shadow hover:shadow-xl"
+					class="whitespace-nowrap shadow-md"
 					onclick={openActivityForm}
 				>
-					<span class="mr-2">
-						<Plus />
-					</span>
+					<Plus />
 					Create Activity
 				</Button>
 			</div>
@@ -70,9 +66,7 @@
 		<!-- Main Add Button -->
 		<Button
 			size="lg"
-			class="h-14 w-14 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl {isExpanded
-				? 'rotate-45'
-				: ''}"
+			class="h-14 w-14 rounded-full shadow-lg transition-transform {isExpanded ? 'rotate-45' : ''}"
 			onclick={toggleExpanded}
 			aria-label={isExpanded ? 'Close menu' : 'Add new category or activity'}
 			aria-expanded={isExpanded}

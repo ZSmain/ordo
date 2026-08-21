@@ -177,38 +177,41 @@
 
 			<span class="relative size-4 shrink-0 self-start text-muted-foreground" aria-hidden="true">
 				<Play
-					class="absolute inset-0 m-auto size-4 transition-all duration-200 {isRunning
-						? 'scale-50 opacity-0'
-						: 'opacity-100'}"
+					class="absolute inset-0 m-auto size-4 transition-[opacity,scale] duration-150 ease-out {isRunning
+						? 'scale-25 opacity-0'
+						: 'scale-100 opacity-100'}"
 				/>
 				<Pause
-					class="absolute inset-0 m-auto size-4 text-[color-mix(in_oklab,var(--category-color)_65%,black)] transition-all duration-200 {isRunning
-						? 'opacity-100'
-						: 'scale-50 opacity-0'}"
+					class="absolute inset-0 m-auto size-4 text-[color-mix(in_oklab,var(--category-color)_65%,black)] transition-[opacity,scale] duration-150 ease-out {isRunning
+						? 'scale-100 opacity-100'
+						: 'scale-25 opacity-0'}"
 				/>
 			</span>
 		</button>
 	</ContextMenu.Trigger>
 	<ContextMenu.Content>
 		<ContextMenu.Item onclick={handleModifyActivity}>
-			<PencilLine class="mr-2 h-4 w-4" />
+			<PencilLine />
 			Modify
 		</ContextMenu.Item>
 		<ContextMenu.Item onclick={() => (statisticsOpen = true)}>
-			<ChartBar class="mr-2 h-4 w-4" />
+			<ChartBar />
 			Statistics
 		</ContextMenu.Item>
 		<ContextMenu.Item onclick={handleToggleFavorite} disabled={isUpdatingFavorite}>
-			<Star class="mr-2 h-4 w-4" />
+			<Star />
 			{activity.favorite ? 'Remove from favorites' : 'Add to favorites'}
 		</ContextMenu.Item>
 		<ContextMenu.Item onclick={handleArchiveActivity}>
-			<Archive class="mr-2 h-4 w-4" />
+			<Archive />
 			{activity.archived ? 'Unarchive' : 'Archive'}
 		</ContextMenu.Item>
 		<ContextMenu.Separator />
-		<ContextMenu.Item onclick={handleDeleteActivity} class="text-destructive focus:text-destructive">
-			<Trash2 class="mr-2 h-4 w-4" />
+		<ContextMenu.Item
+			onclick={handleDeleteActivity}
+			class="text-destructive focus:text-destructive"
+		>
+			<Trash2 />
 			Delete
 		</ContextMenu.Item>
 	</ContextMenu.Content>

@@ -77,7 +77,7 @@
 					type="submit"
 					class="flex h-9 w-full items-center justify-center gap-2"
 				>
-					<LogOut class="h-4 w-4" />
+					<LogOut />
 					Sign Out
 				</Button>
 			</form>
@@ -89,11 +89,13 @@
 			{/if}
 
 			<Dialog.Root bind:open={isDeleteDialogOpen}>
-				<Dialog.Trigger
-					class="text-destructive-foreground inline-flex h-9 w-full items-center justify-center gap-2 rounded-md border border-transparent bg-destructive px-4 py-2 text-sm font-medium shadow transition-colors hover:bg-destructive/90 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
-				>
-					<Trash2 class="h-4 w-4" />
-					Delete Account
+				<Dialog.Trigger>
+					{#snippet child({ props })}
+						<Button {...props} variant="destructive" class="w-full">
+							<Trash2 />
+							Delete Account
+						</Button>
+					{/snippet}
 				</Dialog.Trigger>
 				<Dialog.Content class="sm:max-w-md">
 					<Dialog.Header>
@@ -113,14 +115,12 @@
 					</Dialog.Header>
 					<div class="py-4">
 						<div class="rounded-lg bg-destructive/10 p-4">
-							<h4 class="mb-2 font-semibold text-destructive">
-								This will permanently delete:
-							</h4>
-							<ul class="space-y-1 text-sm text-destructive">
-								<li>• Your account and profile information</li>
-								<li>• All your categories and activities</li>
-								<li>• All your time tracking sessions</li>
-								<li>• All your statistics and progress data</li>
+							<h4 class="mb-2 font-semibold text-destructive">This will permanently delete:</h4>
+							<ul class="list-inside list-disc space-y-1 text-sm text-destructive">
+								<li>Your account and profile information</li>
+								<li>All your categories and activities</li>
+								<li>All your time tracking sessions</li>
+								<li>All your statistics and progress data</li>
 							</ul>
 						</div>
 						{#if form?.action === 'deleteAccount' && form.message}
@@ -132,8 +132,8 @@
 					<form method="POST" action="?/deleteAccount" use:enhance class="contents">
 						<Dialog.Footer class="gap-2">
 							<Button variant="outline" type="button" onclick={closeDeleteDialog}>Cancel</Button>
-							<Button variant="destructive" type="submit" class="flex items-center gap-2">
-								<Trash2 class="h-4 w-4" />
+							<Button variant="destructive" type="submit">
+								<Trash2 />
 								Delete Account
 							</Button>
 						</Dialog.Footer>
