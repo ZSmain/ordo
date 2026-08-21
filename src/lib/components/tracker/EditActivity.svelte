@@ -141,13 +141,14 @@
 							type="multiple"
 							bind:value={selectedCategoryIds}
 							aria-label="Categories"
+							spacing={2}
 							class="flex w-full flex-row flex-wrap gap-2 rounded-none"
 						>
 							{#each categoriesQuery.current as category (category.id)}
 								<ToggleGroupItem
 									value={String(category.id)}
 									aria-label={`Toggle ${category.name}`}
-									class="h-auto rounded-full border-0 bg-secondary px-3 py-1.5 text-sm font-normal shadow-none transition-colors duration-150 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+									class="h-auto rounded-md border-0 bg-secondary px-3 py-1.5 text-sm font-normal shadow-none transition-colors duration-150 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
 								>
 									<div class="flex items-center gap-1.5">
 										<span class="text-sm">{category.icon}</span>
