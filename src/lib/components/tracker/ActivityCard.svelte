@@ -137,7 +137,7 @@
 	<ContextMenu.Trigger>
 		<button
 			type="button"
-			class="relative flex min-h-24 w-full items-start gap-3 overflow-hidden rounded-xl border p-3 text-left transition-colors duration-200 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-[var(--category-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none {activity.archived
+			class="relative flex w-full flex-col items-start gap-2 overflow-hidden rounded-xl border p-3 text-left transition-colors duration-200 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-[var(--category-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none {activity.archived
 				? 'opacity-60'
 				: ''} {isRunning
 				? 'border-[color-mix(in_oklab,var(--category-color)_55%,var(--border))] bg-[color-mix(in_oklab,var(--category-color)_7%,var(--card))] ring-1 ring-[color-mix(in_oklab,var(--category-color)_30%,transparent)]'
@@ -147,22 +147,39 @@
 			aria-pressed={isRunning}
 			aria-label={isRunning ? `Pause ${activity.name}` : `Start ${activity.name}`}
 		>
-			<span
-				class="grid size-10 shrink-0 place-items-center rounded-lg bg-[color-mix(in_oklab,var(--category-color)_12%,transparent)] text-xl leading-none"
-				aria-hidden="true"
-			>
-				{activity.icon}
-			</span>
-
-			<span class="grid min-w-0 flex-1 gap-0.5">
-				<span class="flex items-center gap-1 text-sm font-medium text-foreground">
-					<span class="truncate">{activity.name}</span>
+			<span class="flex w-full items-start justify-between gap-1">
+				<span
+					class="flex min-w-0 flex-wrap items-center gap-x-1 text-sm font-medium text-foreground"
+				>
+					<span class="wrap-anywhere">{activity.name}</span>
 					{#if activity.favorite && showFavoriteStar}
 						<Star class="size-3.5 shrink-0 fill-amber-400 text-amber-400" aria-hidden="true" />
 					{/if}
 					{#if activity.archived}
 						<span class="text-xs font-normal text-muted-foreground">(Archived)</span>
 					{/if}
+				</span>
+
+				<span class="relative mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true">
+					<Play
+						class="absolute inset-0 m-auto size-4 transition-[opacity,scale] duration-150 ease-out {isRunning
+							? 'scale-25 opacity-0'
+							: 'scale-100 opacity-100'}"
+					/>
+					<Pause
+						class="absolute inset-0 m-auto size-4 text-[color-mix(in_oklab,var(--category-color)_65%,black)] transition-[opacity,scale] duration-150 ease-out {isRunning
+							? 'scale-100 opacity-100'
+							: 'scale-25 opacity-0'}"
+					/>
+				</span>
+			</span>
+
+			<span class="flex items-center gap-1.5">
+				<span
+					class="grid size-6 shrink-0 place-items-center rounded-md bg-[color-mix(in_oklab,var(--category-color)_12%,transparent)] text-sm leading-none"
+					aria-hidden="true"
+				>
+					{activity.icon}
 				</span>
 				{#if activity.dailyGoal}
 					<span class="text-xs text-muted-foreground">
@@ -173,19 +190,6 @@
 						Goal from tomorrow: {activity.latestGoals.dailyGoal} min/day
 					</span>
 				{/if}
-			</span>
-
-			<span class="relative size-4 shrink-0 self-start text-muted-foreground" aria-hidden="true">
-				<Play
-					class="absolute inset-0 m-auto size-4 transition-[opacity,scale] duration-150 ease-out {isRunning
-						? 'scale-25 opacity-0'
-						: 'scale-100 opacity-100'}"
-				/>
-				<Pause
-					class="absolute inset-0 m-auto size-4 text-[color-mix(in_oklab,var(--category-color)_65%,black)] transition-[opacity,scale] duration-150 ease-out {isRunning
-						? 'scale-100 opacity-100'
-						: 'scale-25 opacity-0'}"
-				/>
 			</span>
 		</button>
 	</ContextMenu.Trigger>
