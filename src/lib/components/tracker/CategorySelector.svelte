@@ -55,10 +55,6 @@
 		onClearSelection?.();
 	}
 
-	function isSelected(categoryId: number): boolean {
-		return selectedCategoryIds.includes(String(categoryId));
-	}
-
 	function handleModifyCategory(category: Category) {
 		categoryToEdit = category;
 		editCategoryOpen = true;
@@ -191,10 +187,7 @@
 													<ContextMenu.Trigger>
 														<ToggleGroupItem
 															value={String(category.id)}
-															class="h-auto rounded-full border-0 px-3 py-1.5 text-sm font-normal shadow-none transition-colors duration-150"
-															style="background-color: {isSelected(category.id)
-																? category.color + '40'
-																: category.color + '10'}"
+															class="h-auto rounded-full border-0 bg-secondary px-3 py-1.5 text-sm font-normal shadow-none transition-colors duration-150 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
 														>
 															<div class="flex items-center gap-1.5">
 																<span class="text-sm">{category.icon}</span>
