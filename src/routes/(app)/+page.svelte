@@ -11,31 +11,50 @@
 		FloatingAddButton,
 		Timer
 	} from '$lib/components/tracker';
+	import ActivityCard from '$lib/components/tracker/ActivityCard.svelte';
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
+	import * as Select from '$lib/components/ui/select';
 	import { Separator } from '$lib/components/ui/separator';
 	import {
 		selectionStore,
-		trackerSessionController,
 		timerStore,
+		trackerSessionController,
 		trackerTabPersistedState
 	} from '$lib/stores';
-	import { Star } from '@lucide/svelte';
+	import type { TrackerTab } from '$lib/stores/tracker-view';
 	import {
 		projectFavoriteActivities,
 		projectSelectedActivities
 	} from '$lib/tracker/activity-projection';
+	import { Archive, LayoutGrid, Star } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
 	// State for create dialogs triggered from empty states
 	let showCreateCategory = $state(false);
 	let showCreateActivity = $state(false);
 
-	const showFavorites = $derived(trackerTabPersistedState.current === 'favorites');
+	const currentTab = $derived(trackerTabPersistedState.current);
 
-	function toggleFavorites() {
-		trackerTabPersistedState.current =
-			trackerTabPersistedState.current === 'favorites' ? 'activities' : 'favorites';
-	}
+	const tabOrder: TrackerTab[] = ['activities', 'favorites', 'archived'];
+
+	const tabConfig = $derived.by(() => {
+		if (currentTab === 'favorites') {
+			return {
+				label: 'Favorites',
+				Icon: Star
+			};
+		}
+		if (currentTab === 'archived') {
+			return {
+				label: 'Archived',
+				Icon: Archive
+			};
+		}
+		return {
+			label: 'Categories',
+			Icon: LayoutGrid
+		};
+	});
 
 	// Get user from page data
 	const user = $derived(page.data?.user);
@@ -94,6 +113,11 @@
 			localStorage.removeItem('ordo-show-favorites');
 		}
 
+		// Migrate invalid tab values (e.g., old store without 'archived')
+		if (!tabOrder.includes(trackerTabPersistedState.current as TrackerTab)) {
+			trackerTabPersistedState.current = 'activities';
+		}
+
 		if (user?.id) {
 			void trackerSessionController.reconcile();
 		}
@@ -104,6 +128,10 @@
 	// Check if there are any non-archived activities in selected categories
 	const hasActivitiesInSelection = $derived(
 		selectedActivities.some((item) => !item.activity.archived)
+	);
+
+	const archivedSelectedActivities = $derived.by(() =>
+		selectedActivities.filter((item) => item.activity.archived)
 	);
 </script>
 
@@ -131,47 +159,77 @@
 		<!-- Empty state for new users with no categories -->
 		<EmptyState type="no-categories" onCreateCategory={() => (showCreateCategory = true)} />
 	{:else}
-		<div class="star-wrapper relative mt-8">
-			<CategorySelector
-				categories={categoriesQuery?.current || []}
-				selectedCategoryIds={selectionStore.current.selectedCategoryIds}
-				filterMode={selectionStore.current.filterMode}
-				onFilterModeChange={handleFilterModeChange}
-				onClearSelection={handleClearCategorySelection}
-				onSelectedCategoryIdsChange={handleCategorySelectionChange}
-				loading={categoriesQuery?.loading || false}
-				error={categoriesQuery?.error}
-				userId={user?.id || ''}
-				{showFavorites}
-			/>
+		<div class="mt-8 space-y-4">
+			<!-- Header with title + select -->
+			<div class="flex items-center justify-between gap-3 px-1">
+				<h2 class="text-lg font-semibold text-foreground">
+					{tabConfig.label}
+				</h2>
+				<Select.Root
+					type="single"
+					value={currentTab}
+					onValueChange={(value) => {
+						if (value && tabOrder.includes(value as TrackerTab)) {
+							trackerTabPersistedState.current = value as TrackerTab;
+						}
+					}}
+				>
+					<Select.Trigger
+						class="h-8 w-8 justify-center p-0 [&>svg:last-child]:hidden"
+						size="sm"
+						aria-label="Select view: {tabConfig.label}"
+					>
+						<span class="flex items-center justify-center">
+							{#if currentTab === 'favorites'}
+								<Star class="size-4" />
+							{:else if currentTab === 'archived'}
+								<Archive class="size-4" />
+							{:else}
+								<LayoutGrid class="size-4" />
+							{/if}
+							<span class="sr-only">{tabConfig.label}</span>
+						</span>
+					</Select.Trigger>
+					<Select.Content>
+						<Select.Item value="activities">
+							<span class="flex items-center gap-2">
+								<LayoutGrid class="size-4" />
+								Categories
+							</span>
+						</Select.Item>
+						<Select.Item value="favorites">
+							<span class="flex items-center gap-2">
+								<Star class="size-4" />
+								Favorites
+							</span>
+						</Select.Item>
+						<Select.Item value="archived">
+							<span class="flex items-center gap-2">
+								<Archive class="size-4" />
+								Archived
+							</span>
+						</Select.Item>
+					</Select.Content>
+				</Select.Root>
+			</div>
 
-			<!--
-				Star tab is always a circle sitting in the card's top-edge notch.
-				Outline star when categories are shown, filled star when favorites are shown.
-			-->
-			<button
-				type="button"
-				onclick={toggleFavorites}
-				class="star-tab absolute z-10 flex size-12 items-center justify-center border border-border bg-card shadow-md
-					transition-[transform,box-shadow,color] duration-300 ease-out
-					hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2
-					focus-visible:ring-primary focus-visible:outline-none active:scale-[0.96]"
-				style="top: -24px; right: 32px;"
-				aria-expanded={!showFavorites}
-				aria-controls="categories-grid"
-				aria-pressed={showFavorites}
-				aria-label={showFavorites ? 'Show categories' : 'Show favorites'}
-			>
-				<Star
-					class="size-5 transition-[fill,color,stroke] duration-300 ease-out {showFavorites
-						? 'fill-primary text-primary'
-						: 'fill-none text-muted-foreground'}"
+			{#if currentTab !== 'favorites'}
+				<CategorySelector
+					categories={categoriesQuery?.current || []}
+					selectedCategoryIds={selectionStore.current.selectedCategoryIds}
+					filterMode={selectionStore.current.filterMode}
+					onFilterModeChange={handleFilterModeChange}
+					onClearSelection={handleClearCategorySelection}
+					onSelectedCategoryIdsChange={handleCategorySelectionChange}
+					loading={categoriesQuery?.loading || false}
+					error={categoriesQuery?.error}
+					userId={user?.id || ''}
 				/>
-			</button>
+			{/if}
 
 			<div class="content-panel">
 				<Separator class="my-4" />
-				{#if !showFavorites}
+				{#if currentTab === 'activities'}
 					{#if selectionStore.current.selectedCategoryIds.length === 0}
 						<EmptyState type="no-selection" />
 					{:else if !hasActivitiesInSelection}
@@ -184,13 +242,49 @@
 							currentActivityId={timerStore.current.activityId}
 						/>
 					{/if}
-				{:else}
+				{:else if currentTab === 'favorites'}
 					<FavoriteActivities
 						activities={favoriteActivities}
 						onActivitySelect={handleActivitySelect}
 						userId={user?.id || ''}
 						currentActivityId={timerStore.current.activityId}
 					/>
+				{:else}
+					<!-- Archived -->
+					{#if selectionStore.current.selectedCategoryIds.length === 0}
+						<EmptyState type="no-selection" />
+					{:else if archivedSelectedActivities.length === 0}
+						<div class="py-6 text-center">
+							<p class="text-sm text-muted-foreground">
+								No archived activities in selected categories
+							</p>
+							<p class="mt-1 text-xs text-muted-foreground">
+								Archived items will appear here. Right-click to unarchive, view statistics, or
+								delete.
+							</p>
+						</div>
+					{:else}
+						<div class="mt-4 space-y-3">
+							<div class="flex items-center justify-between gap-2">
+								<h2 class="text-lg font-semibold text-foreground">Archived Activities</h2>
+								<span class="text-xs text-muted-foreground">
+									{archivedSelectedActivities.length} archived
+								</span>
+							</div>
+							<div class="grid grid-cols-2 gap-3">
+								{#each archivedSelectedActivities as item (item.activity.id)}
+									<ActivityCard
+										activity={item.activity}
+										categoryColor={item.categoryColor}
+										categoryName={item.categoryName}
+										onActivitySelect={handleActivitySelect}
+										userId={user?.id || ''}
+										currentActivityId={timerStore.current.activityId}
+									/>
+								{/each}
+							</div>
+						</div>
+					{/if}
 				{/if}
 			</div>
 		</div>
@@ -214,30 +308,11 @@
 />
 
 <style>
-	/* Circular bite out of the card top edge so the star tab sits in a notch */
-	.star-wrapper :global(.category-panel) {
-		-webkit-mask-image:
-			radial-gradient(circle 28px at right 52px top 0, #000 99%, transparent 100%),
-			linear-gradient(#000, #000);
-		-webkit-mask-repeat: no-repeat;
-		-webkit-mask-composite: xor;
-		mask-image:
-			radial-gradient(circle 28px at right 52px top 0, #000 99%, transparent 100%),
-			linear-gradient(#000, #000);
-		mask-repeat: no-repeat;
-		mask-composite: exclude;
-	}
-
-	.star-tab {
-		border-radius: 9999px;
-	}
-
 	.content-panel {
 		transition: opacity 0.25s ease;
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.star-tab,
 		.content-panel {
 			transition: none;
 		}

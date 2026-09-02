@@ -1,6 +1,6 @@
 import { PersistedState } from 'runed';
 
-export type TrackerTab = 'activities' | 'favorites';
+export type TrackerTab = 'activities' | 'favorites' | 'archived';
 
 const defaultTrackerTab: TrackerTab = 'activities';
 

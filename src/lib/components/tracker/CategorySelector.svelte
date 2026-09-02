@@ -24,8 +24,6 @@
 		error?: Error | null;
 		onSelectedCategoryIdsChange?: (categoryIds: string[]) => void;
 		userId?: string;
-		/** When true, category pills collapse so favorites can use the vertical space. */
-		showFavorites?: boolean;
 	}
 
 	let {
@@ -37,8 +35,7 @@
 		loading = false,
 		error = null,
 		onSelectedCategoryIdsChange,
-		userId = '',
-		showFavorites = false
+		userId = ''
 	}: Props = $props();
 
 	let editCategoryOpen = $state(false);
@@ -91,9 +88,7 @@
 	}
 
 	const hasCategories = $derived((categories?.length ?? 0) > 0);
-	const showFilterControls = $derived(
-		!showFavorites && selectedCategoryIds.length > 0 && hasCategories
-	);
+	const showFilterControls = $derived(selectedCategoryIds.length > 0 && hasCategories);
 </script>
 
 <div class="space-y-2 px-1">
@@ -103,8 +98,8 @@
 			<p class="mt-1 text-xs text-muted-foreground">Please try refreshing the page</p>
 		</div>
 	{:else if loading}
-		<Card class="category-panel py-4 pt-7 pr-7 shadow-none">
-			<CardContent class="px-4 pr-7">
+		<Card class="py-4 shadow-none">
+			<CardContent class="px-4">
 				<div class="space-y-4">
 					<Skeleton class="h-5 w-24" />
 					<div class="flex flex-wrap gap-2">
@@ -115,27 +110,16 @@
 				</div>
 			</CardContent>
 		</Card>
-	{:else if !hasCategories && !showFavorites}
+	{:else if !hasCategories}
 		<div class="mt-4 text-center text-xs text-muted-foreground">No categories yet</div>
 	{:else}
-		<Card
-			class="category-panel py-4 pr-7 shadow-none transition-[padding] duration-300 ease-out {showFavorites
-				? 'pt-6'
-				: 'pt-7'}"
-			data-collapsed={showFavorites ? 'true' : 'false'}
-		>
-			<CardContent class="px-4 pr-7">
+		<Card class="py-4 shadow-none">
+			<CardContent class="px-4">
 				<form>
 					<Field.Group>
 						<Field.Set class="gap-0">
-							<div
-								class="flex items-center justify-between gap-3 transition-[margin] duration-300 ease-out {showFavorites
-									? 'mb-0'
-									: 'mb-4'}"
-							>
-								<Field.Legend class="mb-0">
-									{showFavorites ? 'Favorites' : 'Categories'}
-								</Field.Legend>
+							<div class="mb-4 flex items-center justify-between gap-3">
+								<Field.Legend class="mb-0">Categories</Field.Legend>
 								{#if showFilterControls}
 									<div class="flex flex-wrap items-center justify-end gap-2">
 										{#if selectedCategoryIds.length > 1}
@@ -165,15 +149,8 @@
 								{/if}
 							</div>
 
-							<!-- Collapsible category pills: grid 1fr → 0fr keeps height animation smooth -->
-							<div
-								id="categories-grid"
-								class="categories-collapse"
-								class:collapsed={showFavorites}
-								aria-hidden={showFavorites}
-								inert={showFavorites}
-							>
-								<div class="categories-collapse-inner">
+							<div id="categories-grid">
+								<div>
 									{#if hasCategories}
 										<ToggleGroup
 											type="multiple"
@@ -253,34 +230,3 @@
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>
-
-<style>
-	/* Animate height via grid-template-rows (stable cross-browser alternative to max-height hacks) */
-	.categories-collapse {
-		display: grid;
-		grid-template-rows: 1fr;
-		opacity: 1;
-		transition:
-			grid-template-rows 0.4s ease,
-			opacity 0.3s ease,
-			margin-top 0.3s ease;
-	}
-
-	.categories-collapse.collapsed {
-		grid-template-rows: 0fr;
-		opacity: 0;
-		margin-top: 0;
-		pointer-events: none;
-	}
-
-	.categories-collapse-inner {
-		overflow: hidden;
-		min-height: 0;
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.categories-collapse {
-			transition: none;
-		}
-	}
-</style>
