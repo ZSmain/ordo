@@ -213,17 +213,19 @@
 				</Select.Root>
 			</div>
 
-			<CategorySelector
-				categories={categoriesQuery?.current || []}
-				selectedCategoryIds={selectionStore.current.selectedCategoryIds}
-				filterMode={selectionStore.current.filterMode}
-				onFilterModeChange={handleFilterModeChange}
-				onClearSelection={handleClearCategorySelection}
-				onSelectedCategoryIdsChange={handleCategorySelectionChange}
-				loading={categoriesQuery?.loading || false}
-				error={categoriesQuery?.error}
-				userId={user?.id || ''}
-			/>
+			{#if currentTab !== 'favorites'}
+				<CategorySelector
+					categories={categoriesQuery?.current || []}
+					selectedCategoryIds={selectionStore.current.selectedCategoryIds}
+					filterMode={selectionStore.current.filterMode}
+					onFilterModeChange={handleFilterModeChange}
+					onClearSelection={handleClearCategorySelection}
+					onSelectedCategoryIdsChange={handleCategorySelectionChange}
+					loading={categoriesQuery?.loading || false}
+					error={categoriesQuery?.error}
+					userId={user?.id || ''}
+				/>
+			{/if}
 
 			<div class="content-panel">
 				<Separator class="my-4" />
