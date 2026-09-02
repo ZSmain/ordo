@@ -1,9 +1,11 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { archiveActivity, deleteActivity, setActivityFavorite } from '$lib/api/data.remote';
 	import { ActivityStatisticsDrawer } from '$lib/components/stats';
 	import { Button } from '$lib/components/ui/button';
 	import * as ContextMenu from '$lib/components/ui/context-menu';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import { trackerTabPersistedState } from '$lib/stores/tracker-view';
 	import type { TrackerActivity } from '$lib/tracker/activity-projection';
 	import { Archive, ChartBar, Pause, PencilLine, Play, Star, Trash2 } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
@@ -89,15 +91,44 @@
 		if (!userId || isArchiving) return;
 
 		isArchiving = true;
-		const actionName = activity.archived ? 'unarchived' : 'archived';
+		const wasArchived = activity.archived;
+		const actionName = wasArchived ? 'unarchived' : 'archived';
+		const targetArchived = !wasArchived;
+		const nameSnapshot = activity.name;
+		const idSnapshot = activity.id;
 
 		try {
 			await archiveActivity({
-				id: activity.id,
-				archived: !activity.archived
+				id: idSnapshot,
+				archived: targetArchived
 			});
 
-			toast.success(`"${activity.name}" ${actionName}`);
+			if (wasArchived) {
+				toast.success(`"${nameSnapshot}" ${actionName}`);
+			} else {
+				toast.success(`"${nameSnapshot}" ${actionName}`, {
+					description: 'Find it in Archived — switch via the header button.',
+					duration: 6000,
+					action: {
+						label: 'Undo',
+						onClick: async () => {
+							try {
+								await archiveActivity({ id: idSnapshot, archived: false });
+								toast.success(`"${nameSnapshot}" unarchived`);
+							} catch {
+								toast.error('Failed to undo archive');
+							}
+						}
+					},
+					cancel: {
+						label: 'View Archived',
+						onClick: () => {
+							trackerTabPersistedState.current = 'archived';
+							goto('/');
+						}
+					}
+				});
+			}
 			archiveDialogOpen = false;
 		} catch (error) {
 			console.error('Failed to archive activity:', error);
@@ -239,7 +270,8 @@
 			<Dialog.Description>
 				Are you sure you want to {activity.archived ? 'unarchive' : 'archive'} "{activity.name}"?
 				{#if !activity.archived}
-					Archived activities won't appear in the main list but can still be viewed.
+					Archived activities won't appear in the main list but can be viewed in Archived (header
+					button).
 				{/if}
 			</Dialog.Description>
 		</Dialog.Header>
