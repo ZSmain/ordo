@@ -162,8 +162,7 @@
 		<div class="mt-8 space-y-4">
 			<!-- Header with title + select -->
 			<div class="flex items-center justify-between gap-3 px-1">
-				<h2 class="flex items-center gap-2 text-lg font-semibold text-foreground">
-					<tabConfig.Icon class="size-5" />
+				<h2 class="text-lg font-semibold text-foreground">
 					{tabConfig.label}
 				</h2>
 				<Select.Root
@@ -175,18 +174,20 @@
 						}
 					}}
 				>
-					<Select.Trigger class="w-[160px] justify-between" size="sm" aria-label="Select view">
-						<span class="flex items-center gap-1.5">
+					<Select.Trigger
+						class="h-8 w-8 justify-center p-0 [&>svg:last-child]:hidden"
+						size="sm"
+						aria-label="Select view: {tabConfig.label}"
+					>
+						<span class="flex items-center justify-center">
 							{#if currentTab === 'favorites'}
 								<Star class="size-4" />
-								Favorites
 							{:else if currentTab === 'archived'}
 								<Archive class="size-4" />
-								Archived
 							{:else}
 								<LayoutGrid class="size-4" />
-								Categories
 							{/if}
+							<span class="sr-only">{tabConfig.label}</span>
 						</span>
 					</Select.Trigger>
 					<Select.Content>
