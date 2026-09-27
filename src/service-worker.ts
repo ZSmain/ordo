@@ -7,7 +7,8 @@ import { build, files, version } from '$service-worker';
 
 const sw = /** @type {ServiceWorkerGlobalScope} */ /** @type {unknown} */ self;
 
-const CACHE = `cache-${version}`;
+const STATIC_CACHE = `cache-${version}-static`;
+const RUNTIME_CACHE = `cache-${version}-runtime`;
 
 const ASSETS = [...build, ...files];
 
@@ -19,7 +20,7 @@ const MAX_RUNTIME_ENTRIES = 100;
 
 sw.addEventListener('install', (event) => {
 	async function addFilesToCache() {
-		const cache = await caches.open(CACHE);
+		const cache = await caches.open(STATIC_CACHE);
 		const results = await Promise.allSettled(ASSETS.map((asset) => cache.add(asset)));
 		const failed = results.filter((result) => result.status === 'rejected');
 		if (failed.length > 0) {
@@ -27,32 +28,43 @@ sw.addEventListener('install', (event) => {
 		}
 	}
 
-	event.waitUntil(addFilesToCache());
-
-	sw.skipWaiting();
+	event.waitUntil(addFilesToCache().then(() => sw.skipWaiting()));
 });
 
 sw.addEventListener('activate', (event) => {
 	async function deleteOldCaches() {
 		for (const key of await caches.keys()) {
-			if (key !== CACHE) await caches.delete(key);
+			if (key !== STATIC_CACHE && key !== RUNTIME_CACHE) await caches.delete(key);
+		}
+		if ('navigationPreload' in sw.registration) {
+			try {
+				await sw.registration.navigationPreload.enable();
+			} catch {
+				// Navigation preload is a progressive enhancement
+			}
 		}
 	}
 
-	event.waitUntil(deleteOldCaches());
-
-	sw.clients.claim();
+	event.waitUntil(deleteOldCaches().then(() => sw.clients.claim()));
 });
 
-async function trimCache(maxEntries) {
-	const cache = await caches.open(CACHE);
-	const runtimeKeys = (await cache.keys()).filter((request) => {
-		return !ASSET_SET.has(new URL(request.url).pathname);
-	});
+async function trimCache() {
+	const cache = await caches.open(RUNTIME_CACHE);
+	const keys = await cache.keys();
+	if (keys.length <= MAX_RUNTIME_ENTRIES) return;
 
-	for (let i = 0; i < runtimeKeys.length - maxEntries; i++) {
-		await cache.delete(runtimeKeys[i]);
+	for (let i = 0; i < keys.length - MAX_RUNTIME_ENTRIES; i++) {
+		await cache.delete(keys[i]);
 	}
+}
+
+function isCacheableResponse(response: unknown): response is Response {
+	return (
+		response instanceof Response &&
+		response.status === 200 &&
+		response.type === 'basic' &&
+		!response.headers.get('cache-control')?.includes('no-store')
+	);
 }
 
 sw.addEventListener('fetch', (event) => {
@@ -67,42 +79,74 @@ sw.addEventListener('fetch', (event) => {
 	if (
 		AUTH_PATHS.has(url.pathname) ||
 		url.pathname.startsWith('/api/') ||
-		url.pathname.includes('.remote')
+		url.pathname.includes('.remote') ||
+		url.searchParams.has('__data') ||
+		url.searchParams.has('x-sveltekit-invalidated')
 	) {
 		return;
 	}
 
-	async function respond() {
-		const cache = await caches.open(CACHE);
-		const cachedResponse = await cache.match(event.request);
+	// Immutable build output + static files: cache-first, never revalidate in SW.
+	// Filenames are content-hashed, so a new deploy gets a new cache.
+	if (ASSET_SET.has(url.pathname)) {
+		event.respondWith(
+			(async () => {
+				const cache = await caches.open(STATIC_CACHE);
+				const cachedResponse = await cache.match(event.request);
+				if (cachedResponse) return cachedResponse;
+				try {
+					const response = await fetch(event.request);
+					if (isCacheableResponse(response)) {
+						event.waitUntil(cache.put(event.request, response.clone()));
+					}
+					return response;
+				} catch {
+					throw new Error('No cached response available');
+				}
+			})()
+		);
+		return;
+	}
 
-		if (ASSET_SET.has(url.pathname) && cachedResponse) {
-			return cachedResponse;
-		}
+	// Pages and other same-origin GETs: stale-while-revalidate.
+	// Serve the cached shell instantly, refresh it in the background.
+	event.respondWith(
+		(async () => {
+			const cache = await caches.open(RUNTIME_CACHE);
+			const cachedResponse = await cache.match(event.request);
 
-		try {
-			const response = await fetch(event.request);
+			const networkPromise = (async () => {
+				try {
+					const preload =
+						event.request.mode === 'navigate'
+							? await event.preloadResponse.catch(() => undefined)
+							: undefined;
+					const response = preload ?? (await fetch(event.request));
+					if (isCacheableResponse(response)) {
+						await cache.put(event.request, response.clone());
+						await trimCache();
+					}
+					return response;
+				} catch {
+					return undefined;
+				}
+			})();
 
-			if (response.status === 200) {
-				event.waitUntil(
-					cache.put(event.request, response.clone()).then(() => trimCache(MAX_RUNTIME_ENTRIES))
-				);
-			}
-
-			return response;
-		} catch {
 			if (cachedResponse) {
+				event.waitUntil(networkPromise);
 				return cachedResponse;
 			}
 
+			const networkResponse = await networkPromise;
+			if (networkResponse) return networkResponse;
+
 			if (event.request.mode === 'navigate') {
-				const offlineResponse = await cache.match('/offline.html');
+				const staticCache = await caches.open(STATIC_CACHE);
+				const offlineResponse = await staticCache.match('/offline.html');
 				if (offlineResponse) return offlineResponse;
 			}
 
 			throw new Error('No cached response available');
-		}
-	}
-
-	event.respondWith(respond());
+		})()
+	);
 });
