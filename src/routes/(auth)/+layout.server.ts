@@ -5,7 +5,6 @@ export const load = async ({locals, request}) => {
 		headers: request.headers
 	});
 
-	// If user is already authenticated, redirect to home
 	if (session) {
 		throw redirect(302, '/');
 	}

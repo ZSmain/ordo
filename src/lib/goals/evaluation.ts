@@ -1,6 +1,5 @@
 import { eachDateKey, monthBounds, toDateKey, weekBounds } from './dates';
 
-/** Goal amounts in minutes. Null means no goal for that period. */
 export type GoalValues = {
 	dailyGoal: number | null;
 	weeklyGoal: number | null;
@@ -8,12 +7,12 @@ export type GoalValues = {
 };
 
 export type GoalHistoryEntry = GoalValues & {
-	startDate: string; // YYYY-MM-DD
+	startDate: string;
 };
 
 export type SessionForGoals = {
 	startedAt: Date | string;
-	duration: number | null; // seconds
+	duration: number | null;
 	isActive?: boolean | null;
 };
 
@@ -50,10 +49,6 @@ function toGoalValues(entry: GoalHistoryEntry): GoalValues {
 	};
 }
 
-/**
- * Active goal for a calendar date: most recent history entry with startDate <= dateKey.
- * Returns null when no goal has ever been set for that date (or all values are null).
- */
 export function getActiveGoal(
 	history: readonly GoalHistoryEntry[],
 	dateKey: string
@@ -101,7 +96,6 @@ export function isCountableSession(session: SessionForGoals): boolean {
 	return true;
 }
 
-/** Map of dateKey → duration seconds for stopped sessions. */
 export function durationByDate(sessions: readonly SessionForGoals[]): Map<string, number> {
 	const map = new Map<string, number>();
 	for (const session of sessions) {
@@ -112,7 +106,6 @@ export function durationByDate(sessions: readonly SessionForGoals[]): Map<string
 	return map;
 }
 
-/** Sum stopped-session duration (seconds) whose startedAt falls on dateKey. */
 export function sumDurationOnDate(
 	sessions: readonly SessionForGoals[],
 	dateKey: string
@@ -126,7 +119,6 @@ export function sumDurationOnDate(
 	return total;
 }
 
-/** Sum stopped-session duration (seconds) for inclusive [start, end] date keys. */
 export function sumDurationInRange(
 	sessions: readonly SessionForGoals[],
 	start: string,
@@ -142,10 +134,6 @@ export function sumDurationInRange(
 	return total;
 }
 
-/**
- * Whether a goal was met.
- * Returns null when no goal is set (no indicator).
- */
 export function isGoalHit(
 	durationSeconds: number,
 	goalMinutes: number | null | undefined
@@ -154,14 +142,12 @@ export function isGoalHit(
 	return durationSeconds >= goalMinutes * 60;
 }
 
-/** Alias for daily evaluation call sites. */
 export const isDailyGoalHit = isGoalHit;
 
 export type DayGoalEvaluation = {
 	dateKey: string;
 	durationSeconds: number;
 	dailyGoalMinutes: number | null;
-	/** null = no goal set; true = hit; false = miss */
 	goalHit: boolean | null;
 };
 
@@ -188,9 +174,7 @@ export type PeriodGoalSummary = {
 	durationSeconds: number;
 	goalMinutes: number | null;
 	goalHit: boolean | null;
-	/** Number of days in range with a daily goal that was hit. */
 	dailyHits: number;
-	/** Number of days in range that had a daily goal set. */
 	dailyGoalDays: number;
 };
 

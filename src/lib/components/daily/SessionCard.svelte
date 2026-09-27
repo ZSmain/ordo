@@ -45,10 +45,8 @@
 		>
 			<div class="flex items-start justify-between gap-2">
 				<div class="flex flex-1 items-center gap-3">
-					<!-- Activity icon -->
 					<span class="shrink-0 text-lg">{session.activity.icon}</span>
 
-					<!-- Activity info -->
 					<div class="min-w-0 flex-1">
 						<div class="mb-1">
 							<h3 class="truncate text-sm font-medium">
@@ -56,7 +54,6 @@
 							</h3>
 						</div>
 
-						<!-- Categories as badges -->
 						{#if session.categories.length > 0}
 							<div class="mb-1 flex flex-wrap gap-1">
 								{#each session.categories as category (category.id)}
@@ -78,7 +75,6 @@
 					</div>
 				</div>
 
-				<!-- Duration -->
 				<div class="shrink-0 text-right">
 					<Badge variant="secondary" class="text-xs">
 						{formatDuration(session.duration)}
@@ -86,7 +82,6 @@
 				</div>
 			</div>
 
-			<!-- Notes -->
 			{#if session.notes}
 				<div class="mt-3 border-t pt-3 text-xs text-muted-foreground">
 					{session.notes}
@@ -115,7 +110,6 @@
 	</ContextMenu.Content>
 </ContextMenu.Root>
 
-<!-- Dialogs -->
 <ModifySessionDrawer
 	bind:open={modifyDialogOpen}
 	{session}
@@ -130,7 +124,6 @@
 	onSessionDeleted={() => onSessionUpdated?.()}
 />
 
-<!-- Activity Statistics Drawer -->
 <ActivityStatisticsDrawer
 	bind:open={statisticsOpen}
 	activity={session.activity}

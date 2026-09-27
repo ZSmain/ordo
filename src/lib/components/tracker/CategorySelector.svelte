@@ -203,14 +203,12 @@
 	{/if}
 </div>
 
-<!-- Edit Category Drawer -->
 <EditCategory
 	bind:open={editCategoryOpen}
 	category={categoryToEdit}
 	onCategoryUpdated={handleCategoryUpdated}
 />
 
-<!-- Delete Category Confirmation Dialog -->
 <Dialog.Root bind:open={deleteDialogOpen}>
 	<Dialog.Content class="sm:max-w-md">
 		<Dialog.Header>

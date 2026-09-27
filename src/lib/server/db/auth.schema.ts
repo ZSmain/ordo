@@ -70,7 +70,6 @@ export const verification = table('verification', {
 	updatedAt: t.integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
 });
 
-// User validation schemas
 export const insertUserSchema = createInsertSchema(user, {
 	id: v.pipe(v.string('User ID must be a string'), v.minLength(1, 'User ID is required')),
 	name: v.pipe(

@@ -21,7 +21,6 @@
 
 	let { activities, onActivityClick }: Props = $props();
 
-	// Group activities by category
 	function groupActivitiesByCategory() {
 		const grouped = new SvelteMap<
 			number,

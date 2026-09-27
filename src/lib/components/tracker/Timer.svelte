@@ -14,7 +14,6 @@
 
 	const now = new SvelteDate();
 
-	// Get timer state directly from the store (reactive)
 	const timerState = $derived(timerStore.current);
 
 	const elapsedSeconds = $derived.by(() => {
@@ -26,7 +25,6 @@
 		return calculateElapsedTime(timerState);
 	});
 
-	// Ignore shortcuts while focus is inside other interactive controls.
 	const interactiveSelector =
 		'input, textarea, select, button, a, [contenteditable="true"], [role="button"], [role="link"], [role="menuitem"], [role="option"], [role="checkbox"], [role="radio"], [role="switch"], [role="tab"]';
 

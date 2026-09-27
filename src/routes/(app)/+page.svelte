@@ -29,7 +29,6 @@
 	import { Archive, LayoutGrid, Star } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
-	// State for create dialogs triggered from empty states
 	let showCreateCategory = $state(false);
 	let showCreateActivity = $state(false);
 
@@ -56,23 +55,18 @@
 		};
 	});
 
-	// Get user from page data
 	const user = $derived(page.data?.user);
 
-	// Guard the remote query behind authenticated page data
 	const categoriesQuery = $derived(user ? getCategoriesWithActivities() : null);
 
-	// Computed: selected activities from multiple categories
 	const selectedActivities = $derived.by(() =>
 		projectSelectedActivities(categoriesQuery?.current, selectionStore.current)
 	);
 
-	// Handle category selection changes
 	function handleCategorySelectionChange(categoryIds: string[]) {
 		selectionStore.setSelectedCategories(categoryIds);
 	}
 
-	// Handle filter mode changes
 	function handleFilterModeChange(mode: 'AND' | 'OR') {
 		selectionStore.setFilterMode(mode);
 	}
@@ -87,7 +81,6 @@
 		void trackerSessionController.stop();
 	}
 
-	// Handle activity selection
 	function handleActivitySelect(activityId: number, categoryName: string, activityName: string) {
 		if (!user?.id) return;
 
@@ -106,14 +99,12 @@
 	}
 
 	onMount(() => {
-		// One-time migration from the old localStorage flag to the shared tab store
 		const legacy = localStorage.getItem('ordo-show-favorites');
 		if (legacy !== null && localStorage.getItem('ordo-tracker-tab') === null) {
 			trackerTabPersistedState.current = legacy === 'true' ? 'favorites' : 'activities';
 			localStorage.removeItem('ordo-show-favorites');
 		}
 
-		// Migrate invalid tab values (e.g., old store without 'archived')
 		if (!tabOrder.includes(trackerTabPersistedState.current as TrackerTab)) {
 			trackerTabPersistedState.current = 'activities';
 		}
@@ -125,7 +116,6 @@
 
 	const favoriteActivities = $derived.by(() => projectFavoriteActivities(categoriesQuery?.current));
 
-	// Check if there are any non-archived activities in selected categories
 	const hasActivitiesInSelection = $derived(
 		selectedActivities.some((item) => !item.activity.archived)
 	);
@@ -145,7 +135,6 @@
 	{#if timerStore.current.isActive}
 		<Timer onStop={stopTimer} />
 	{:else if (categoriesQuery?.current?.length ?? 0) > 0}
-		<!-- Instructions when no timer is active but categories exist -->
 		<div class="px-4 py-8 text-center">
 			<div class="mb-2 text-xl font-semibold text-foreground">
 				Click on activity to start tracking
@@ -156,11 +145,9 @@
 	{/if}
 
 	{#if !categoriesQuery?.loading && (categoriesQuery?.current?.length ?? 0) === 0}
-		<!-- Empty state for new users with no categories -->
 		<EmptyState type="no-categories" onCreateCategory={() => (showCreateCategory = true)} />
 	{:else}
 		<div class="mt-8 space-y-4">
-			<!-- Header with title + select -->
 			<div class="flex items-center justify-between gap-3 px-1">
 				<h2 class="text-lg font-semibold text-foreground">
 					{tabConfig.label}
@@ -250,7 +237,6 @@
 						currentActivityId={timerStore.current.activityId}
 					/>
 				{:else}
-					<!-- Archived -->
 					{#if selectionStore.current.selectedCategoryIds.length === 0}
 						<EmptyState type="no-selection" />
 					{:else if archivedSelectedActivities.length === 0}
@@ -291,10 +277,8 @@
 	{/if}
 </ScrollArea>
 
-<!-- Floating Add Button -->
 <FloatingAddButton userId={user?.id || ''} />
 
-<!-- Create dialogs triggered from empty states -->
 <CreateCategory
 	bind:open={showCreateCategory}
 	userId={user?.id || ''}

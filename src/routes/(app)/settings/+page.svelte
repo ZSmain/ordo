@@ -27,13 +27,11 @@
 
 <div class="p-4">
 	<div class="mx-auto max-w-2xl space-y-6">
-		<!-- Page Header -->
 		<div>
 			<h1 class="text-2xl font-bold text-foreground">Settings</h1>
 			<p class="text-sm text-muted-foreground">Manage your account and preferences</p>
 		</div>
 
-		<!-- User Profile Section -->
 		{#if data.user}
 			<div class="rounded-lg border border-border p-4">
 				<div class="flex items-center gap-4">
@@ -55,7 +53,6 @@
 
 		<Separator />
 
-		<!-- Appearance Section -->
 		<div class="space-y-3">
 			<h3 class="text-lg font-medium text-foreground">Appearance</h3>
 			<div class="flex items-center justify-between rounded-lg border border-border p-4">
@@ -69,7 +66,6 @@
 
 		<Separator />
 
-		<!-- Account Actions -->
 		<div class="space-y-3">
 			<form method="POST" action="?/signOut" use:enhance>
 				<Button

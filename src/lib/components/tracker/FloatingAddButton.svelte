@@ -36,22 +36,18 @@
 	}
 
 	function handleCategoryCreated() {
-		// Collapse the floating button after successful creation
 		isExpanded = false;
 	}
 
 	function handleActivityCreated() {
-		// Collapse the floating button after successful creation
 		isExpanded = false;
 	}
 </script>
 
 <svelte:window onpointerdown={handleOutsideClick} />
 
-<!-- Floating Add Button -->
 <div bind:this={container} class="pointer-events-none absolute right-6 bottom-6 z-50">
 	<div class="pointer-events-auto flex flex-col items-end gap-3">
-		<!-- Expanded Action Buttons -->
 		{#if isExpanded}
 			<div class="flex animate-in flex-col gap-2 duration-200 slide-in-from-bottom-2">
 				<Button
@@ -75,7 +71,6 @@
 			</div>
 		{/if}
 
-		<!-- Main Add Button -->
 		<Button
 			size="lg"
 			class="h-14 w-14 rounded-full shadow-lg transition-transform {isExpanded ? 'rotate-45' : ''}"
@@ -101,8 +96,6 @@
 	</div>
 </div>
 
-<!-- Create Category Form -->
 <CreateCategory bind:open={showCategoryForm} onCategoryCreated={handleCategoryCreated} {userId} />
 
-<!-- Create Activity Form -->
 <CreateActivity bind:open={showActivityForm} onActivityCreated={handleActivityCreated} {userId} />

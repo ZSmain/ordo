@@ -34,12 +34,10 @@
 		monthlyGoal: undefined as number | undefined
 	});
 
-	// Category selection using ToggleGroup
 	let selectedCategoryIds = $state<string[]>([]);
 
 	let isPending = $state(false);
 
-	// Get categories for selection
 	const categoriesQuery = $derived.by(() => getCategoriesWithActivities());
 
 	/** Prefer latest scheduled goals (includes pending tomorrow change) for editing. */
@@ -50,7 +48,6 @@
 		activityForm.monthlyGoal = goals.monthlyGoal || undefined;
 	}
 
-	// Initialize form when activity changes
 	$effect(() => {
 		if (activity) {
 			activityForm.name = activity.name;
@@ -116,7 +113,6 @@
 			</DrawerHeader>
 
 			<div class="space-y-4 p-4 pb-0">
-				<!-- Name and Icon in one row -->
 				<div class="space-y-2">
 					<Label for="activity-name">Name & Icon</Label>
 					<div class="flex items-center gap-2">
@@ -133,7 +129,6 @@
 					</div>
 				</div>
 
-				<!-- Categories -->
 				<div class="space-y-2">
 					<Label for="activity-category">Categories</Label>
 					{#if categoriesQuery.current?.length}
@@ -162,7 +157,6 @@
 					{/if}
 				</div>
 
-				<!-- Goals in a compact grid — changes take effect tomorrow -->
 				<div class="space-y-2">
 					<Label>Goals (minutes)</Label>
 					<p class="text-xs text-muted-foreground">Changes take effect tomorrow.</p>

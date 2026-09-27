@@ -30,7 +30,6 @@
 	let { activities, period }: Props = $props();
 
 	let chartData = $derived.by(() => {
-		// Now activities are already deduplicated from the remote function
 		return activities.map((activity) => ({
 			category: activity.activityName,
 			duration: activity.totalDuration,

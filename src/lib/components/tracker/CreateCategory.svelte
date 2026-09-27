@@ -34,7 +34,6 @@
 
 	let isPending = $state(false);
 
-	// Available colors for category with semantic names
 	const colors = [
 		{ hex: '#3B82F6', name: 'blue' },
 		{ hex: '#EF4444', name: 'red' },
@@ -62,14 +61,11 @@
 
 			await createCategory(categoryData);
 
-			// Reset form
 			resetForm();
 
-			// Close drawer
 			open = false;
 			onOpenChange?.(false);
 
-			// Notify parent component
 			onCategoryCreated?.();
 		} catch (error) {
 			console.error('Failed to create category:', error);

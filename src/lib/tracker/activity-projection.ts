@@ -3,7 +3,6 @@ import type { SelectActivity, SelectCategory } from '$lib/server/db/schema';
 
 export type TrackerActivityCategory = Pick<SelectCategory, 'id' | 'name' | 'color' | 'icon'>;
 
-/** Active (or latest form) goal values in minutes. Null = no goal for that period. */
 export type TrackerActivityGoals = {
 	dailyGoal: number | null;
 	weeklyGoal: number | null;
