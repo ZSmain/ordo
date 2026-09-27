@@ -53,7 +53,6 @@ export const getCategoryStats = query(
 		const start = new Date(startDate + 'T00:00:00.000Z');
 		const end = new Date(endDate + 'T23:59:59.999Z');
 
-		// Get all sessions for the time period
 		const sessions: Array<{
 			sessionId: number;
 			duration: number | null;
@@ -82,7 +81,6 @@ export const getCategoryStats = query(
 			...new Set(sessions.map((session: (typeof sessions)[number]) => session.activityId))
 		]);
 
-		// Calculate category stats by distributing session time proportionally
 		const categoryStatsMap = new Map<
 			number,
 			{
@@ -99,9 +97,8 @@ export const getCategoryStats = query(
 			const categoriesForActivity = categoriesByActivityId.get(session.activityId) ?? [];
 			const categoryCount = categoriesForActivity.length;
 
-			if (categoryCount === 0) return; // Skip activities without categories
+			if (categoryCount === 0) return;
 
-			// Distribute the session duration proportionally among categories
 			const durationPerCategory = (session.duration || 0) / categoryCount;
 			const sessionCountPerCategory = 1 / categoryCount;
 
@@ -147,7 +144,6 @@ export const getActivityStats = query(
 		const start = new Date(startDate + 'T00:00:00.000Z');
 		const end = new Date(endDate + 'T23:59:59.999Z');
 
-		// First get activity stats without category duplication
 		const activityStats: Array<{
 			activityId: number;
 			activityName: string;
@@ -181,7 +177,6 @@ export const getActivityStats = query(
 		);
 		const categoriesByActivityId = await getCategoriesForActivityIds(db, activityIds);
 
-		// Combine activity stats with their categories
 		return activityStats.map((stat: (typeof activityStats)[number]) => {
 			const categories = categoriesByActivityId.get(stat.activityId) ?? [];
 			const primaryCategory = getRepresentativeCategory(categories);
@@ -260,7 +255,6 @@ export const getSessionsForActivity = query(
 		const start = new Date(startDate + 'T00:00:00.000Z');
 		const end = new Date(endDate + 'T23:59:59.999Z');
 
-		// Get all sessions for this activity within the date range
 		const sessions = await db
 			.select({
 				id: timeSession.id,
@@ -288,7 +282,6 @@ export const getSessionsForActivity = query(
 
 		const categories = await getCategoriesForActivityId(db, activityId);
 
-		// Transform sessions to match SessionCard format
 		return sessions.map((session: (typeof sessions)[number]) => ({
 			id: session.id,
 			startedAt: session.startedAt,
@@ -316,7 +309,6 @@ export const getActivityStatistics = query(
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
-		// Build date filters - if no dates provided, get all sessions
 		const dateFilters = [];
 		if (startDate) {
 			const start = new Date(startDate + 'T00:00:00.000Z');
@@ -388,7 +380,6 @@ export const getActivityStatistics = query(
 			};
 		}
 
-		// Calculate aggregated chart data based on granularity
 		const chartDataMap: Record<
 			string,
 			{ label: string; duration: number; sortKey: string; bucketKey: string }
@@ -407,7 +398,6 @@ export const getActivityStatistics = query(
 					const day = String(date.getUTCDate()).padStart(2, '0');
 					key = `${year}-${month}-${day}`;
 					sortKey = key;
-					// Format as "Nov 24"
 					label = date.toLocaleDateString('en-US', {
 						month: 'short',
 						day: 'numeric',
@@ -416,7 +406,6 @@ export const getActivityStatistics = query(
 					break;
 				}
 				case 'weekly': {
-					// Get ISO week number and year
 					const tempDate = new Date(
 						Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
 					);
@@ -452,12 +441,10 @@ export const getActivityStatistics = query(
 			chartDataMap[key].duration += session.duration || 0;
 		});
 
-		// Convert to sorted array (only entries with data)
 		const chartData = Object.values(chartDataMap)
 			.sort((a, b) => a.sortKey.localeCompare(b.sortKey))
 			.map(({ label, duration, bucketKey }) => ({ label, duration, bucketKey }));
 
-		// Calculate statistics
 		const durations = sessions
 			.map((s: (typeof sessions)[number]) => s.duration || 0)
 			.filter((d: number) => d > 0);
@@ -469,7 +456,6 @@ export const getActivityStatistics = query(
 		const averageSession =
 			durations.length > 0 ? Math.round(totalDuration / durations.length) : null;
 
-		// First and last session times
 		const firstSession = sessions[0]?.startedAt || null;
 		const lastSession = sessions[sessions.length - 1]?.startedAt || null;
 

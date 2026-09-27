@@ -5,7 +5,6 @@ export const load = async ({locals, request}) => {
         headers: request.headers
     });
 
-    // If user is not authenticated, redirect to login
     if (!session) {
         throw redirect(302, '/login');
     }

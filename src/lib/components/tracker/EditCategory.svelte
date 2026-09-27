@@ -33,7 +33,6 @@
 
 	let isPending = $state(false);
 
-	// Available colors for category with semantic names
 	const colors = [
 		{ hex: '#3B82F6', name: 'blue' },
 		{ hex: '#EF4444', name: 'red' },
@@ -47,7 +46,6 @@
 		{ hex: '#6B7280', name: 'gray' }
 	];
 
-	// Initialize form when category changes
 	$effect(() => {
 		if (category) {
 			categoryForm.name = category.name;
@@ -68,11 +66,9 @@
 				icon: categoryForm.icon
 			});
 
-			// Close drawer
 			open = false;
 			onOpenChange?.(false);
 
-			// Notify parent component
 			onCategoryUpdated?.();
 		} catch (error) {
 			console.error('Failed to update category:', error);
@@ -108,7 +104,6 @@
 			</DrawerHeader>
 
 			<div class="space-y-5 p-4 pb-0">
-				<!-- Name and Icon in one row -->
 				<div class="space-y-2">
 					<Label for="category-name">Name & Icon</Label>
 					<div class="flex items-center gap-2">
@@ -125,7 +120,6 @@
 					</div>
 				</div>
 
-				<!-- Color picker -->
 				<div class="space-y-2">
 					<Label>Color</Label>
 					<div class="flex flex-wrap gap-2">

@@ -34,7 +34,6 @@ const { ...insertCategoryEntries } = insertCategorySchema.entries;
 const { ...insertActivityEntries } = insertActivitySchema.entries;
 const optionalGoalMinutes = activityGoalFieldsSchema.entries.dailyGoal;
 
-/** Coerce form/API goal input into minutes or null (invalid / empty → null). */
 function sanitizeGoalMinutes(value: number | null | undefined): number | null {
 	if (value == null || Number.isNaN(value) || value <= 0) return null;
 	return value;
@@ -91,12 +90,10 @@ async function ensureCategoriesBelongToUser(
 	return uniqueCategoryIds;
 }
 
-// Return all categories with their activities for the current user
 export const getCategoriesWithActivities = query(async () => {
 	const { db, user } = getRemoteContext();
 	const userId = user.id;
 
-	// Get all categories for the user
 	const categories: SelectCategory[] = await db
 		.select()
 		.from(category)
@@ -115,7 +112,6 @@ export const getCategoriesWithActivities = query(async () => {
 		return [] as UserCategoryWithActivities[];
 	}
 
-	// Get all activities for the user first
 	const userActivities: SelectActivity[] = await db
 		.select()
 		.from(activity)
@@ -161,9 +157,7 @@ export const getCategoriesWithActivities = query(async () => {
 	return groupActivitiesByCategory(sortedCategories, activitiesWithCategories);
 });
 
-// Get currently active timer session for a user
 export const getActiveSession = query(async () => {
-	// First get the active session with activity
 	const { db, user } = getRemoteContext();
 	const userId = user.id;
 
@@ -192,7 +186,6 @@ export const getActiveSession = query(async () => {
 	};
 });
 
-// Start timer session with activity ID
 export const startTimerSession = command(
 	v.object({
 		activityId: v.pipe(v.number(), v.minValue(1, 'Activity ID must be a positive number'))
@@ -203,14 +196,12 @@ export const startTimerSession = command(
 
 		await ensureActivityBelongsToUser(db, userId, activityId);
 
-		// First, stop any currently active sessions for this user
 		const activeSessions = await db
 			.select()
 			.from(timeSession)
 			.where(and(eq(timeSession.userId, userId), eq(timeSession.isActive, true)))
 			.all();
 
-		// Stop all active sessions
 		for (const session of activeSessions) {
 			const stoppedAt = new Date();
 			const durationSeconds = Math.round(
@@ -228,7 +219,6 @@ export const startTimerSession = command(
 				.where(eq(timeSession.id, session.id));
 		}
 
-		// Create new active session
 		const newSession = await db
 			.insert(timeSession)
 			.values({
@@ -246,7 +236,6 @@ export const startTimerSession = command(
 	}
 );
 
-// Stop session timer with session ID
 export const stopTimerSession = command(
 	v.object({
 		sessionId: v.pipe(v.number(), v.minValue(1, 'Session ID must be a positive number'))
@@ -286,7 +275,6 @@ export const stopTimerSession = command(
 	}
 );
 
-// Create a new category
 export const createCategory = command(v.object(insertCategoryEntries), async (categoryData) => {
 	const { db, user } = getRemoteContext();
 
@@ -299,13 +287,11 @@ export const createCategory = command(v.object(insertCategoryEntries), async (ca
 		.returning()
 		.get();
 
-	// Refresh the categories query to update UI
 	await getCategoriesWithActivities().refresh();
 
 	return newCategory;
 });
 
-// Update an existing category
 export const updateCategory = command(
 	v.object({
 		id: v.pipe(v.number(), v.minValue(1, 'Category ID must be a positive number')),
@@ -334,7 +320,6 @@ export const updateCategory = command(
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
-		// Only include defined fields in the update
 		const fieldsToUpdate = Object.fromEntries(
 			Object.entries(updateData).filter(([, value]) => value !== undefined)
 		);
@@ -357,14 +342,12 @@ export const updateCategory = command(
 			error(404, 'Category not found');
 		}
 
-		// Refresh the categories query to update UI
 		await getCategoriesWithActivities().refresh();
 
 		return updatedCategory;
 	}
 );
 
-// Delete a category
 export const deleteCategory = command(
 	v.object({
 		id: v.pipe(v.number(), v.minValue(1, 'Category ID must be a positive number'))
@@ -373,7 +356,6 @@ export const deleteCategory = command(
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
-		// First check if the category exists and belongs to the user
 		const existingCategory = await db
 			.select()
 			.from(category)
@@ -391,14 +373,12 @@ export const deleteCategory = command(
 			.returning()
 			.get();
 
-		// Refresh the categories query to update UI
 		await getCategoriesWithActivities().refresh();
 
 		return deletedCategory;
 	}
 );
 
-// Create a new activity
 export const createActivity = command(
 	v.object({
 		...insertActivityEntries,
@@ -424,7 +404,6 @@ export const createActivity = command(
 			.returning()
 			.get();
 
-		// If categoryIds are provided, create the activity-category relationships
 		if (validatedCategoryIds.length > 0) {
 			const activityCategoryData: InsertActivityCategory[] = validatedCategoryIds.map(
 				(categoryId) => ({
@@ -443,14 +422,12 @@ export const createActivity = command(
 			sanitizeGoalFields({ dailyGoal, weeklyGoal, monthlyGoal })
 		);
 
-		// Refresh the categories query to update UI
 		await getCategoriesWithActivities().refresh();
 
 		return newActivity;
 	}
 );
 
-// Update an existing activity
 export const updateActivity = command(
 	v.object({
 		id: v.pipe(v.number(), v.minValue(1, 'Activity ID must be a positive number')),
@@ -481,7 +458,6 @@ export const updateActivity = command(
 		const goalsProvided =
 			dailyGoal !== undefined || weeklyGoal !== undefined || monthlyGoal !== undefined;
 
-		// Only include defined activity fields in the update
 		const fieldsToUpdate = Object.fromEntries(
 			Object.entries(updateData).filter(([, value]) => value !== undefined)
 		);
@@ -504,7 +480,6 @@ export const updateActivity = command(
 			? await ensureCategoriesBelongToUser(db, userId, categoryIds)
 			: null;
 
-		// Update the activity
 		const activityUpdate =
 			Object.keys(fieldsToUpdate).length > 0
 				? await db
@@ -518,12 +493,9 @@ export const updateActivity = command(
 						.get()
 				: existingActivity;
 
-		// Update categories if provided
 		if (validatedCategoryIds) {
-			// First, delete existing category relationships
 			await db.delete(activityCategory).where(eq(activityCategory.activityId, id));
 
-			// Then, create new category relationships
 			if (validatedCategoryIds.length > 0) {
 				const activityCategoryData: InsertActivityCategory[] = validatedCategoryIds.map(
 					(categoryId) => ({
@@ -545,14 +517,12 @@ export const updateActivity = command(
 			);
 		}
 
-		// Refresh the categories query to update UI
 		await getCategoriesWithActivities().refresh();
 
 		return activityUpdate;
 	}
 );
 
-// Archive/unarchive an activity
 export const setActivityFavorite = command(
 	v.object({
 		id: v.pipe(v.number(), v.minValue(1, 'Activity ID must be a positive number')),
@@ -582,7 +552,6 @@ export const setActivityFavorite = command(
 	}
 );
 
-// Archive/unarchive an activity
 export const archiveActivity = command(
 	v.object({
 		id: v.pipe(v.number(), v.minValue(1, 'Activity ID must be a positive number')),
@@ -606,14 +575,12 @@ export const archiveActivity = command(
 			error(404, 'Activity not found');
 		}
 
-		// Refresh the categories query to update UI
 		await getCategoriesWithActivities().refresh();
 
 		return updatedActivity;
 	}
 );
 
-// Delete an activity
 export const deleteActivity = command(
 	v.object({
 		id: v.pipe(v.number(), v.minValue(1, 'Activity ID must be a positive number'))
@@ -622,7 +589,6 @@ export const deleteActivity = command(
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
-		// First check if the activity exists and belongs to the user
 		const existingActivity = await db
 			.select()
 			.from(activity)
@@ -640,7 +606,6 @@ export const deleteActivity = command(
 			.returning()
 			.get();
 
-		// Refresh the categories query to update UI
 		await getCategoriesWithActivities().refresh();
 
 		return deletedActivity;

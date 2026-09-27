@@ -12,24 +12,20 @@
 
 	let { data }: PageProps = $props();
 
-	// Current selected date (defaults to today)
 	let selectedDateValue = $state(today(getLocalTimeZone()));
 	let calendarOpen = $state(false);
 	let addSessionOpen = $state(false);
 
-	// Derive sessions reactively based on selected date
 	const sessionsQuery = $derived.by(() => {
 		if (!data.user) return null;
 		const dateStr = formatDateForAPI(selectedDateValue);
 		return getSessionsForDate({ date: dateStr });
 	});
 
-	// Convert DateValue to JS Date for display formatting
 	function dateValueToJSDate(dateValue: CalendarDate): Date {
 		return new Date(dateValue.year, dateValue.month - 1, dateValue.day);
 	}
 
-	// Format date for display
 	function formatDisplayDate(dateValue: CalendarDate) {
 		const jsDate = dateValueToJSDate(dateValue);
 		const todayDate = new Date();
@@ -53,7 +49,6 @@
 		}
 	}
 
-	// Format date for API (YYYY-MM-DD)
 	function formatDateForAPI(dateValue: CalendarDate) {
 		const year = dateValue.year;
 		const month = String(dateValue.month).padStart(2, '0');
@@ -61,40 +56,33 @@
 		return `${year}-${month}-${day}`;
 	}
 
-	// Navigate to previous day
 	function goToPreviousDay() {
 		selectedDateValue = selectedDateValue.subtract({ days: 1 });
 	}
 
-	// Navigate to next day
 	function goToNextDay() {
 		const tomorrow = selectedDateValue.add({ days: 1 });
 		const todayDate = today(getLocalTimeZone());
 
-		// Don't allow navigation to future dates
 		if (tomorrow.compare(todayDate) <= 0) {
 			selectedDateValue = tomorrow;
 		}
 	}
 
-	// Check if we can navigate to next day (not in future)
 	function canGoToNextDay() {
 		const tomorrow = selectedDateValue.add({ days: 1 });
 		const todayDate = today(getLocalTimeZone());
 		return tomorrow.compare(todayDate) <= 0;
 	}
 
-	// Handle calendar date selection
 	function handleDateSelect() {
 		calendarOpen = false;
 	}
 
-	// Calculate total duration for the day
 	function getTotalDuration(sessions: { duration: number | null }[]) {
 		return sessions.reduce((total, session) => total + (session.duration || 0), 0);
 	}
 
-	// Refresh sessions after create/update/delete
 	function handleSessionUpdated() {
 		sessionsQuery?.refresh();
 	}
@@ -125,7 +113,6 @@
 			sessions.length > 0 ? 'grid-rows-[auto_1fr_auto]' : 'grid-rows-[1fr_auto]'
 		]}
 	>
-		<!-- Total duration summary -->
 		{#if sessions.length > 0}
 			<div class="p-4 pb-0">
 				<div class="rounded-lg bg-muted/50 p-4">
@@ -140,11 +127,9 @@
 			</div>
 		{/if}
 
-		<!-- Content area -->
 		<div class="overflow-hidden">
 			<ScrollArea class="h-full">
 				<div class="p-4">
-					<!-- Sessions list -->
 					<div class="space-y-4">
 						{#if sessions.length === 0}
 							<div class="py-8 text-center">
@@ -163,7 +148,6 @@
 			</ScrollArea>
 		</div>
 
-		<!-- Date navigation -->
 		<div class="border-t p-1.5">
 			<div class="flex items-center justify-between">
 				<Button variant="outline" size="icon" onclick={goToPreviousDay}>
@@ -198,7 +182,6 @@
 			</div>
 		</div>
 
-		<!-- Floating Add Button -->
 		<div class="pointer-events-none absolute right-6 bottom-16 z-50">
 			<div class="pointer-events-auto">
 				<Button
@@ -214,7 +197,6 @@
 	</div>
 </svelte:boundary>
 
-<!-- Add Session Drawer -->
 {#if data.user}
 	<AddSessionDrawer
 		bind:open={addSessionOpen}

@@ -9,12 +9,10 @@ import { activity, timeSession } from '$lib/server/db/schema';
 import { and, desc, eq, gte, isNotNull, lt } from 'drizzle-orm';
 import * as v from 'valibot';
 
-// Get all activities with their categories for the current user (for manual session entry)
 export const getActivitiesForUser = query(async () => {
 	const { db, user } = getRemoteContext();
 	const userId = user.id;
 
-	// Get all non-archived activities for the user
 	const activities: Array<{ id: number; name: string; icon: string }> = await db
 		.select({
 			id: activity.id,
@@ -38,7 +36,6 @@ export const getActivitiesForUser = query(async () => {
 	return hydrateActivitiesWithCategories(activities, categoriesByActivityId);
 });
 
-// Create a manual session (for logging past activities)
 export const createManualSession = command(
 	v.object({
 		activityId: v.pipe(v.number(), v.minValue(1, 'Activity ID must be valid')),
@@ -58,20 +55,16 @@ export const createManualSession = command(
 		const startDate = new Date(startedAt);
 		const endDate = new Date(stoppedAt);
 
-		// Validate that end time is after start time
 		if (endDate <= startDate) {
 			throw new Error('End time must be after start time');
 		}
 
-		// Validate that start time is not in the future
 		if (startDate > new Date()) {
 			throw new Error('Start time cannot be in the future');
 		}
 
-		// Calculate duration in seconds
 		const duration = Math.floor((endDate.getTime() - startDate.getTime()) / 1000);
 
-		// Verify the activity belongs to the user
 		const existingActivity = await db
 			.select({ id: activity.id })
 			.from(activity)
@@ -82,7 +75,6 @@ export const createManualSession = command(
 			error(404, 'Activity not found');
 		}
 
-		// Create the session
 		const newSession = await db
 			.insert(timeSession)
 			.values({
@@ -97,7 +89,6 @@ export const createManualSession = command(
 			.returning()
 			.get();
 
-		// Refresh the sessions query for the date
 		const sessionDateStr = startDate.toISOString().split('T')[0];
 		await getSessionsForDate({ date: sessionDateStr }).refresh();
 
@@ -105,10 +96,9 @@ export const createManualSession = command(
 	}
 );
 
-// Get all completed sessions for a specific date
 export const getSessionsForDate = query(
 	v.object({
-		date: v.string() // YYYY-MM-DD format
+		date: v.string()
 	}),
 	async ({ date }) => {
 		const { db, user } = getRemoteContext();
@@ -117,7 +107,6 @@ export const getSessionsForDate = query(
 		const startOfDay = new Date(date + 'T00:00:00.000Z');
 		const endOfDay = new Date(date + 'T23:59:59.999Z');
 
-		// Get all sessions for the day
 		const sessions: Array<{
 			id: number;
 			startedAt: Date;
@@ -145,7 +134,7 @@ export const getSessionsForDate = query(
 					eq(timeSession.userId, userId),
 					gte(timeSession.startedAt, startOfDay),
 					lt(timeSession.startedAt, endOfDay),
-					isNotNull(timeSession.stoppedAt) // Only completed sessions
+					isNotNull(timeSession.stoppedAt)
 				)
 			)
 			.orderBy(timeSession.startedAt)
@@ -171,7 +160,6 @@ export const getSessionsForDate = query(
 	}
 );
 
-// Update a session's start and end times
 export const updateSession = command(
 	v.object({
 		sessionId: v.pipe(v.number(), v.minValue(1, 'Session ID must be valid')),
@@ -185,15 +173,12 @@ export const updateSession = command(
 		const startDate = new Date(startedAt);
 		const endDate = new Date(stoppedAt);
 
-		// Validate that end time is after start time
 		if (endDate <= startDate) {
 			throw new Error('End time must be after start time');
 		}
 
-		// Calculate duration in seconds
 		const duration = Math.floor((endDate.getTime() - startDate.getTime()) / 1000);
 
-		// Verify the session belongs to the user
 		const existingSession = await db
 			.select({ id: timeSession.id })
 			.from(timeSession)
@@ -204,7 +189,6 @@ export const updateSession = command(
 			error(404, 'Session not found');
 		}
 
-		// Update the session
 		await db
 			.update(timeSession)
 			.set({
@@ -215,14 +199,11 @@ export const updateSession = command(
 			})
 			.where(eq(timeSession.id, sessionId));
 
-		// Refresh the sessions query for both start and end dates
-		// (in case the session was moved to a different date)
 		const startDateStr = startDate.toISOString().split('T')[0];
 		const endDateStr = endDate.toISOString().split('T')[0];
 
 		await getSessionsForDate({ date: startDateStr }).refresh();
 
-		// If the session spans different dates, refresh both
 		if (startDateStr !== endDateStr) {
 			await getSessionsForDate({ date: endDateStr }).refresh();
 		}
@@ -231,7 +212,6 @@ export const updateSession = command(
 	}
 );
 
-// Delete a session
 export const deleteSession = command(
 	v.object({
 		sessionId: v.pipe(v.number(), v.minValue(1, 'Session ID must be valid'))
@@ -240,7 +220,6 @@ export const deleteSession = command(
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
-		// Verify the session belongs to the user and get session details for cache invalidation
 		const existingSession = await db
 			.select({
 				id: timeSession.id,
@@ -254,13 +233,10 @@ export const deleteSession = command(
 			error(404, 'Session not found');
 		}
 
-		// Get the date for cache invalidation before deleting
 		const sessionDate = existingSession.startedAt.toISOString().split('T')[0];
 
-		// Delete the session
 		await db.delete(timeSession).where(eq(timeSession.id, sessionId));
 
-		// Refresh the sessions query for the date this session was on
 		await getSessionsForDate({ date: sessionDate }).refresh();
 
 		return { success: true };

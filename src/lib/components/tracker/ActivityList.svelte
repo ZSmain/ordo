@@ -14,10 +14,8 @@
 
 	let { activities, onActivitySelect, userId, currentActivityId }: Props = $props();
 
-	// Search state
 	let searchQuery = $state('');
 
-	// Filter out archived activities and apply search filter
 	let visibleActivities = $derived.by(() => {
 		const nonArchived = activities?.filter((item) => !item.activity.archived) || [];
 
@@ -34,12 +32,10 @@
 		);
 	});
 
-	// Clear search
 	function clearSearch() {
 		searchQuery = '';
 	}
 
-	// Handle keyboard shortcuts
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Escape' && searchQuery) {
 			clearSearch();
@@ -58,7 +54,6 @@
 			</span>
 		</div>
 
-		<!-- Search input -->
 		<div class="relative px-1">
 			<Search class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 			<Input

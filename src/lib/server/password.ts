@@ -1,8 +1,8 @@
 import { env } from '$env/dynamic/private';
 
 const DEFAULT_ITERATIONS = 75000;
-const DEFAULT_KEY_LENGTH = 32; // bytes
-const DEFAULT_SALT_LENGTH = 16; // bytes
+const DEFAULT_KEY_LENGTH = 32;
+const DEFAULT_SALT_LENGTH = 16;
 
 const encoder = new TextEncoder();
 

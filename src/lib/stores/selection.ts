@@ -1,13 +1,11 @@
 import { browser } from '$app/environment';
 import { PersistedState } from 'runed';
 
-// Selection state interface
 export interface SelectionState {
 	selectedCategoryIds: string[];
 	filterMode: 'AND' | 'OR';
 }
 
-// Default selection state
 const defaultSelectionState: SelectionState = {
 	selectedCategoryIds: [],
 	filterMode: 'OR'

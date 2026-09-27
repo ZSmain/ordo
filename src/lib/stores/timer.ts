@@ -1,16 +1,14 @@
 import { PersistedState } from 'runed';
 
-// Timer state interface
 export interface TimerState {
 	isActive: boolean;
 	categoryName: string;
 	activityName: string;
 	activityId: number | null;
 	sessionId: number | null;
-	startTime: number | null; // timestamp when timer started
+	startTime: number | null;
 }
 
-// Database session interface for type safety
 export interface DatabaseSession {
 	session: {
 		id: number;
@@ -26,7 +24,6 @@ export interface DatabaseSession {
 	};
 }
 
-// Default timer state
 const defaultTimerState: TimerState = {
 	isActive: false,
 	categoryName: '',
@@ -36,21 +33,17 @@ const defaultTimerState: TimerState = {
 	startTime: null
 };
 
-// Create timer store with automatic persistence using PersistedState
 export const timerPersistedState = new PersistedState('ordo-timer-state', defaultTimerState, {
-	storage: 'local', // Use localStorage for persistence across sessions
-	syncTabs: true // Synchronize timer state across browser tabs
+	storage: 'local',
+	syncTabs: true
 });
 
-// Create store interface that maintains compatibility with existing code
 function createTimerStore() {
 	return {
-		// For reactive access in Svelte 5 (using runes) - this is the primary interface
 		get current() {
 			return timerPersistedState.current;
 		},
 
-		// Direct set method (for backward compatibility)
 		set: (value: TimerState) => {
 			timerPersistedState.current = value;
 		},
@@ -71,7 +64,6 @@ function createTimerStore() {
 			};
 		},
 
-		// Update session ID after server confirms (for optimistic updates)
 		updateSessionId: (sessionId: number) => {
 			if (timerPersistedState.current.isActive) {
 				timerPersistedState.current = {
@@ -93,7 +85,6 @@ function createTimerStore() {
 
 export const timerStore = createTimerStore();
 
-// Helper function to calculate current elapsed time from database start time
 export function calculateElapsedTime(state: TimerState): number {
 	if (!state.isActive || !state.startTime) {
 		return 0;
@@ -104,7 +95,6 @@ export function calculateElapsedTime(state: TimerState): number {
 	return sessionElapsed;
 }
 
-// Helper function to restore timer state from database session
 export function restoreTimerFromDatabase(sessionData: DatabaseSession | null): TimerState {
 	if (!sessionData || !sessionData.session || !sessionData.session.isActive) {
 		return defaultTimerState;

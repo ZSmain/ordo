@@ -41,7 +41,6 @@
 		}>;
 	}
 
-	// Reactive query that updates when activity changes
 	const sessionsQuery = $derived.by(() => {
 		if (!open || !activity) return null;
 		return getSessionsForActivity({
@@ -55,7 +54,6 @@
 		sessionsQuery?.refresh();
 	}
 
-	// Group sessions by date
 	let groupedSessions = $derived.by(() => {
 		const sessions = (sessionsQuery?.current ?? []) as Session[];
 		const groups: [string, Session[]][] = [];
@@ -79,7 +77,6 @@
 		return groups;
 	});
 
-	// Calculate total duration
 	let totalDuration = $derived(
 		((sessionsQuery?.current ?? []) as Session[]).reduce((sum, s) => sum + (s.duration || 0), 0)
 	);
@@ -118,7 +115,6 @@
 					</div>
 				{/snippet}
 
-				<!-- Summary -->
 				{#if sessionCount > 0}
 					<div class="px-4 pb-4">
 						<div class="flex items-center justify-center gap-6 rounded-lg bg-muted/50 p-3">
@@ -140,7 +136,6 @@
 					</div>
 				{/if}
 
-				<!-- Sessions List -->
 				<div class="flex-1 overflow-hidden px-4 pb-4">
 					{#if sessionCount === 0}
 						<div class="py-8 text-center">

@@ -39,24 +39,20 @@
 	let isArchiving = $state(false);
 	let isUpdatingFavorite = $state(false);
 
-	// Check if this activity is currently running
 	let isRunning = $derived(currentActivityId === activity.id);
 
 	function handleClick() {
 		onActivitySelect?.(activity.id, categoryName, activity.name);
 	}
 
-	// Handle modify activity
 	function handleModifyActivity() {
 		editActivityOpen = true;
 	}
 
-	// Handle archive activity
 	function handleArchiveActivity() {
 		archiveDialogOpen = true;
 	}
 
-	// Handle delete activity
 	function handleDeleteActivity() {
 		deleteDialogOpen = true;
 	}
@@ -86,7 +82,6 @@
 		}
 	}
 
-	// Confirm archive
 	async function confirmArchive() {
 		if (!userId || isArchiving) return;
 
@@ -138,7 +133,6 @@
 		}
 	}
 
-	// Confirm delete
 	async function confirmDelete() {
 		if (!userId || isDeleting) return;
 
@@ -158,7 +152,6 @@
 		}
 	}
 
-	// Handle activity updated
 	function handleActivityUpdated() {
 		editActivityOpen = false;
 	}
@@ -168,10 +161,10 @@
 	<ContextMenu.Trigger>
 		<button
 			type="button"
-			class="relative flex w-full flex-col items-start gap-2 overflow-hidden rounded-xl border p-3 text-left transition-colors duration-200 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-[var(--category-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none {activity.archived
+			class="relative flex w-full flex-col items-start gap-2 overflow-hidden rounded-xl border p-3 text-left transition-colors duration-200 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none {activity.archived
 				? 'opacity-60'
 				: ''} {isRunning
-				? 'border-[color-mix(in_oklab,var(--category-color)_55%,var(--border))] bg-[color-mix(in_oklab,var(--category-color)_7%,var(--card))] ring-1 ring-[color-mix(in_oklab,var(--category-color)_30%,transparent)]'
+				? 'border-[color-mix(in_oklab,var(--primary)_55%,var(--border))] bg-[color-mix(in_oklab,var(--primary)_7%,var(--card))] ring-1 ring-[color-mix(in_oklab,var(--primary)_30%,transparent)]'
 				: 'border-border bg-card'}"
 			style="--category-color: {categoryColor}"
 			onclick={handleClick}
@@ -198,7 +191,7 @@
 							: 'scale-100 opacity-100'}"
 					/>
 					<Pause
-						class="absolute inset-0 m-auto size-4 text-[color-mix(in_oklab,var(--category-color)_65%,black)] transition-[opacity,scale] duration-150 ease-out {isRunning
+						class="absolute inset-0 m-auto size-4 text-primary transition-[opacity,scale] duration-150 ease-out {isRunning
 							? 'scale-100 opacity-100'
 							: 'scale-25 opacity-0'}"
 					/>
@@ -252,17 +245,14 @@
 	</ContextMenu.Content>
 </ContextMenu.Root>
 
-<!-- Edit Activity Drawer -->
 <EditActivity bind:open={editActivityOpen} {activity} onActivityUpdated={handleActivityUpdated} />
 
-<!-- Activity Statistics Drawer -->
 <ActivityStatisticsDrawer
 	bind:open={statisticsOpen}
 	activity={{ id: activity.id, name: activity.name, icon: activity.icon }}
 	onOpenChange={(open) => (statisticsOpen = open)}
 />
 
-<!-- Archive Confirmation Dialog -->
 <Dialog.Root bind:open={archiveDialogOpen}>
 	<Dialog.Content class="sm:max-w-md">
 		<Dialog.Header>
@@ -290,7 +280,6 @@
 	</Dialog.Content>
 </Dialog.Root>
 
-<!-- Delete Confirmation Dialog -->
 <Dialog.Root bind:open={deleteDialogOpen}>
 	<Dialog.Content class="sm:max-w-md">
 		<Dialog.Header>

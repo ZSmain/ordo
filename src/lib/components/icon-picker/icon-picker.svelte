@@ -27,19 +27,15 @@
 	let activeTab = $state<EmojiCategory | 'recent'>('recent');
 	let recentEmojis = $state<string[]>([]);
 
-	// Load recent emojis on mount
 	onMount(() => {
 		recentEmojis = getRecentEmojis();
-		// If no recent emojis, default to productivity tab
 		if (recentEmojis.length === 0) {
 			activeTab = 'productivity';
 		}
 	});
 
-	// Get emojis based on active tab and search
 	const displayEmojis = $derived.by(() => {
 		if (searchQuery.trim()) {
-			// Search across all emojis by keyword
 			return searchEmojis(searchQuery);
 		}
 
@@ -58,7 +54,6 @@
 		searchQuery = '';
 	}
 
-	// Get category keys for tabs (excluding 'recent' which we handle separately)
 	const categoryKeys = Object.keys(EMOJI_CATEGORIES).filter(
 		(key) => key !== 'recent'
 	) as EmojiCategory[];
@@ -76,7 +71,6 @@
 	</Popover.Trigger>
 	<Popover.Content class="w-80 p-0" align="start">
 		<div class="flex flex-col">
-			<!-- Search input -->
 			<div class="border-b p-3">
 				<div class="relative">
 					<Search class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -84,7 +78,6 @@
 				</div>
 			</div>
 
-			<!-- Category tabs -->
 			{#if !searchQuery}
 				<Tabs.Root bind:value={activeTab} class="w-full">
 					<div class="border-b">
@@ -110,7 +103,6 @@
 						</ScrollArea>
 					</div>
 
-					<!-- Tab content with emoji grids -->
 					<ScrollArea class="h-48">
 						{#if recentEmojis.length > 0}
 							<Tabs.Content value="recent" class="mt-0 p-2">
@@ -149,7 +141,6 @@
 					</ScrollArea>
 				</Tabs.Root>
 			{:else}
-				<!-- Search results -->
 				<ScrollArea class="h-48">
 					<div class="p-2">
 						{#if displayEmojis.length > 0}

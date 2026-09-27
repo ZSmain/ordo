@@ -1,7 +1,4 @@
 import Root from './icon-picker.svelte';
 
-export {
-    //
-    Root as IconPicker, Root
-};
+export { Root as IconPicker, Root };
 

@@ -36,12 +36,10 @@
 		monthlyGoal: undefined as number | undefined
 	});
 
-	// Category selection using ToggleGroup
 	let selectedCategoryIds = $state<string[]>([]);
 
 	let isPending = $state(false);
 
-	// Get categories for selection
 	const categoriesQuery = $derived.by(() => getCategoriesWithActivities());
 
 	async function handleCreateActivity() {
@@ -61,14 +59,11 @@
 
 			await createActivity(activityData);
 
-			// Reset form
 			resetForm();
 
-			// Close drawer
 			open = false;
 			onOpenChange?.(false);
 
-			// Notify parent component
 			onActivityCreated?.();
 		} catch (error) {
 			console.error('Failed to create activity:', error);

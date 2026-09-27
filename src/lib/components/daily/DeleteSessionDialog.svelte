@@ -37,7 +37,6 @@
 			});
 
 			toast.success('Session deleted');
-			// Notify parent component
 			onSessionDeleted();
 			error = null;
 			onOpenChange(false);
@@ -74,7 +73,6 @@
 				</div>
 			{/if}
 
-			<!-- Session details -->
 			<div class="rounded-lg border bg-muted/50 p-4">
 				<div class="flex items-center gap-3">
 					<span class="text-lg">{session.activity.icon}</span>

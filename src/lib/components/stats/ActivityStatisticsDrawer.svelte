@@ -33,7 +33,6 @@
 		border: string;
 		tooltip: string;
 		isActive: boolean;
-		/** null = no daily goal; true = hit; false = miss */
 		goalHit: boolean | null;
 	}
 
@@ -497,7 +496,6 @@
 				</Drawer.Title>
 			</Drawer.Header>
 
-			<!-- Period & Granularity Selectors -->
 			<div class="flex items-center justify-center gap-2 px-4 pb-3">
 				<DropdownMenu.Root>
 					<DropdownMenu.Trigger>
@@ -539,7 +537,6 @@
 				</DropdownMenu.Root>
 			</div>
 
-			<!-- Content -->
 			<div class="min-h-0 flex-1 overflow-y-auto">
 				<div class="space-y-4 px-4 pb-8">
 					{#if statisticsQuery}
@@ -666,7 +663,6 @@
 									{/if}
 								</div>
 
-								<!-- Goal summary: current week & month -->
 								{#if calendarGoalSummary && (calendarGoalSummary.activeGoal || calendarGoalSummary.week.dailyGoalDays > 0 || calendarGoalSummary.month.dailyGoalDays > 0 || calendarGoalSummary.week.goalMinutes != null || calendarGoalSummary.month.goalMinutes != null)}
 									<div class="rounded-lg border bg-card p-4">
 										<h3 class="mb-3 text-sm font-medium text-muted-foreground">Goals</h3>
@@ -735,7 +731,6 @@
 									</div>
 								{/if}
 
-								<!-- Bar Chart -->
 								{#if chartData.length > 0}
 									<div class="rounded-lg border bg-card p-4">
 										<h3 class="mb-3 text-sm font-medium text-muted-foreground">
@@ -788,7 +783,6 @@
 								{/if}
 
 								{#if statistics.totalSessions > 0}
-									<!-- Record Length -->
 									<div class="rounded-lg border bg-card p-4">
 										<h3 class="mb-3 text-sm font-medium text-muted-foreground">Record Length</h3>
 										<div class="grid grid-cols-3 gap-3">
@@ -813,7 +807,6 @@
 										</div>
 									</div>
 
-									<!-- Record Time -->
 									<div class="rounded-lg border bg-card p-4">
 										<h3 class="mb-3 text-sm font-medium text-muted-foreground">Record Time</h3>
 										<div class="grid grid-cols-2 gap-3">

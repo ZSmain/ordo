@@ -27,7 +27,6 @@
 			</Button>
 		{/if}
 
-		<!-- Tips section -->
 		<div class="mt-8 rounded-lg border border-dashed p-4 text-left">
 			<div class="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
 				<Lightbulb class="h-4 w-4 text-muted-foreground" />

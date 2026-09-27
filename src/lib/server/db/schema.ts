@@ -45,17 +45,16 @@ export const goalHistory = table(
 			.integer('activity_id')
 			.notNull()
 			.references(() => activity.id, { onDelete: 'cascade' }),
-		dailyGoal: t.integer('daily_goal'), // minutes; null = no daily goal
-		weeklyGoal: t.integer('weekly_goal'), // minutes; null = no weekly goal
-		monthlyGoal: t.integer('monthly_goal'), // minutes; null = no monthly goal
-		startDate: t.text('start_date').notNull(), // YYYY-MM-DD (calendar date)
+		dailyGoal: t.integer('daily_goal'),
+		weeklyGoal: t.integer('weekly_goal'),
+		monthlyGoal: t.integer('monthly_goal'),
+		startDate: t.text('start_date').notNull(),
 
 		...timestamps
 	},
 	(table) => [t.unique().on(table.activityId, table.startDate)]
 );
 
-// Junction table for many-to-many relationship between activities and categories
 export const activityCategory = table(
 	'activity_category',
 	{
@@ -89,14 +88,13 @@ export const timeSession = table('time_session', {
 		.notNull()
 		.$defaultFn(() => new Date()),
 	stoppedAt: t.integer('stopped_at', { mode: 'timestamp' }),
-	duration: t.integer('duration'), // in seconds, calculated when session ends
-	isActive: t.integer('is_active', { mode: 'boolean' }).default(true).notNull(), // tracks if timer is currently running
-	notes: t.text('notes'), // optional notes for the time session
+	duration: t.integer('duration'),
+	isActive: t.integer('is_active', { mode: 'boolean' }).default(true).notNull(),
+	notes: t.text('notes'),
 
 	...timestamps
 });
 
-// Category validation schemas
 export const insertCategorySchema = createInsertSchema(category, {
 	name: v.pipe(
 		v.string('Category name must be a string'),
@@ -117,7 +115,6 @@ export const insertCategorySchema = createInsertSchema(category, {
 
 export const selectCategorySchema = createSelectSchema(category);
 
-// Activity validation schemas
 export const insertActivitySchema = createInsertSchema(activity, {
 	name: v.pipe(
 		v.string('Activity name must be a string'),
@@ -145,7 +142,6 @@ const optionalGoalMinutes = v.optional(
 	)
 );
 
-// Goal history validation schemas
 export const insertGoalHistorySchema = createInsertSchema(goalHistory, {
 	activityId: v.pipe(
 		v.number('Activity ID must be a number'),
@@ -162,14 +158,12 @@ export const insertGoalHistorySchema = createInsertSchema(goalHistory, {
 
 export const selectGoalHistorySchema = createSelectSchema(goalHistory);
 
-/** Optional goal fields accepted when creating/updating an activity. */
 export const activityGoalFieldsSchema = v.object({
 	dailyGoal: optionalGoalMinutes,
 	weeklyGoal: optionalGoalMinutes,
 	monthlyGoal: optionalGoalMinutes
 });
 
-// Activity creation with categories validation schema
 export const insertActivityWithCategoriesSchema = v.object({
 	...insertActivitySchema.entries,
 	categoryIds: v.pipe(
@@ -178,7 +172,6 @@ export const insertActivityWithCategoriesSchema = v.object({
 	)
 });
 
-// Time Session validation schemas
 export const insertTimeSessionSchema = createInsertSchema(timeSession, {
 	activityId: v.pipe(
 		v.number('Activity ID must be a number'),
@@ -201,7 +194,6 @@ export const insertTimeSessionSchema = createInsertSchema(timeSession, {
 
 export const selectTimeSessionSchema = createSelectSchema(timeSession);
 
-// Activity-Category junction table validation schemas
 export const insertActivityCategorySchema = createInsertSchema(activityCategory, {
 	activityId: v.pipe(
 		v.number('Activity ID must be a number'),
@@ -215,7 +207,6 @@ export const insertActivityCategorySchema = createInsertSchema(activityCategory,
 
 export const selectActivityCategorySchema = createSelectSchema(activityCategory);
 
-// Type exports
 export type InsertCategory = v.InferInput<typeof insertCategorySchema>;
 export type SelectCategory = v.InferOutput<typeof selectCategorySchema>;
 export type InsertActivity = v.InferInput<typeof insertActivitySchema>;

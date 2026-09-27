@@ -54,11 +54,9 @@
 
 		const todayDate = today(getLocalTimeZone());
 
-		// Don't allow navigation to future periods
 		if (selectedPeriod === 'day' && nextDate.compare(todayDate) <= 0) {
 			onDateChange(nextDate);
 		} else if (selectedPeriod !== 'day') {
-			// For week/month/year, allow if the period starts before or on today
 			const periodStart = getPeriodStart(nextDate, selectedPeriod);
 			if (periodStart.compare(todayDate) <= 0) {
 				onDateChange(nextDate);
@@ -85,7 +83,6 @@
 		if (selectedPeriod === 'day') {
 			return nextDate.compare(todayDate) <= 0;
 		} else {
-			// For week/month/year, allow if the period starts before or on today
 			const periodStart = getPeriodStart(nextDate, selectedPeriod);
 			return periodStart.compare(todayDate) <= 0;
 		}
@@ -97,10 +94,9 @@
 				return date;
 			}
 			case 'week': {
-				// Start of week (Monday)
 				const jsDate = date.toDate(getLocalTimeZone());
-				const dayOfWeek = jsDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
-				const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday = 0 days to subtract
+				const dayOfWeek = jsDate.getDay();
+				const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 				return date.subtract({ days: daysToSubtract });
 			}
 			case 'month': {
@@ -118,14 +114,12 @@
 				return date;
 			}
 			case 'week': {
-				// End of week (Sunday)
 				const jsDate = date.toDate(getLocalTimeZone());
-				const dayOfWeek = jsDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
-				const daysToAdd = dayOfWeek === 0 ? 0 : 7 - dayOfWeek; // Sunday = 0 days to add
+				const dayOfWeek = jsDate.getDay();
+				const daysToAdd = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
 				return date.add({ days: daysToAdd });
 			}
 			case 'month': {
-				// Last day of month
 				const nextMonth = date.month === 12 ? 1 : date.month + 1;
 				const yearForNextMonth = date.month === 12 ? date.year + 1 : date.year;
 				return new CalendarDate(yearForNextMonth, nextMonth, 1).subtract({ days: 1 });

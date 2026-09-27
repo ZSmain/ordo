@@ -1,9 +1,4 @@
-// Centralized emoji definitions for icon picker
-// Organized by category for easy navigation
-
-// Emoji to keywords mapping for search functionality
 export const EMOJI_KEYWORDS: Record<string, string[]> = {
-    // Productivity
     '💼': ['briefcase', 'work', 'business', 'job', 'office'],
     '📊': ['chart', 'graph', 'analytics', 'data', 'statistics'],
     '📁': ['folder', 'file', 'organize', 'documents'],
@@ -25,7 +20,6 @@ export const EMOJI_KEYWORDS: Record<string, string[]> = {
     '📌': ['pin', 'pushpin', 'important', 'mark'],
     '🗂️': ['dividers', 'organize', 'tabs', 'index'],
 
-    // Fitness
     '🏃': ['run', 'running', 'jog', 'exercise', 'cardio'],
     '🏃‍♂️': ['run', 'running', 'jog', 'exercise', 'cardio', 'man'],
     '🏃‍♀️': ['run', 'running', 'jog', 'exercise', 'cardio', 'woman'],
@@ -51,7 +45,6 @@ export const EMOJI_KEYWORDS: Record<string, string[]> = {
     '⛹️': ['basketball', 'bounce', 'ball', 'sport'],
     '🏌️': ['golf', 'sport', 'swing', 'club'],
 
-    // Creative
     '🎨': ['art', 'paint', 'palette', 'creative', 'draw', 'design'],
     '🎵': ['music', 'note', 'song', 'audio', 'sound'],
     '🎶': ['music', 'notes', 'song', 'melody'],
@@ -73,7 +66,6 @@ export const EMOJI_KEYWORDS: Record<string, string[]> = {
     '🖼️': ['picture', 'frame', 'art', 'gallery'],
     '🎪': ['circus', 'carnival', 'tent', 'show'],
 
-    // Learning
     '📚': ['books', 'study', 'read', 'library', 'learn', 'education'],
     '📖': ['book', 'read', 'open', 'study'],
     '🎓': ['graduate', 'education', 'school', 'university', 'cap'],
@@ -94,7 +86,6 @@ export const EMOJI_KEYWORDS: Record<string, string[]> = {
     '📓': ['notebook', 'journal', 'write', 'diary'],
     '📒': ['ledger', 'notebook', 'yellow'],
 
-    // Lifestyle
     '🍽️': ['food', 'eat', 'meal', 'dinner', 'plate', 'dining'],
     '☕': ['coffee', 'tea', 'drink', 'cafe', 'morning'],
     '🍳': ['cooking', 'breakfast', 'egg', 'fry', 'kitchen'],
@@ -116,7 +107,6 @@ export const EMOJI_KEYWORDS: Record<string, string[]> = {
     '🐈': ['cat', 'pet', 'animal', 'feline'],
     '🌱': ['plant', 'garden', 'grow', 'nature', 'seedling'],
 
-    // Tools
     '🛠️': ['tools', 'fix', 'repair', 'build', 'hardware'],
     '⚙️': ['gear', 'settings', 'config', 'mechanical'],
     '🔧': ['wrench', 'fix', 'repair', 'tool'],
@@ -137,7 +127,6 @@ export const EMOJI_KEYWORDS: Record<string, string[]> = {
     '🧰': ['toolbox', 'tools', 'repair', 'fix'],
     '⚡': ['lightning', 'electric', 'power', 'energy', 'fast', 'quick'],
 
-    // Social
     '👥': ['people', 'group', 'team', 'users', 'community'],
     '👨‍👩‍👧': ['family', 'parents', 'child', 'home'],
     '👨‍👩‍👧‍👦': ['family', 'parents', 'children', 'home'],
@@ -163,7 +152,7 @@ export const EMOJI_CATEGORIES = {
     recent: {
         label: 'Recent',
         icon: '🕐',
-        emojis: [] as string[] // Populated from localStorage
+        emojis: [] as string[]
     },
     productivity: {
         label: 'Work',
@@ -355,7 +344,6 @@ export const EMOJI_CATEGORIES = {
 
 export type EmojiCategory = keyof typeof EMOJI_CATEGORIES;
 
-// Search emojis by keyword
 export function searchEmojis(query: string): string[] {
     if (!query.trim()) return [];
     const lowerQuery = query.toLowerCase();
@@ -367,18 +355,15 @@ export function searchEmojis(query: string): string[] {
     });
 }
 
-// Get all emojis as a flat array for search
 export function getAllEmojis(): string[] {
     return Object.values(EMOJI_CATEGORIES)
         .flatMap((category) => category.emojis)
-        .filter((emoji, index, self) => self.indexOf(emoji) === index); // Remove duplicates
+        .filter((emoji, index, self) => self.indexOf(emoji) === index);
 }
 
-// Local storage key for recent emojis
 const RECENT_EMOJIS_KEY = 'ordo-recent-emojis';
 const MAX_RECENT_EMOJIS = 12;
 
-// Get recent emojis from localStorage
 export function getRecentEmojis(): string[] {
     if (typeof window === 'undefined') return [];
     try {
@@ -389,20 +374,16 @@ export function getRecentEmojis(): string[] {
     }
 }
 
-// Add emoji to recent list
 export function addRecentEmoji(emoji: string): void {
     if (typeof window === 'undefined') return;
     try {
         const recent = getRecentEmojis();
-        // Remove if already exists, then add to front
         const filtered = recent.filter((e) => e !== emoji);
         const updated = [emoji, ...filtered].slice(0, MAX_RECENT_EMOJIS);
         localStorage.setItem(RECENT_EMOJIS_KEY, JSON.stringify(updated));
     } catch {
-        // Ignore localStorage errors
     }
 }
 
-// Default emojis for categories and activities
 export const DEFAULT_CATEGORY_EMOJI = '📁';
 export const DEFAULT_ACTIVITY_EMOJI = '⚡';

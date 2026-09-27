@@ -16,11 +16,9 @@
 
 	type PeriodType = 'day' | 'week' | 'month' | 'year';
 
-	// State for period selection
 	let selectedPeriod = $state<PeriodType>('day');
 	let selectedDate = $state(today(getLocalTimeZone()));
 
-	// Activity statistics drawer state
 	let statisticsDrawerOpen = $state(false);
 	let selectedActivity = $state<{ id: number; name: string; icon: string } | null>(null);
 
@@ -86,7 +84,6 @@
 		}
 	}
 
-	// Reactive queries that update when period/date changes
 	const statsParams = $derived.by(() => {
 		if (!data.user) return null;
 		const startDate = getPeriodStart(selectedDate, selectedPeriod);
@@ -126,7 +123,6 @@
 </svelte:head>
 
 <div class="grid h-full grid-rows-[1fr_auto]">
-	<!-- Content area -->
 	<div class="overflow-hidden">
 		<ScrollArea class="h-full">
 			<div class="container mx-auto max-w-4xl p-4">
@@ -182,7 +178,6 @@
 		</ScrollArea>
 	</div>
 
-	<!-- Date navigation -->
 	<div class="border-t p-1.5">
 		<div class="container mx-auto max-w-4xl">
 			<PeriodSelector
@@ -195,7 +190,6 @@
 	</div>
 </div>
 
-<!-- Activity Statistics Drawer -->
 {#if data.user}
 	<ActivityStatisticsDrawer
 		bind:open={statisticsDrawerOpen}
