@@ -40,12 +40,12 @@
 
 	const categoriesQuery = $derived.by(() => getCategoriesWithActivities());
 
-	/** Prefer latest scheduled goals (includes pending tomorrow change) for editing. */
+	/** Prefer pending goals (scheduled tomorrow change) for editing, falling back to current. */
 	function applyGoalsToForm(source: NonNullable<typeof activity>) {
-		const goals = source.latestGoals ?? source;
-		activityForm.dailyGoal = goals.dailyGoal || undefined;
-		activityForm.weeklyGoal = goals.weeklyGoal || undefined;
-		activityForm.monthlyGoal = goals.monthlyGoal || undefined;
+		const goals = source.goals.pending ?? source.goals.current;
+		activityForm.dailyGoal = goals?.dailyGoal ?? undefined;
+		activityForm.weeklyGoal = goals?.weeklyGoal ?? undefined;
+		activityForm.monthlyGoal = goals?.monthlyGoal ?? undefined;
 	}
 
 	$effect(() => {

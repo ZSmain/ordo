@@ -5,7 +5,6 @@ import {
 	getActiveGoal,
 	toDateKey,
 	todayDateKey,
-	type GoalHistoryEntry,
 	type PeriodGoalSummary
 } from '#lib/goals/index.js';
 import { requireOwnedActivity } from '#lib/server/access.js';
@@ -15,20 +14,11 @@ import {
 	getRepresentativeCategory
 } from '#lib/server/activity-catalog.js';
 import { activity, activityCategory, category, timeSession } from '#lib/server/db/schema.js';
-import { loadGoalHistoryForActivity, type GoalHistoryRow } from '#lib/server/goals.js';
+import { getGoalHistoryEntries } from '#lib/server/goals.js';
 import { getRemoteContext } from '#lib/server/remote-context.js';
 import { query } from '$app/server';
 import { and, eq, gte, isNotNull, lt, sql, sum } from 'drizzle-orm';
 import * as v from 'valibot';
-
-function toGoalHistoryEntries(rows: GoalHistoryRow[]): GoalHistoryEntry[] {
-	return rows.map((row) => ({
-		startDate: row.startDate,
-		dailyGoal: row.dailyGoal,
-		weeklyGoal: row.weeklyGoal,
-		monthlyGoal: row.monthlyGoal
-	}));
-}
 
 function periodSummaryPayload(summary: PeriodGoalSummary) {
 	return {
@@ -324,7 +314,7 @@ export const getActivityStatistics = query(
 			dateFilters.push(lt(timeSession.startedAt, end));
 		}
 
-		const [sessions, goalHistoryRows] = await Promise.all([
+		const [sessions, goalHistory] = await Promise.all([
 			db
 				.select({
 					id: timeSession.id,
@@ -343,10 +333,9 @@ export const getActivityStatistics = query(
 				)
 				.orderBy(sql`${timeSession.startedAt} ASC`)
 				.all(),
-			loadGoalHistoryForActivity(db, activityId)
+			getGoalHistoryEntries(db, activityId)
 		]);
 
-		const goalHistory = toGoalHistoryEntries(goalHistoryRows);
 		const sessionsForGoals = sessions.map((session: (typeof sessions)[number]) => ({
 			startedAt: session.startedAt,
 			duration: session.duration,

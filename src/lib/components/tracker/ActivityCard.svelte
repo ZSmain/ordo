@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { archiveActivity, deleteActivity, setActivityFavorite } from '#lib/api/data.remote.js';
 	import { ActivityStatisticsDrawer } from '#lib/components/stats/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -7,6 +6,7 @@
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import { trackerTabPersistedState } from '#lib/stores/tracker-view.js';
 	import type { TrackerActivity } from '#lib/tracker/activity-projection.js';
+	import { goto } from '$app/navigation';
 	import { Archive, ChartBar, Pause, PencilLine, Play, Star, Trash2 } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import EditActivity from './EditActivity.svelte';
@@ -40,6 +40,10 @@
 	let isUpdatingFavorite = $state(false);
 
 	let isRunning = $derived(currentActivityId === activity.id);
+
+	let currentDaily = $derived(activity.goals.current?.dailyGoal ?? null);
+	let pendingDaily = $derived(activity.goals.pending?.dailyGoal ?? null);
+	let hasPendingChange = $derived(activity.goals.pending !== null && pendingDaily !== currentDaily);
 
 	function handleClick() {
 		onActivitySelect?.(activity.id, categoryName, activity.name);
@@ -205,13 +209,20 @@
 				>
 					{activity.icon}
 				</span>
-				{#if activity.dailyGoal}
+				{#if currentDaily != null}
 					<span class="text-xs text-muted-foreground">
-						Goal: {activity.dailyGoal} min/day
+						Goal: {currentDaily} min/day
+						{#if hasPendingChange}
+							{#if pendingDaily != null}
+								→ {pendingDaily} from {activity.goals.effectiveDate ?? 'tomorrow'}
+							{:else}
+								(ends {activity.goals.effectiveDate ?? 'tomorrow'})
+							{/if}
+						{/if}
 					</span>
-				{:else if activity.latestGoals?.dailyGoal}
+				{:else if pendingDaily != null}
 					<span class="text-xs text-muted-foreground">
-						Goal from tomorrow: {activity.latestGoals.dailyGoal} min/day
+						Goal from {activity.goals.effectiveDate ?? 'tomorrow'}: {pendingDaily} min/day
 					</span>
 				{/if}
 			</span>

@@ -1,6 +1,5 @@
 import {
 	getActiveGoal,
-	getLatestGoalEntry,
 	goalsEqual,
 	normalizeGoalValues,
 	todayDateKey,
@@ -13,7 +12,10 @@ import { and, eq, inArray } from 'drizzle-orm';
 
 type AppDb = App.Locals['db'];
 
-export type GoalHistoryRow = {
+/** Subset of the DB client used by goal queries (satisfied by both db and txn). */
+type DbExecutor = Pick<AppDb, 'select' | 'insert' | 'update' | 'delete'>;
+
+type GoalHistoryRow = {
 	id: number;
 	activityId: number;
 	dailyGoal: number | null;
@@ -22,10 +24,35 @@ export type GoalHistoryRow = {
 	startDate: string;
 };
 
+export type DisplayGoals = {
+	/** Goals in effect today. Null when the activity has no active goals. */
+	current: GoalValues | null;
+	/**
+	 * Scheduled change taking effect on `effectiveDate` (tomorrow).
+	 * Null when nothing is scheduled. A non-null value with all nulls
+	 * means a scheduled removal of goals.
+	 */
+	pending: GoalValues | null;
+	/** Tomorrow's date key when `pending` is set, otherwise null. */
+	effectiveDate: string | null;
+};
+
+export type GoalChangeInput = {
+	dailyGoal?: number | null;
+	weeklyGoal?: number | null;
+	monthlyGoal?: number | null;
+};
+
 const EMPTY_GOALS: GoalValues = {
 	dailyGoal: null,
 	weeklyGoal: null,
 	monthlyGoal: null
+};
+
+const NO_GOALS: DisplayGoals = {
+	current: null,
+	pending: null,
+	effectiveDate: null
 };
 
 function toEntry(row: GoalHistoryRow): GoalHistoryEntry {
@@ -37,32 +64,29 @@ function toEntry(row: GoalHistoryRow): GoalHistoryEntry {
 	};
 }
 
-function toRow(row: {
-	id: number;
-	activityId: number;
-	dailyGoal: number | null;
-	weeklyGoal: number | null;
-	monthlyGoal: number | null;
-	startDate: string;
-}): GoalHistoryRow {
-	return {
-		id: row.id,
-		activityId: row.activityId,
-		dailyGoal: row.dailyGoal,
-		weeklyGoal: row.weeklyGoal,
-		monthlyGoal: row.monthlyGoal,
-		startDate: row.startDate
-	};
+function toDisplayGoals(entries: GoalHistoryEntry[], now: Date): DisplayGoals {
+	const today = todayDateKey(now);
+	const tomorrow = tomorrowDateKey(now);
+	const current = getActiveGoal(entries, today);
+	const tomorrowEntry = entries.find((entry) => entry.startDate === tomorrow);
+	if (!tomorrowEntry) {
+		return { current, pending: null, effectiveDate: null };
+	}
+	const pending = normalizeGoalValues(tomorrowEntry);
+	// A pending row identical to today is not a change (scheduleGoalChange
+	// deletes such rows, but guard here for legacy data).
+	if (goalsEqual(pending, current ?? EMPTY_GOALS)) {
+		return { current, pending: null, effectiveDate: null };
+	}
+	return { current, pending, effectiveDate: tomorrow };
 }
 
-export async function loadGoalHistoryForActivities(
-	db: AppDb,
+async function fetchGoalRows(
+	executor: DbExecutor,
 	activityIds: number[]
-): Promise<Map<number, GoalHistoryRow[]>> {
-	const map = new Map<number, GoalHistoryRow[]>();
-	if (activityIds.length === 0) return map;
-
-	const rows = await db
+): Promise<GoalHistoryRow[]> {
+	if (activityIds.length === 0) return [];
+	return await executor
 		.select({
 			id: goalHistory.id,
 			activityId: goalHistory.activityId,
@@ -74,94 +98,107 @@ export async function loadGoalHistoryForActivities(
 		.from(goalHistory)
 		.where(inArray(goalHistory.activityId, activityIds))
 		.all();
+}
 
+/**
+ * Single read path for goal display. Returns the today-active goals
+ * (`current`) plus any scheduled tomorrow change (`pending`) per activity.
+ * Callers never see raw `goal_history` rows.
+ */
+export async function getDisplayGoals(
+	db: AppDb,
+	activityIds: number[],
+	now = new Date()
+): Promise<Map<number, DisplayGoals>> {
+	const map = new Map<number, DisplayGoals>();
+	for (const id of activityIds) {
+		map.set(id, { ...NO_GOALS });
+	}
+	if (activityIds.length === 0) return map;
+
+	const rows = await fetchGoalRows(db, activityIds);
+	const entriesByActivity = new Map<number, GoalHistoryEntry[]>();
 	for (const row of rows) {
-		const list = map.get(row.activityId) ?? [];
-		list.push(row);
-		map.set(row.activityId, list);
+		const list = entriesByActivity.get(row.activityId) ?? [];
+		list.push(toEntry(row));
+		entriesByActivity.set(row.activityId, list);
+	}
+
+	for (const [activityId, entries] of entriesByActivity) {
+		map.set(activityId, toDisplayGoals(entries, now));
 	}
 
 	return map;
 }
 
-export async function loadGoalHistoryForActivity(
+/**
+ * History entries for goal evaluation (stats). Returns plain
+ * `{ startDate, dailyGoal, weeklyGoal, monthlyGoal }` DTOs —
+ * never raw DB rows with `id` / `activityId`.
+ */
+export async function getGoalHistoryEntries(
 	db: AppDb,
 	activityId: number
-): Promise<GoalHistoryRow[]> {
-	return (await loadGoalHistoryForActivities(db, [activityId])).get(activityId) ?? [];
-}
-
-/** Display goals for the activity list: currently active for today. */
-export function activeGoalsForToday(rows: GoalHistoryRow[], now = new Date()): GoalValues | null {
-	return getActiveGoal(rows.map(toEntry), todayDateKey(now));
-}
-
-/** Goals shown in edit forms: latest entry including tomorrow's pending change. */
-export function latestGoalValues(rows: GoalHistoryRow[]): GoalValues | null {
-	const latest = getLatestGoalEntry(rows.map(toEntry));
-	if (!latest) return null;
-	return normalizeGoalValues(latest);
+): Promise<GoalHistoryEntry[]> {
+	const rows = await fetchGoalRows(db, [activityId]);
+	return rows.map(toEntry);
 }
 
 /**
- * Persist a goal change that takes effect tomorrow.
- * - If values match the baseline (active goal without a tomorrow entry), remove any
- *   pending tomorrow entry and no-op.
- * - Otherwise upsert a single history row for tomorrow.
+ * Persist a goal change that takes effect tomorrow. Read-then-write runs
+ * inside a transaction so concurrent edits to the same activity serialize.
+ * - Values matching tomorrow's baseline delete any pending row (revert).
+ * - Otherwise a single tomorrow row is upserted.
+ * Resolves to the activity's display goals after the change.
  */
-export async function setActivityGoalsEffectiveTomorrow(
+export async function scheduleGoalChange(
 	db: AppDb,
 	activityId: number,
-	goals: {
-		dailyGoal?: number | null;
-		weeklyGoal?: number | null;
-		monthlyGoal?: number | null;
-	},
+	goals: GoalChangeInput,
 	now = new Date()
-): Promise<GoalHistoryRow | null> {
+): Promise<DisplayGoals> {
 	const next = normalizeGoalValues(goals);
 	const startDate = tomorrowDateKey(now);
-	const history = await loadGoalHistoryForActivity(db, activityId);
-	const existingTomorrow = history.find((row) => row.startDate === startDate);
-	const baselineEntries = history.filter((row) => row.startDate !== startDate).map(toEntry);
-	const baseline = getActiveGoal(baselineEntries, startDate) ?? EMPTY_GOALS;
+	const today = todayDateKey(now);
 
-	if (goalsEqual(next, baseline)) {
-		if (existingTomorrow) {
-			await db
-				.delete(goalHistory)
-				.where(and(eq(goalHistory.activityId, activityId), eq(goalHistory.startDate, startDate)));
+	return await db.transaction(async (tx: DbExecutor) => {
+		const executor = tx;
+		const rows = await fetchGoalRows(executor, [activityId]);
+		const entries = rows.map(toEntry);
+		const current = getActiveGoal(entries, today);
+		const baselineEntries = entries.filter((entry) => entry.startDate !== startDate);
+		const baseline = getActiveGoal(baselineEntries, startDate) ?? EMPTY_GOALS;
+		const existingTomorrow = rows.find((row) => row.startDate === startDate);
+
+		if (goalsEqual(next, baseline)) {
+			if (existingTomorrow) {
+				await executor
+					.delete(goalHistory)
+					.where(and(eq(goalHistory.activityId, activityId), eq(goalHistory.startDate, startDate)));
+			}
+			return { current, pending: null, effectiveDate: null } satisfies DisplayGoals;
 		}
-		return null;
-	}
 
-	if (existingTomorrow) {
-		const updated = await db
-			.update(goalHistory)
-			.set({
+		if (existingTomorrow) {
+			await executor
+				.update(goalHistory)
+				.set({
+					dailyGoal: next.dailyGoal,
+					weeklyGoal: next.weeklyGoal,
+					monthlyGoal: next.monthlyGoal,
+					updatedAt: new Date()
+				})
+				.where(eq(goalHistory.id, existingTomorrow.id));
+		} else {
+			await executor.insert(goalHistory).values({
+				activityId,
 				dailyGoal: next.dailyGoal,
 				weeklyGoal: next.weeklyGoal,
 				monthlyGoal: next.monthlyGoal,
-				updatedAt: new Date()
-			})
-			.where(eq(goalHistory.id, existingTomorrow.id))
-			.returning()
-			.get();
+				startDate
+			});
+		}
 
-		return updated ? toRow(updated) : null;
-	}
-
-	const inserted = await db
-		.insert(goalHistory)
-		.values({
-			activityId,
-			dailyGoal: next.dailyGoal,
-			weeklyGoal: next.weeklyGoal,
-			monthlyGoal: next.monthlyGoal,
-			startDate
-		})
-		.returning()
-		.get();
-
-	return inserted ? toRow(inserted) : null;
+		return { current, pending: { ...next }, effectiveDate: startDate } satisfies DisplayGoals;
+	});
 }

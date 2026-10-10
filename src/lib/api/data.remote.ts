@@ -26,18 +26,16 @@ import {
 	insertCategorySchema,
 	timeSession
 } from '#lib/server/db/schema.js';
-import {
-	activeGoalsForToday,
-	latestGoalValues,
-	loadGoalHistoryForActivities,
-	setActivityGoalsEffectiveTomorrow
-} from '#lib/server/goals.js';
+import { getDisplayGoals, scheduleGoalChange } from '#lib/server/goals.js';
 import { getRemoteContext } from '#lib/server/remote-context.js';
 import {
 	startActiveSession as persistStartedSession,
 	stopActiveSession as persistStoppedSession
 } from '#lib/server/sessions.js';
-import type { TrackerActivityGoals } from '#lib/tracker/activity-projection.js';
+import type {
+	TrackerActivityGoals,
+	TrackerActivityGoalState
+} from '#lib/tracker/activity-projection.js';
 import { command, query, requested } from '$app/server';
 import { error } from '@sveltejs/kit';
 import { and, eq } from 'drizzle-orm';
@@ -76,10 +74,9 @@ export const getCategoriesWithActivities = query(async () => {
 
 	const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
 
-	type ActivityWithGoals = SelectActivity &
-		TrackerActivityGoals & {
-			latestGoals: TrackerActivityGoals | null;
-		};
+	type ActivityWithGoals = SelectActivity & {
+		goals: TrackerActivityGoalState;
+	};
 	type UserActivityWithCategories = ActivityWithCategories<ActivityWithGoals>;
 	type UserCategoryWithActivities = CategoryWithActivities<UserActivityWithCategories>;
 
@@ -105,22 +102,19 @@ export const getCategoriesWithActivities = query(async () => {
 	);
 
 	const activityIds = sortedUserActivities.map((item) => item.id);
-	const [categoriesByActivityId, goalsByActivityId] = await Promise.all([
+	const [categoriesByActivityId, displayGoalsByActivityId] = await Promise.all([
 		getCategoriesForActivityIds(db, activityIds),
-		loadGoalHistoryForActivities(db, activityIds)
+		getDisplayGoals(db, activityIds)
 	]);
 
 	const activitiesWithGoals: ActivityWithGoals[] = sortedUserActivities.map((item) => {
-		const history = goalsByActivityId.get(item.id) ?? [];
-		const active = activeGoalsForToday(history);
-		const latest = latestGoalValues(history);
-
 		return {
 			...item,
-			dailyGoal: active?.dailyGoal ?? null,
-			weeklyGoal: active?.weeklyGoal ?? null,
-			monthlyGoal: active?.monthlyGoal ?? null,
-			latestGoals: latest
+			goals: displayGoalsByActivityId.get(item.id) ?? {
+				current: null,
+				pending: null,
+				effectiveDate: null
+			}
 		};
 	});
 
@@ -326,7 +320,7 @@ export const createActivity = command(
 		}
 
 		// Goals take effect tomorrow
-		await setActivityGoalsEffectiveTomorrow(
+		const goals = await scheduleGoalChange(
 			db,
 			newActivity.id,
 			sanitizeGoalFields({ dailyGoal, weeklyGoal, monthlyGoal })
@@ -334,7 +328,7 @@ export const createActivity = command(
 
 		await getCategoriesWithActivities().refresh();
 
-		return newActivity;
+		return { ...newActivity, goals };
 	}
 );
 
@@ -410,18 +404,19 @@ export const updateActivity = command(
 			}
 		}
 
-		// Goal changes take effect tomorrow (history table)
-		if (goalsProvided) {
-			await setActivityGoalsEffectiveTomorrow(
-				db,
-				id,
-				sanitizeGoalFields({ dailyGoal, weeklyGoal, monthlyGoal })
-			);
-		}
+		// Goal changes take effect tomorrow (history table). Always resolve the
+		// unified display goals so the response never carries stale goal state.
+		const goals = goalsProvided
+			? await scheduleGoalChange(db, id, sanitizeGoalFields({ dailyGoal, weeklyGoal, monthlyGoal }))
+			: ((await getDisplayGoals(db, [id])).get(id) ?? {
+					current: null,
+					pending: null,
+					effectiveDate: null
+				});
 
 		await getCategoriesWithActivities().refresh();
 
-		return activityUpdate;
+		return { ...activityUpdate, goals };
 	}
 );
 

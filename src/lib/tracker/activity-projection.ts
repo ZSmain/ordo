@@ -1,5 +1,5 @@
-import type { SelectionState } from '#lib/stores/selection.js';
 import type { SelectActivity, SelectCategory } from '#lib/server/db/schema.js';
+import type { SelectionState } from '#lib/stores/selection.js';
 
 export type TrackerActivityCategory = Pick<SelectCategory, 'id' | 'name' | 'color' | 'icon'>;
 
@@ -9,16 +9,24 @@ export type TrackerActivityGoals = {
 	monthlyGoal: number | null;
 };
 
+export type TrackerActivityGoalState = {
+	/** Goals in effect today. Null when the activity has no active goals. */
+	current: TrackerActivityGoals | null;
+	/**
+	 * Scheduled change taking effect on `effectiveDate` (tomorrow).
+	 * Null when nothing is scheduled.
+	 */
+	pending: TrackerActivityGoals | null;
+	/** Tomorrow's date key when `pending` is set, otherwise null. */
+	effectiveDate: string | null;
+};
+
 export type TrackerActivity = Pick<
 	SelectActivity,
 	'id' | 'name' | 'icon' | 'favorite' | 'archived'
 > & {
-	/** Goals currently in effect for today (for display). */
-	dailyGoal: number | null;
-	weeklyGoal: number | null;
-	monthlyGoal: number | null;
-	/** Latest scheduled goals including pending tomorrow change (for edit forms). */
-	latestGoals: TrackerActivityGoals | null;
+	/** Unified goal timeline: today-active plus any scheduled tomorrow change. */
+	goals: TrackerActivityGoalState;
 	categories: TrackerActivityCategory[];
 };
 
