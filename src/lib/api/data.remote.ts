@@ -1,4 +1,9 @@
-import { command, query, requested } from '$app/server';
+import {
+	requireOwnedActivity,
+	requireOwnedCategories,
+	requireOwnedCategory,
+	requireOwnedSession
+} from '#lib/server/access.js';
 import {
 	getCategoriesForActivityId,
 	getCategoriesForActivityIds,
@@ -30,8 +35,9 @@ import {
 } from '#lib/server/goals.js';
 import { getRemoteContext } from '#lib/server/remote-context.js';
 import type { TrackerActivityGoals } from '#lib/tracker/activity-projection.js';
+import { command, query, requested } from '$app/server';
 import { error } from '@sveltejs/kit';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import * as v from 'valibot';
 
 const { ...insertCategoryEntries } = insertCategorySchema.entries;
@@ -53,45 +59,6 @@ function sanitizeGoalFields(goals: {
 		weeklyGoal: sanitizeGoalMinutes(goals.weeklyGoal),
 		monthlyGoal: sanitizeGoalMinutes(goals.monthlyGoal)
 	};
-}
-
-async function ensureActivityBelongsToUser(
-	db: ReturnType<typeof getRemoteContext>['db'],
-	userId: string,
-	activityId: number
-) {
-	const existingActivity = await db
-		.select({ id: activity.id })
-		.from(activity)
-		.where(and(eq(activity.id, activityId), eq(activity.userId, userId)))
-		.get();
-
-	if (!existingActivity) {
-		error(404, 'Activity not found');
-	}
-}
-
-async function ensureCategoriesBelongToUser(
-	db: ReturnType<typeof getRemoteContext>['db'],
-	userId: string,
-	categoryIds: number[]
-) {
-	if (categoryIds.length === 0) {
-		return [] as number[];
-	}
-
-	const uniqueCategoryIds = [...new Set(categoryIds)];
-	const existingCategories = await db
-		.select({ id: category.id })
-		.from(category)
-		.where(and(eq(category.userId, userId), inArray(category.id, uniqueCategoryIds)))
-		.all();
-
-	if (existingCategories.length !== uniqueCategoryIds.length) {
-		error(404, 'One or more categories were not found');
-	}
-
-	return uniqueCategoryIds;
 }
 
 export const getCategoriesWithActivities = query(async () => {
@@ -199,7 +166,7 @@ export const startTimerSession = command(
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
-		await ensureActivityBelongsToUser(db, userId, activityId);
+		await requireOwnedActivity(db, userId, activityId);
 
 		const activeSessions = await db
 			.select()
@@ -249,13 +216,9 @@ export const stopTimerSession = command(
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
-		const session = await db
-			.select()
-			.from(timeSession)
-			.where(and(eq(timeSession.id, sessionId), eq(timeSession.userId, userId)))
-			.get();
+		const session = await requireOwnedSession(db, userId, sessionId);
 
-		if (!session || session.stoppedAt || !session.isActive) {
+		if (session.stoppedAt || !session.isActive) {
 			error(404, 'Active session not found');
 		}
 
@@ -361,15 +324,7 @@ export const deleteCategory = command(
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
-		const existingCategory = await db
-			.select()
-			.from(category)
-			.where(and(eq(category.id, id), eq(category.userId, userId)))
-			.get();
-
-		if (!existingCategory) {
-			error(404, 'Category not found');
-		}
+		await requireOwnedCategory(db, userId, id);
 
 		// Delete the category (activities will be cascaded due to foreign key constraint)
 		const deletedCategory = await db
@@ -397,7 +352,7 @@ export const createActivity = command(
 		const userId = user.id;
 
 		const { categoryIds, dailyGoal, weeklyGoal, monthlyGoal, ...activityFields } = activityData;
-		const validatedCategoryIds = await ensureCategoriesBelongToUser(db, userId, categoryIds ?? []);
+		const validatedCategoryIds = await requireOwnedCategories(db, userId, categoryIds ?? []);
 
 		// Create the activity (goals live in goal_history)
 		const newActivity = await db
@@ -471,18 +426,10 @@ export const updateActivity = command(
 			throw new Error('No fields to update');
 		}
 
-		const existingActivity = await db
-			.select()
-			.from(activity)
-			.where(and(eq(activity.id, id), eq(activity.userId, userId)))
-			.get();
-
-		if (!existingActivity) {
-			error(404, 'Activity not found');
-		}
+		const existingActivity = await requireOwnedActivity(db, userId, id);
 
 		const validatedCategoryIds = categoryIds
-			? await ensureCategoriesBelongToUser(db, userId, categoryIds)
+			? await requireOwnedCategories(db, userId, categoryIds)
 			: null;
 
 		const activityUpdate =
@@ -594,15 +541,7 @@ export const deleteActivity = command(
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
-		const existingActivity = await db
-			.select()
-			.from(activity)
-			.where(and(eq(activity.id, id), eq(activity.userId, userId)))
-			.get();
-
-		if (!existingActivity) {
-			error(404, 'Activity not found');
-		}
+		await requireOwnedActivity(db, userId, id);
 
 		// Delete the activity (time sessions will be cascaded due to foreign key constraint)
 		const deletedActivity = await db

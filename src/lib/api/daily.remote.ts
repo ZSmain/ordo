@@ -1,11 +1,11 @@
-import { command, query } from '$app/server';
-import { error } from '@sveltejs/kit';
+import { requireOwnedActivity, requireOwnedSession } from '#lib/server/access.js';
 import {
 	getCategoriesForActivityIds,
 	hydrateActivitiesWithCategories
 } from '#lib/server/activity-catalog.js';
-import { getRemoteContext } from '#lib/server/remote-context.js';
 import { activity, timeSession } from '#lib/server/db/schema.js';
+import { getRemoteContext } from '#lib/server/remote-context.js';
+import { command, query } from '$app/server';
 import { and, desc, eq, gte, isNotNull, lt } from 'drizzle-orm';
 import * as v from 'valibot';
 
@@ -65,15 +65,7 @@ export const createManualSession = command(
 
 		const duration = Math.floor((endDate.getTime() - startDate.getTime()) / 1000);
 
-		const existingActivity = await db
-			.select({ id: activity.id })
-			.from(activity)
-			.where(and(eq(activity.id, activityId), eq(activity.userId, userId)))
-			.get();
-
-		if (!existingActivity) {
-			error(404, 'Activity not found');
-		}
+		await requireOwnedActivity(db, userId, activityId);
 
 		const newSession = await db
 			.insert(timeSession)
@@ -179,15 +171,7 @@ export const updateSession = command(
 
 		const duration = Math.floor((endDate.getTime() - startDate.getTime()) / 1000);
 
-		const existingSession = await db
-			.select({ id: timeSession.id })
-			.from(timeSession)
-			.where(and(eq(timeSession.id, sessionId), eq(timeSession.userId, userId)))
-			.get();
-
-		if (!existingSession) {
-			error(404, 'Session not found');
-		}
+		await requireOwnedSession(db, userId, sessionId);
 
 		await db
 			.update(timeSession)
@@ -220,18 +204,7 @@ export const deleteSession = command(
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
-		const existingSession = await db
-			.select({
-				id: timeSession.id,
-				startedAt: timeSession.startedAt
-			})
-			.from(timeSession)
-			.where(and(eq(timeSession.id, sessionId), eq(timeSession.userId, userId)))
-			.get();
-
-		if (!existingSession) {
-			error(404, 'Session not found');
-		}
+		const existingSession = await requireOwnedSession(db, userId, sessionId);
 
 		const sessionDate = existingSession.startedAt.toISOString().split('T')[0];
 

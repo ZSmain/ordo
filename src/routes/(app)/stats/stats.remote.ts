@@ -1,4 +1,3 @@
-import { query } from '$app/server';
 import {
 	dailyGoalHitsForRange,
 	evaluateMonth,
@@ -9,6 +8,7 @@ import {
 	type GoalHistoryEntry,
 	type PeriodGoalSummary
 } from '#lib/goals/index.js';
+import { requireOwnedActivity } from '#lib/server/access.js';
 import {
 	getCategoriesForActivityId,
 	getCategoriesForActivityIds,
@@ -17,6 +17,7 @@ import {
 import { activity, activityCategory, category, timeSession } from '#lib/server/db/schema.js';
 import { loadGoalHistoryForActivity, type GoalHistoryRow } from '#lib/server/goals.js';
 import { getRemoteContext } from '#lib/server/remote-context.js';
+import { query } from '$app/server';
 import { and, eq, gte, isNotNull, lt, sql, sum } from 'drizzle-orm';
 import * as v from 'valibot';
 
@@ -252,6 +253,8 @@ export const getSessionsForActivity = query(
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
+		await requireOwnedActivity(db, userId, activityId);
+
 		const start = new Date(startDate + 'T00:00:00.000Z');
 		const end = new Date(endDate + 'T23:59:59.999Z');
 
@@ -308,6 +311,8 @@ export const getActivityStatistics = query(
 	async ({ activityId, startDate, endDate, granularity }) => {
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
+
+		await requireOwnedActivity(db, userId, activityId);
 
 		const dateFilters = [];
 		if (startDate) {
