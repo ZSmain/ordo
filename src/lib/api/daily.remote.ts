@@ -1,10 +1,14 @@
-import { requireOwnedActivity, requireOwnedSession } from '#lib/server/access.js';
+import { requireOwnedSession } from '#lib/server/access.js';
 import {
 	getCategoriesForActivityIds,
 	hydrateActivitiesWithCategories
 } from '#lib/server/activity-catalog.js';
 import { activity, timeSession } from '#lib/server/db/schema.js';
 import { getRemoteContext } from '#lib/server/remote-context.js';
+import {
+	createManualSession as persistManualSession,
+	rescheduleSession as persistRescheduledSession
+} from '#lib/server/sessions.js';
 import { command, query } from '$app/server';
 import { and, desc, eq, gte, isNotNull, lt } from 'drizzle-orm';
 import * as v from 'valibot';
@@ -52,36 +56,14 @@ export const createManualSession = command(
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
-		const startDate = new Date(startedAt);
-		const endDate = new Date(stoppedAt);
+		const newSession = await persistManualSession(db, userId, {
+			activityId,
+			start: new Date(startedAt),
+			end: new Date(stoppedAt),
+			notes: notes || null
+		});
 
-		if (endDate <= startDate) {
-			throw new Error('End time must be after start time');
-		}
-
-		if (startDate > new Date()) {
-			throw new Error('Start time cannot be in the future');
-		}
-
-		const duration = Math.floor((endDate.getTime() - startDate.getTime()) / 1000);
-
-		await requireOwnedActivity(db, userId, activityId);
-
-		const newSession = await db
-			.insert(timeSession)
-			.values({
-				activityId,
-				userId,
-				startedAt: startDate,
-				stoppedAt: endDate,
-				duration,
-				isActive: false,
-				notes: notes || null
-			})
-			.returning()
-			.get();
-
-		const sessionDateStr = startDate.toISOString().split('T')[0];
+		const sessionDateStr = newSession.startedAt.toISOString().split('T')[0];
 		await getSessionsForDate({ date: sessionDateStr }).refresh();
 
 		return newSession;
@@ -165,23 +147,11 @@ export const updateSession = command(
 		const startDate = new Date(startedAt);
 		const endDate = new Date(stoppedAt);
 
-		if (endDate <= startDate) {
-			throw new Error('End time must be after start time');
-		}
-
-		const duration = Math.floor((endDate.getTime() - startDate.getTime()) / 1000);
-
-		await requireOwnedSession(db, userId, sessionId);
-
-		await db
-			.update(timeSession)
-			.set({
-				startedAt: startDate,
-				stoppedAt: endDate,
-				duration,
-				updatedAt: new Date()
-			})
-			.where(eq(timeSession.id, sessionId));
+		await persistRescheduledSession(db, userId, {
+			sessionId,
+			start: startDate,
+			end: endDate
+		});
 
 		const startDateStr = startDate.toISOString().split('T')[0];
 		const endDateStr = endDate.toISOString().split('T')[0];

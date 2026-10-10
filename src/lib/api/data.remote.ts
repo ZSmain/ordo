@@ -1,8 +1,7 @@
 import {
 	requireOwnedActivity,
 	requireOwnedCategories,
-	requireOwnedCategory,
-	requireOwnedSession
+	requireOwnedCategory
 } from '#lib/server/access.js';
 import {
 	getCategoriesForActivityId,
@@ -34,6 +33,10 @@ import {
 	setActivityGoalsEffectiveTomorrow
 } from '#lib/server/goals.js';
 import { getRemoteContext } from '#lib/server/remote-context.js';
+import {
+	startActiveSession as persistStartedSession,
+	stopActiveSession as persistStoppedSession
+} from '#lib/server/sessions.js';
 import type { TrackerActivityGoals } from '#lib/tracker/activity-projection.js';
 import { command, query, requested } from '$app/server';
 import { error } from '@sveltejs/kit';
@@ -166,41 +169,7 @@ export const startTimerSession = command(
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
-		await requireOwnedActivity(db, userId, activityId);
-
-		const activeSessions = await db
-			.select()
-			.from(timeSession)
-			.where(and(eq(timeSession.userId, userId), eq(timeSession.isActive, true)))
-			.all();
-
-		for (const session of activeSessions) {
-			const stoppedAt = new Date();
-			const durationSeconds = Math.round(
-				(stoppedAt.getTime() - session.startedAt.getTime()) / 1000
-			);
-
-			await db
-				.update(timeSession)
-				.set({
-					stoppedAt,
-					duration: durationSeconds,
-					isActive: false,
-					updatedAt: new Date()
-				})
-				.where(eq(timeSession.id, session.id));
-		}
-
-		const newSession = await db
-			.insert(timeSession)
-			.values({
-				activityId,
-				userId,
-				startedAt: new Date(),
-				isActive: true
-			})
-			.returning()
-			.get();
+		const newSession = await persistStartedSession(db, userId, { activityId });
 
 		await requested(getActiveSession, 1).refreshAll();
 
@@ -216,26 +185,7 @@ export const stopTimerSession = command(
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
-		const session = await requireOwnedSession(db, userId, sessionId);
-
-		if (session.stoppedAt || !session.isActive) {
-			error(404, 'Active session not found');
-		}
-
-		const stoppedAt = new Date();
-		const durationSeconds = Math.round((stoppedAt.getTime() - session.startedAt.getTime()) / 1000);
-
-		const updatedSession = await db
-			.update(timeSession)
-			.set({
-				stoppedAt,
-				duration: durationSeconds,
-				isActive: false,
-				updatedAt: new Date()
-			})
-			.where(eq(timeSession.id, sessionId))
-			.returning()
-			.get();
+		const updatedSession = await persistStoppedSession(db, userId, { sessionId });
 
 		await requested(getActiveSession, 1).refreshAll();
 
