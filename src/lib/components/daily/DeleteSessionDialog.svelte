@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { deleteSession } from '$lib/api/daily.remote';
-	import { Button } from '$lib/components/ui/button';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import { formatDuration, formatTimeRange } from '$lib/time';
+	import { deleteSession } from '#lib/api/daily.remote.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import { formatDuration, formatTimeRange } from '#lib/time/index.js';
 	import { Trash2 } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 

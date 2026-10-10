@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { IconPicker } from '$lib/components/icon-picker';
-	import { Button } from '$lib/components/ui/button';
+	import { IconPicker } from '#lib/components/icon-picker/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
 	import {
 		Drawer,
 		DrawerClose,
@@ -9,14 +9,14 @@
 		DrawerFooter,
 		DrawerHeader,
 		DrawerTitle
-	} from '$lib/components/ui/drawer';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
-	import { ToggleGroup, ToggleGroupItem } from '$lib/components/ui/toggle-group';
-	import { DEFAULT_ACTIVITY_EMOJI } from '$lib/constants/emojis';
+	} from '#lib/components/ui/drawer/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
+	import { ToggleGroup, ToggleGroupItem } from '#lib/components/ui/toggle-group/index.js';
+	import { DEFAULT_ACTIVITY_EMOJI } from '#lib/constants/emojis.js';
 	import { toast } from 'svelte-sonner';
 
-	import { createActivity, getCategoriesWithActivities } from '$lib/api/data.remote';
+	import { createActivity, getCategoriesWithActivities } from '#lib/api/data.remote.js';
 
 	interface Props {
 		open: boolean;

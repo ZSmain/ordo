@@ -1,4 +1,4 @@
-import { googleSignInSchema, loginSchema } from '$lib/schema/auth';
+import { googleSignInSchema, loginSchema } from '#lib/schema/auth.js';
 import {
 	flattenValidation,
 	getAuthErrorMessage,
@@ -6,7 +6,7 @@ import {
 	isRedirectLike,
 	readFormString,
 	resolveSocialRedirectUrl
-} from '$lib/server/auth-actions';
+} from '#lib/server/auth-actions.js';
 import { fail, redirect } from '@sveltejs/kit';
 import * as v from 'valibot';
 import type { Actions } from './$types';

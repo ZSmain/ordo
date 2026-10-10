@@ -1,4 +1,4 @@
-import { activityCategory, category, type SelectCategory } from '$lib/server/db/schema';
+import { activityCategory, category, type SelectCategory } from '#lib/server/db/schema.js';
 import { eq, inArray } from 'drizzle-orm';
 
 export type ActivityCategoryDetails = Pick<SelectCategory, 'id' | 'name' | 'color' | 'icon'>;

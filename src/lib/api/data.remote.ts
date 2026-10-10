@@ -7,8 +7,12 @@ import {
 	hydrateActivitiesWithCategories,
 	type ActivityWithCategories,
 	type CategoryWithActivities
-} from '$lib/server/activity-catalog';
-import type { InsertActivityCategory, SelectActivity, SelectCategory } from '$lib/server/db/schema';
+} from '#lib/server/activity-catalog.js';
+import type {
+	InsertActivityCategory,
+	SelectActivity,
+	SelectCategory
+} from '#lib/server/db/schema.js';
 import {
 	activity,
 	activityCategory,
@@ -17,15 +21,15 @@ import {
 	insertActivitySchema,
 	insertCategorySchema,
 	timeSession
-} from '$lib/server/db/schema';
+} from '#lib/server/db/schema.js';
 import {
 	activeGoalsForToday,
 	latestGoalValues,
 	loadGoalHistoryForActivities,
 	setActivityGoalsEffectiveTomorrow
-} from '$lib/server/goals';
-import { getRemoteContext } from '$lib/server/remote';
-import type { TrackerActivityGoals } from '$lib/tracker/activity-projection';
+} from '#lib/server/goals.js';
+import { getRemoteContext } from '#lib/server/remote-context.js';
+import type { TrackerActivityGoals } from '#lib/tracker/activity-projection.js';
 import { error } from '@sveltejs/kit';
 import { and, eq, inArray } from 'drizzle-orm';
 import * as v from 'valibot';
@@ -102,9 +106,10 @@ export const getCategoriesWithActivities = query(async () => {
 
 	const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
 
-	type ActivityWithGoals = SelectActivity & TrackerActivityGoals & {
-		latestGoals: TrackerActivityGoals | null;
-	};
+	type ActivityWithGoals = SelectActivity &
+		TrackerActivityGoals & {
+			latestGoals: TrackerActivityGoals | null;
+		};
 	type UserActivityWithCategories = ActivityWithCategories<ActivityWithGoals>;
 	type UserCategoryWithActivities = CategoryWithActivities<UserActivityWithCategories>;
 

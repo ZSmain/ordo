@@ -8,15 +8,15 @@ import {
 	todayDateKey,
 	type GoalHistoryEntry,
 	type PeriodGoalSummary
-} from '$lib/goals';
+} from '#lib/goals/index.js';
 import {
 	getCategoriesForActivityId,
 	getCategoriesForActivityIds,
 	getRepresentativeCategory
-} from '$lib/server/activity-catalog';
-import { activity, activityCategory, category, timeSession } from '$lib/server/db/schema';
-import { loadGoalHistoryForActivity, type GoalHistoryRow } from '$lib/server/goals';
-import { getRemoteContext } from '$lib/server/remote';
+} from '#lib/server/activity-catalog.js';
+import { activity, activityCategory, category, timeSession } from '#lib/server/db/schema.js';
+import { loadGoalHistoryForActivity, type GoalHistoryRow } from '#lib/server/goals.js';
+import { getRemoteContext } from '#lib/server/remote-context.js';
 import { and, eq, gte, isNotNull, lt, sql, sum } from 'drizzle-orm';
 import * as v from 'valibot';
 

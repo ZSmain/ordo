@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import favicon from '$lib/assets/favicon.svg';
-	import { Toaster } from '$lib/components/ui/sonner';
+	import favicon from '#lib/assets/favicon.svg';
+	import { Toaster } from '#lib/components/ui/sonner/index.js';
 	import { Calendar, ChartColumn, Settings, Timer } from '@lucide/svelte';
 	import './../layout.css';
 
@@ -27,7 +27,7 @@
 
 			<div class="flex flex-col items-center gap-3">
 				<a
-					href={resolve('/')}
+					href={resolve('/(app)')}
 					class={[
 						'flex h-14 w-14 flex-col items-center justify-center gap-1 rounded-xl transition-colors',
 						page.url.pathname === '/'
@@ -42,7 +42,7 @@
 				</a>
 
 				<a
-					href={resolve('/daily')}
+					href={resolve('daily')}
 					class={[
 						'flex h-14 w-14 flex-col items-center justify-center gap-1 rounded-xl transition-colors',
 						page.url.pathname === '/daily'
@@ -57,7 +57,7 @@
 				</a>
 
 				<a
-					href={resolve('/stats')}
+					href={resolve('stats')}
 					class={[
 						'flex h-14 w-14 flex-col items-center justify-center gap-1 rounded-xl transition-colors',
 						page.url.pathname === '/stats'
@@ -75,7 +75,7 @@
 
 		<div class="flex flex-col items-center gap-4">
 			<a
-				href={resolve('/settings')}
+				href={resolve('settings')}
 				class={[
 					'flex h-14 w-14 flex-col items-center justify-center gap-1 rounded-xl transition-colors',
 					page.url.pathname === '/settings'
@@ -105,7 +105,7 @@
 
 			<div class="space-y-1.5">
 				<a
-					href={resolve('/')}
+					href={resolve('/(app)')}
 					class={[
 						'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
 						page.url.pathname === '/'
@@ -119,7 +119,7 @@
 				</a>
 
 				<a
-					href={resolve('/daily')}
+					href={resolve('daily')}
 					class={[
 						'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
 						page.url.pathname === '/daily'
@@ -133,7 +133,7 @@
 				</a>
 
 				<a
-					href={resolve('/stats')}
+					href={resolve('stats')}
 					class={[
 						'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
 						page.url.pathname === '/stats'
@@ -147,7 +147,7 @@
 				</a>
 
 				<a
-					href={resolve('/settings')}
+					href={resolve('settings')}
 					class={[
 						'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
 						page.url.pathname === '/settings'
@@ -174,7 +174,7 @@
 	<nav class="shrink-0 border-t border-border bg-card md:hidden">
 		<div class="flex items-center justify-around py-3">
 			<a
-				href={resolve('/')}
+				href={resolve('/(app)')}
 				class={[
 					'flex flex-col items-center gap-1 transition-colors',
 					page.url.pathname === '/' ? 'text-primary' : 'text-muted-foreground'
@@ -186,7 +186,7 @@
 			</a>
 
 			<a
-				href={resolve('/daily')}
+				href={resolve('daily')}
 				class={[
 					'flex flex-col items-center gap-1 transition-colors',
 					page.url.pathname === '/daily' ? 'text-primary' : 'text-muted-foreground'
@@ -198,7 +198,7 @@
 			</a>
 
 			<a
-				href={resolve('/stats')}
+				href={resolve('stats')}
 				class={[
 					'flex flex-col items-center gap-1 transition-colors',
 					page.url.pathname === '/stats' ? 'text-primary' : 'text-muted-foreground'
@@ -210,7 +210,7 @@
 			</a>
 
 			<a
-				href={resolve('/settings')}
+				href={resolve('settings')}
 				class={[
 					'flex flex-col items-center gap-1 transition-colors',
 					page.url.pathname === '/settings' ? 'text-primary' : 'text-muted-foreground'

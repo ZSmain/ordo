@@ -1,23 +1,27 @@
 import { getRequestEvent } from '$app/server';
-import { env } from '$env/dynamic/private';
-import type { DrizzleClient } from '$lib/server/db';
-import { passwordHasher } from '$lib/server/password';
+
+import {
+	ORIGIN,
+	BETTER_AUTH_SECRET,
+	GOOGLE_CLIENT_ID,
+	GOOGLE_CLIENT_SECRET
+} from '$app/env/private';
+
+import type { DrizzleClient } from '#lib/server/db/index.js';
+import { passwordHasher } from '#lib/server/password.js';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { betterAuth } from 'better-auth/minimal';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
 
 const authConfig = () =>
 	({
-		baseURL: env.ORIGIN,
-		secret: env.BETTER_AUTH_SECRET,
-		emailAndPassword: {
-			enabled: true,
-			password: passwordHasher
-		},
+		baseURL: ORIGIN,
+		secret: BETTER_AUTH_SECRET,
+		emailAndPassword: { enabled: true, password: passwordHasher },
 		socialProviders: {
 			google: {
-				clientId: env.GOOGLE_CLIENT_ID,
-				clientSecret: env.GOOGLE_CLIENT_SECRET
+				clientId: GOOGLE_CLIENT_ID,
+				clientSecret: GOOGLE_CLIENT_SECRET
 			}
 		},
 		plugins: [

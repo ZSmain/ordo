@@ -18,11 +18,7 @@ declare global {
 				updatedAt: Date;
 			};
 		}
-		interface Platform {
-			env: Env;
-		}
 	}
 }
 
-export { };
-
+export {};

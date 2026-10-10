@@ -1,7 +1,7 @@
 <script lang="ts">
-	import * as Card from '$lib/components/ui/card/index.js';
-	import * as Chart from '$lib/components/ui/chart/index.js';
-	import { formatDuration } from '$lib/time';
+	import * as Card from '#lib/components/ui/card/index.js';
+	import * as Chart from '#lib/components/ui/chart/index.js';
+	import { formatDuration } from '#lib/time/index.js';
 	import { PieChart, Text } from 'layerchart';
 
 	interface ActivityStat {

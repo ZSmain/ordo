@@ -1,15 +1,15 @@
 <script lang="ts">
-	import { deleteCategory } from '$lib/api/data.remote';
-	import { Button } from '$lib/components/ui/button';
-	import { Card, CardContent } from '$lib/components/ui/card';
-	import * as ContextMenu from '$lib/components/ui/context-menu';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import * as Field from '$lib/components/ui/field';
-	import { Label } from '$lib/components/ui/label';
-	import { Skeleton } from '$lib/components/ui/skeleton';
-	import { Switch } from '$lib/components/ui/switch';
-	import { ToggleGroup, ToggleGroupItem } from '$lib/components/ui/toggle-group';
-	import type { Category } from '$lib/types';
+	import { deleteCategory } from '#lib/api/data.remote.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { Card, CardContent } from '#lib/components/ui/card/index.js';
+	import * as ContextMenu from '#lib/components/ui/context-menu/index.js';
+	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Field from '#lib/components/ui/field/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
+	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
+	import { Switch } from '#lib/components/ui/switch/index.js';
+	import { ToggleGroup, ToggleGroupItem } from '#lib/components/ui/toggle-group/index.js';
+	import type { Category } from '#lib/types.js';
 	import { PencilLine, Trash2, X } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import EditCategory from './EditCategory.svelte';
@@ -21,7 +21,7 @@
 		onFilterModeChange?: (mode: 'AND' | 'OR') => void;
 		onClearSelection?: () => void;
 		loading?: boolean;
-		error?: Error | null;
+		error?: App.Error | null;
 		onSelectedCategoryIdsChange?: (categoryIds: string[]) => void;
 		userId?: string;
 	}

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
-	import { calculateElapsedTime, timerStore } from '$lib/stores';
-	import { formatTime } from '$lib/time';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { calculateElapsedTime, timerStore } from '#lib/stores/index.js';
+	import { formatTime } from '#lib/time/index.js';
 	import { Square } from '@lucide/svelte';
 	import { SvelteDate } from 'svelte/reactivity';
 	import { onMount } from 'svelte';

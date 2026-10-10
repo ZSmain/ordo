@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { getCategoriesWithActivities } from '$lib/api/data.remote';
+	import { getCategoriesWithActivities } from '#lib/api/data.remote.js';
 	import {
 		ActivityList,
 		CategorySelector,
@@ -10,22 +10,22 @@
 		FavoriteActivities,
 		FloatingAddButton,
 		Timer
-	} from '$lib/components/tracker';
-	import ActivityCard from '$lib/components/tracker/ActivityCard.svelte';
-	import { ScrollArea } from '$lib/components/ui/scroll-area';
-	import * as Select from '$lib/components/ui/select';
-	import { Separator } from '$lib/components/ui/separator';
+	} from '#lib/components/tracker/index.js';
+	import ActivityCard from '#lib/components/tracker/ActivityCard.svelte';
+	import { ScrollArea } from '#lib/components/ui/scroll-area/index.js';
+	import * as Select from '#lib/components/ui/select/index.js';
+	import { Separator } from '#lib/components/ui/separator/index.js';
 	import {
 		selectionStore,
 		timerStore,
 		trackerSessionController,
 		trackerTabPersistedState
-	} from '$lib/stores';
-	import type { TrackerTab } from '$lib/stores/tracker-view';
+	} from '#lib/stores/index.js';
+	import type { TrackerTab } from '#lib/stores/tracker-view.js';
 	import {
 		projectFavoriteActivities,
 		projectSelectedActivities
-	} from '$lib/tracker/activity-projection';
+	} from '#lib/tracker/activity-projection.js';
 	import { Archive, LayoutGrid, Star } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
@@ -236,41 +236,38 @@
 						userId={user?.id || ''}
 						currentActivityId={timerStore.current.activityId}
 					/>
+				{:else if selectionStore.current.selectedCategoryIds.length === 0}
+					<EmptyState type="no-selection" />
+				{:else if archivedSelectedActivities.length === 0}
+					<div class="py-6 text-center">
+						<p class="text-sm text-muted-foreground">
+							No archived activities in selected categories
+						</p>
+						<p class="mt-1 text-xs text-muted-foreground">
+							Archived items will appear here. Right-click to unarchive, view statistics, or delete.
+						</p>
+					</div>
 				{:else}
-					{#if selectionStore.current.selectedCategoryIds.length === 0}
-						<EmptyState type="no-selection" />
-					{:else if archivedSelectedActivities.length === 0}
-						<div class="py-6 text-center">
-							<p class="text-sm text-muted-foreground">
-								No archived activities in selected categories
-							</p>
-							<p class="mt-1 text-xs text-muted-foreground">
-								Archived items will appear here. Right-click to unarchive, view statistics, or
-								delete.
-							</p>
+					<div class="mt-4 space-y-3">
+						<div class="flex items-center justify-between gap-2">
+							<h2 class="text-lg font-semibold text-foreground">Archived Activities</h2>
+							<span class="text-xs text-muted-foreground">
+								{archivedSelectedActivities.length} archived
+							</span>
 						</div>
-					{:else}
-						<div class="mt-4 space-y-3">
-							<div class="flex items-center justify-between gap-2">
-								<h2 class="text-lg font-semibold text-foreground">Archived Activities</h2>
-								<span class="text-xs text-muted-foreground">
-									{archivedSelectedActivities.length} archived
-								</span>
-							</div>
-							<div class="grid grid-cols-2 gap-3">
-								{#each archivedSelectedActivities as item (item.activity.id)}
-									<ActivityCard
-										activity={item.activity}
-										categoryColor={item.categoryColor}
-										categoryName={item.categoryName}
-										onActivitySelect={handleActivitySelect}
-										userId={user?.id || ''}
-										currentActivityId={timerStore.current.activityId}
-									/>
-								{/each}
-							</div>
+						<div class="grid grid-cols-2 gap-3">
+							{#each archivedSelectedActivities as item (item.activity.id)}
+								<ActivityCard
+									activity={item.activity}
+									categoryColor={item.categoryColor}
+									categoryName={item.categoryName}
+									onActivitySelect={handleActivitySelect}
+									userId={user?.id || ''}
+									currentActivityId={timerStore.current.activityId}
+								/>
+							{/each}
 						</div>
-					{/if}
+					</div>
 				{/if}
 			</div>
 		</div>

@@ -135,10 +135,7 @@ export const selectActivitySchema = createSelectSchema(activity);
 
 const optionalGoalMinutes = v.optional(
 	v.nullable(
-		v.pipe(
-			v.number('Goal must be a number'),
-			v.minValue(1, 'Goal must be at least 1 minute')
-		)
+		v.pipe(v.number('Goal must be a number'), v.minValue(1, 'Goal must be at least 1 minute'))
 	)
 );
 

@@ -1,12 +1,13 @@
-import { building } from '$app/environment';
-import { env } from '$env/dynamic/private';
-import { createAuth } from '$lib/auth';
-import { getDb } from '$lib/server/db';
-import type { Handle } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit/hooks';
+import { building } from '$app/env';
+import { env } from 'cloudflare:workers';
+import { DATABASE_URL } from '$app/env/private';
+import { createAuth } from '#lib/auth.js';
+import { getDb } from '#lib/server/db/index.js';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 
 const handleBetterAuth: Handle = async ({ event, resolve }) => {
-	event.locals.db = getDb(event.platform?.env?.ordo_db, env.DATABASE_URL);
+	event.locals.db = getDb(env.ordo_db, DATABASE_URL);
 	event.locals.auth = createAuth(event.locals.db);
 
 	const { auth } = event.locals;

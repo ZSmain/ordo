@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Button } from '$lib/components/ui/button';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import ModeToggle from '$lib/components/ui/ModeToggle.svelte';
-	import { Separator } from '$lib/components/ui/separator';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import ModeToggle from '#lib/components/ui/ModeToggle.svelte';
+	import { Separator } from '#lib/components/ui/separator/index.js';
 	import { LogOut, Trash2, TriangleAlert, User } from '@lucide/svelte';
 	import type { PageData } from './$types';
 

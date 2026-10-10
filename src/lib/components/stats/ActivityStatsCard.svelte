@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { formatDuration } from '$lib/time';
+	import { formatDuration } from '#lib/time/index.js';
 	import { SvelteMap } from 'svelte/reactivity';
 
 	interface ActivityStat {

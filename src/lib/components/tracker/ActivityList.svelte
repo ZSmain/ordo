@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { Input } from '$lib/components/ui/input';
-	import { Separator } from '$lib/components/ui/separator';
-	import type { TrackerActivityRow } from '$lib/tracker/activity-projection';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import { Separator } from '#lib/components/ui/separator/index.js';
+	import type { TrackerActivityRow } from '#lib/tracker/activity-projection.js';
 	import { Search, X } from '@lucide/svelte';
 	import ActivityCard from './ActivityCard.svelte';
 

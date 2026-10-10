@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as Drawer from '$lib/components/ui/drawer';
+	import * as Drawer from '#lib/components/ui/drawer/index.js';
 	import ModifySessionDrawerContent from './ModifySessionDrawerContent.svelte';
 
 	interface Props {

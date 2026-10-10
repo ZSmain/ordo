@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
-	import * as Chart from '$lib/components/ui/chart/index.js';
-	import * as Drawer from '$lib/components/ui/drawer';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import { formatDuration } from '$lib/time';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Chart from '#lib/components/ui/chart/index.js';
+	import * as Drawer from '#lib/components/ui/drawer/index.js';
+	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
+	import { formatDuration } from '#lib/time/index.js';
 	import { Calendar, ChartBar, ChevronDown, Timer } from '@lucide/svelte';
 	import { scaleBand, scaleQuantize } from 'd3-scale';
 	import { BarChart } from 'layerchart';

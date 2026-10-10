@@ -1,4 +1,8 @@
-import { env } from '$env/dynamic/private';
+import {
+	PASSWORD_HASH_ITERATIONS,
+	PASSWORD_HASH_KEY_LENGTH,
+	PASSWORD_HASH_SALT_LENGTH
+} from '$app/env/private';
 
 const DEFAULT_ITERATIONS = 75000;
 const DEFAULT_KEY_LENGTH = 32;
@@ -7,9 +11,7 @@ const DEFAULT_SALT_LENGTH = 16;
 const encoder = new TextEncoder();
 
 const runtimeCrypto: Crypto | undefined =
-	typeof globalThis !== 'undefined' && globalThis.crypto?.subtle
-		? globalThis.crypto
-		: undefined;
+	typeof globalThis !== 'undefined' && globalThis.crypto?.subtle ? globalThis.crypto : undefined;
 
 if (!runtimeCrypto?.subtle) {
 	throw new Error('Web Crypto API is not available in the current environment.');
@@ -19,21 +21,21 @@ const cryptoSource = runtimeCrypto;
 const subtle = cryptoSource.subtle;
 
 const iterations = (() => {
-	const raw = env.PASSWORD_HASH_ITERATIONS;
+	const raw = PASSWORD_HASH_ITERATIONS;
 	if (!raw) return DEFAULT_ITERATIONS;
 	const parsed = Number.parseInt(raw, 10);
 	return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_ITERATIONS;
 })();
 
 const keyLength = (() => {
-	const raw = env.PASSWORD_HASH_KEY_LENGTH;
+	const raw = PASSWORD_HASH_KEY_LENGTH;
 	if (!raw) return DEFAULT_KEY_LENGTH;
 	const parsed = Number.parseInt(raw, 10);
 	return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_KEY_LENGTH;
 })();
 
 const saltLength = (() => {
-	const raw = env.PASSWORD_HASH_SALT_LENGTH;
+	const raw = PASSWORD_HASH_SALT_LENGTH;
 	if (!raw) return DEFAULT_SALT_LENGTH;
 	const parsed = Number.parseInt(raw, 10);
 	return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_SALT_LENGTH;

@@ -3,9 +3,9 @@ import { error } from '@sveltejs/kit';
 import {
 	getCategoriesForActivityIds,
 	hydrateActivitiesWithCategories
-} from '$lib/server/activity-catalog';
-import { getRemoteContext } from '$lib/server/remote';
-import { activity, timeSession } from '$lib/server/db/schema';
+} from '#lib/server/activity-catalog.js';
+import { getRemoteContext } from '#lib/server/remote-context.js';
+import { activity, timeSession } from '#lib/server/db/schema.js';
 import { and, desc, eq, gte, isNotNull, lt } from 'drizzle-orm';
 import * as v from 'valibot';
 

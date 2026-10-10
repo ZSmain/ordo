@@ -7,8 +7,8 @@ import {
 	tomorrowDateKey,
 	type GoalHistoryEntry,
 	type GoalValues
-} from '$lib/goals';
-import { goalHistory } from '$lib/server/db/schema';
+} from '#lib/goals/index.js';
+import { goalHistory } from '#lib/server/db/schema.js';
 import { and, eq, inArray } from 'drizzle-orm';
 
 type AppDb = App.Locals['db'];

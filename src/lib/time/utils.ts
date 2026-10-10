@@ -33,10 +33,7 @@ export function formatDuration(seconds: number | null | undefined) {
 	return parts.join(' ');
 }
 
-export function formatTimeRange(
-	startedAt: Date | string,
-	stoppedAt: Date | string | null
-): string {
+export function formatTimeRange(startedAt: Date | string, stoppedAt: Date | string | null): string {
 	const start = new Date(startedAt).toLocaleTimeString('en-US', {
 		hour: '2-digit',
 		minute: '2-digit',

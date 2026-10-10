@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as Drawer from '$lib/components/ui/drawer';
+	import * as Drawer from '#lib/components/ui/drawer/index.js';
 	import type { CalendarDate } from '@internationalized/date';
 	import AddSessionDrawerContent from './AddSessionDrawerContent.svelte';
 
