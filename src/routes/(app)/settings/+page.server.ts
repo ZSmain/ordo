@@ -1,5 +1,5 @@
-import { getAuthErrorMessage, isMissingSessionError } from '$lib/server/auth-actions';
-import type { DrizzleClient } from '$lib/server/db';
+import { getAuthErrorMessage, isMissingSessionError } from '#lib/server/auth-actions.js';
+import type { DrizzleClient } from '#lib/server/db/index.js';
 import {
 	account,
 	activity,
@@ -8,7 +8,7 @@ import {
 	timeSession,
 	user,
 	verification
-} from '$lib/server/db/schema';
+} from '#lib/server/db/schema.js';
 import type { Actions } from '@sveltejs/kit';
 import { fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';

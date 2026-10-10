@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { updateCategory } from '$lib/api/data.remote';
-	import { IconPicker } from '$lib/components/icon-picker';
-	import { Button } from '$lib/components/ui/button';
+	import { updateCategory } from '#lib/api/data.remote.js';
+	import { IconPicker } from '#lib/components/icon-picker/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
 	import {
 		Drawer,
 		DrawerClose,
@@ -10,10 +10,10 @@
 		DrawerFooter,
 		DrawerHeader,
 		DrawerTitle
-	} from '$lib/components/ui/drawer';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
-	import type { Category } from '$lib/types';
+	} from '#lib/components/ui/drawer/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
+	import type { Category } from '#lib/types.js';
 	import { toast } from 'svelte-sonner';
 
 	interface Props {

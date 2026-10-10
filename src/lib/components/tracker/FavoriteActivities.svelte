@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { TrackerActivityRow } from '$lib/tracker/activity-projection';
+	import type { TrackerActivityRow } from '#lib/tracker/activity-projection.js';
 	import ActivityCard from './ActivityCard.svelte';
 
 	interface Props {

@@ -1,16 +1,16 @@
 import { redirect } from '@sveltejs/kit';
 
-export const load = async ({locals, request}) => {
-    const session = await locals.auth.api.getSession({
-        headers: request.headers
-    });
+export const load = async ({ locals, request }) => {
+	const session = await locals.auth.api.getSession({
+		headers: request.headers
+	});
 
-    if (!session) {
-        throw redirect(302, '/login');
-    }
+	if (!session) {
+		throw redirect(302, '/login');
+	}
 
-    return {
-        session,
-        user: session.user
-    };
+	return {
+		session,
+		user: session.user
+	};
 };

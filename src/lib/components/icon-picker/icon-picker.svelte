@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
-	import * as Popover from '$lib/components/ui/popover';
-	import { ScrollArea } from '$lib/components/ui/scroll-area';
-	import * as Tabs from '$lib/components/ui/tabs';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import * as Popover from '#lib/components/ui/popover/index.js';
+	import { ScrollArea } from '#lib/components/ui/scroll-area/index.js';
+	import * as Tabs from '#lib/components/ui/tabs/index.js';
 	import {
 		addRecentEmoji,
 		EMOJI_CATEGORIES,
 		getRecentEmojis,
 		searchEmojis,
 		type EmojiCategory
-	} from '$lib/constants/emojis';
+	} from '#lib/constants/emojis.js';
 	import { Search } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 

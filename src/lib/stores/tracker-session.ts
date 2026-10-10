@@ -1,4 +1,4 @@
-import { getActiveSession, startTimerSession, stopTimerSession } from '$lib/api/data.remote';
+import { getActiveSession, startTimerSession, stopTimerSession } from '#lib/api/data.remote.js';
 import { restoreTimerFromDatabase, timerStore, type TimerState } from './timer';
 import { toast } from 'svelte-sonner';
 

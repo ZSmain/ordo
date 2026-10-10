@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { archiveActivity, deleteActivity } from '$lib/api/data.remote';
-	import { ActivityStatisticsDrawer } from '$lib/components/stats';
-	import { Button } from '$lib/components/ui/button';
-	import * as ContextMenu from '$lib/components/ui/context-menu';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import type { TrackerActivity } from '$lib/tracker/activity-projection';
+	import { archiveActivity, deleteActivity } from '#lib/api/data.remote.js';
+	import { ActivityStatisticsDrawer } from '#lib/components/stats/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as ContextMenu from '#lib/components/ui/context-menu/index.js';
+	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import type { TrackerActivity } from '#lib/tracker/activity-projection.js';
 	import { Archive, ChartBar, PencilLine, Star, Trash2 } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import EditActivity from '../tracker/EditActivity.svelte';

@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { getSessionsForDate } from '$lib/api/daily.remote';
-	import { AddSessionDrawer, SessionCard } from '$lib/components/daily';
-	import { Button } from '$lib/components/ui/button';
-	import { Calendar } from '$lib/components/ui/calendar';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import { ScrollArea } from '$lib/components/ui/scroll-area';
+	import { getSessionsForDate } from '#lib/api/daily.remote.js';
+	import { AddSessionDrawer, SessionCard } from '#lib/components/daily/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { Calendar } from '#lib/components/ui/calendar/index.js';
+	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import { ScrollArea } from '#lib/components/ui/scroll-area/index.js';
 	import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date';
 	import { CalendarIcon, ChevronLeft, ChevronRight, Plus } from '@lucide/svelte';
-	import { formatDuration } from '$lib/time';
+	import { formatDuration } from '#lib/time/index.js';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();

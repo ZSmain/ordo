@@ -1,16 +1,15 @@
-/// <reference types="@sveltejs/kit" />
-/// <reference no-default-lib="true"/>
-/// <reference lib="esnext" />
-/// <reference lib="webworker" />
-
-import { build, files, version } from '$service-worker';
-
-const sw = /** @type {ServiceWorkerGlobalScope} */ /** @type {unknown} */ self;
+import { version } from '$app/env';
+import { assets, immutable } from '$app/manifest';
+import { asset } from '$app/paths';
+import { self as sw } from '$app/service-worker';
 
 const STATIC_CACHE = `cache-${version}-static`;
 const RUNTIME_CACHE = `cache-${version}-runtime`;
 
-const ASSETS = [...build, ...files];
+const ASSETS = [
+	...immutable.map(({ path }) => new URL(path, sw.registration.scope).pathname),
+	...assets.map(({ path }) => asset(path))
+];
 
 const ASSET_SET = new Set(ASSETS);
 

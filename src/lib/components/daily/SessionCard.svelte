@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { DeleteSessionDialog, ModifySessionDrawer } from '$lib/components/daily';
-	import { ActivityStatisticsDrawer } from '$lib/components/stats';
-	import { Badge } from '$lib/components/ui/badge';
-	import * as ContextMenu from '$lib/components/ui/context-menu';
-	import { formatDuration, formatTimeRange } from '$lib/time';
+	import { DeleteSessionDialog, ModifySessionDrawer } from '#lib/components/daily/index.js';
+	import { ActivityStatisticsDrawer } from '#lib/components/stats/index.js';
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import * as ContextMenu from '#lib/components/ui/context-menu/index.js';
+	import { formatDuration, formatTimeRange } from '#lib/time/index.js';
 	import { ChartBar, PencilLine, Trash2 } from '@lucide/svelte';
 
 	interface Props {

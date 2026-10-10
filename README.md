@@ -82,17 +82,17 @@ A simple time tracking application inspired by "Simple Time Tracker" mobile appl
 ### Cloudflare D1 notes
 
 - Local development with `pnpm dev` reads `DATABASE_URL` and therefore uses the
-   `local.db` file in the project root.
+  `local.db` file in the project root.
 - When you run `pnpm run preview` (or `wrangler pages dev`), Wrangler spins up a
-   Miniflare D1 database under
-   `.wrangler/state/v3/d1/miniflare-D1DatabaseObject/*.sqlite`. Apply migrations
-   to that instance with:
+  Miniflare D1 database under
+  `.wrangler/state/v3/d1/miniflare-D1DatabaseObject/*.sqlite`. Apply migrations
+  to that instance with:
 
-   ```sh
-   pnpm dlx wrangler d1 migrations apply ordo_db --local
-   ```
+  ```sh
+  pnpm dlx wrangler d1 migrations apply ordo_db --local
+  ```
 
-   Replace `--local` with `--remote` when targeting your production D1 database.
+  Replace `--local` with `--remote` when targeting your production D1 database.
 
 ## Building
 

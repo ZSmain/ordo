@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { updateSession } from '$lib/api/daily.remote';
-	import { Button } from '$lib/components/ui/button';
-	import { Calendar } from '$lib/components/ui/calendar';
-	import * as Drawer from '$lib/components/ui/drawer';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
-	import * as Popover from '$lib/components/ui/popover';
+	import { updateSession } from '#lib/api/daily.remote.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { Calendar } from '#lib/components/ui/calendar/index.js';
+	import * as Drawer from '#lib/components/ui/drawer/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
+	import * as Popover from '#lib/components/ui/popover/index.js';
 	import { CalendarDate, getLocalTimeZone } from '@internationalized/date';
 	import { ChevronDown, Clock } from '@lucide/svelte';
-	import { formatDuration } from '$lib/time';
+	import { formatDuration } from '#lib/time/index.js';
 	import { toast } from 'svelte-sonner';
 
 	interface Props {

@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { SessionCard } from '$lib/components/daily';
-	import * as Drawer from '$lib/components/ui/drawer';
-	import { ScrollArea } from '$lib/components/ui/scroll-area';
-	import { formatDuration } from '$lib/time';
+	import { SessionCard } from '#lib/components/daily/index.js';
+	import * as Drawer from '#lib/components/ui/drawer/index.js';
+	import { ScrollArea } from '#lib/components/ui/scroll-area/index.js';
+	import { formatDuration } from '#lib/time/index.js';
 	import { Clock, History } from '@lucide/svelte';
 	import { getSessionsForActivity } from '../../../routes/(app)/stats/stats.remote';
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { CreateActivity, CreateCategory } from '$lib/components/tracker';
-	import { Button } from '$lib/components/ui/button';
+	import { CreateActivity, CreateCategory } from '#lib/components/tracker/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
 	import { LayoutGrid, Plus } from '@lucide/svelte';
 
 	interface Props {

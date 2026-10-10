@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 
-export const load = async ({locals, request}) => {
+export const load = async ({ locals, request }) => {
 	const session = await locals.auth.api.getSession({
 		headers: request.headers
 	});

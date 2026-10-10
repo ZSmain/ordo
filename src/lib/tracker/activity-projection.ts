@@ -1,5 +1,5 @@
-import type { SelectionState } from '$lib/stores/selection';
-import type { SelectActivity, SelectCategory } from '$lib/server/db/schema';
+import type { SelectionState } from '#lib/stores/selection.js';
+import type { SelectActivity, SelectCategory } from '#lib/server/db/schema.js';
 
 export type TrackerActivityCategory = Pick<SelectCategory, 'id' | 'name' | 'color' | 'icon'>;
 
@@ -9,7 +9,10 @@ export type TrackerActivityGoals = {
 	monthlyGoal: number | null;
 };
 
-export type TrackerActivity = Pick<SelectActivity, 'id' | 'name' | 'icon' | 'favorite' | 'archived'> & {
+export type TrackerActivity = Pick<
+	SelectActivity,
+	'id' | 'name' | 'icon' | 'favorite' | 'archived'
+> & {
 	/** Goals currently in effect for today (for display). */
 	dailyGoal: number | null;
 	weeklyGoal: number | null;

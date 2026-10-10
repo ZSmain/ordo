@@ -1,7 +1,7 @@
 import { command } from '$app/server';
 import { error } from '@sveltejs/kit';
-import { getRemoteContext } from '$lib/server/remote';
-import type { DrizzleClient } from '$lib/server/db';
+import { getRemoteContext } from '#lib/server/remote-context.js';
+import type { DrizzleClient } from '#lib/server/db/index.js';
 import {
 	account,
 	activity,
@@ -10,7 +10,7 @@ import {
 	timeSession,
 	user,
 	verification
-} from '$lib/server/db/schema';
+} from '#lib/server/db/schema.js';
 import { eq } from 'drizzle-orm';
 import * as v from 'valibot';
 

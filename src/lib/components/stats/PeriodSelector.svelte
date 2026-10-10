@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Badge } from '$lib/components/ui/badge';
-	import { Button } from '$lib/components/ui/button';
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
 	import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date';
 	import { ChevronLeft, ChevronRight } from '@lucide/svelte';
 	import { SvelteDate } from 'svelte/reactivity';

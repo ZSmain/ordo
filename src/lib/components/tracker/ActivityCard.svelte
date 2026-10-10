@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { archiveActivity, deleteActivity, setActivityFavorite } from '$lib/api/data.remote';
-	import { ActivityStatisticsDrawer } from '$lib/components/stats';
-	import { Button } from '$lib/components/ui/button';
-	import * as ContextMenu from '$lib/components/ui/context-menu';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import { trackerTabPersistedState } from '$lib/stores/tracker-view';
-	import type { TrackerActivity } from '$lib/tracker/activity-projection';
+	import { archiveActivity, deleteActivity, setActivityFavorite } from '#lib/api/data.remote.js';
+	import { ActivityStatisticsDrawer } from '#lib/components/stats/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as ContextMenu from '#lib/components/ui/context-menu/index.js';
+	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import { trackerTabPersistedState } from '#lib/stores/tracker-view.js';
+	import type { TrackerActivity } from '#lib/tracker/activity-projection.js';
 	import { Archive, ChartBar, Pause, PencilLine, Play, Star, Trash2 } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import EditActivity from './EditActivity.svelte';

@@ -74,13 +74,9 @@ export function createActiveGoalLookup(
 }
 
 /** Latest history entry (by startDate), including future-dated pending goals. */
-export function getLatestGoalEntry(
-	history: readonly GoalHistoryEntry[]
-): GoalHistoryEntry | null {
+export function getLatestGoalEntry(history: readonly GoalHistoryEntry[]): GoalHistoryEntry | null {
 	if (history.length === 0) return null;
-	return history.reduce((latest, entry) =>
-		entry.startDate > latest.startDate ? entry : latest
-	);
+	return history.reduce((latest, entry) => (entry.startDate > latest.startDate ? entry : latest));
 }
 
 function sessionDateKey(session: SessionForGoals): string {
@@ -106,10 +102,7 @@ export function durationByDate(sessions: readonly SessionForGoals[]): Map<string
 	return map;
 }
 
-export function sumDurationOnDate(
-	sessions: readonly SessionForGoals[],
-	dateKey: string
-): number {
+export function sumDurationOnDate(sessions: readonly SessionForGoals[], dateKey: string): number {
 	let total = 0;
 	for (const session of sessions) {
 		if (!isCountableSession(session)) continue;
