@@ -73,7 +73,7 @@
 				<p class="text-muted-foreground">No data available for this period</p>
 			</div>
 		{:else}
-			<Chart.Container config={chartConfig} class="mx-auto aspect-square max-h-62.5">
+			<Chart.Container config={chartConfig} class="mx-auto aspect-square w-full max-w-62.5">
 				<PieChart
 					data={chartData}
 					key="category"
