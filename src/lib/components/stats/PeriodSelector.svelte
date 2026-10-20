@@ -1,11 +1,16 @@
 <script lang="ts">
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
+	import {
+		formatPeriodLabel,
+		getPeriodEnd,
+		getPeriodStart,
+		type StatsPeriod
+	} from '#lib/stats/period.js';
 	import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date';
 	import { ChevronLeft, ChevronRight } from '@lucide/svelte';
-	import { SvelteDate } from 'svelte/reactivity';
 
-	type PeriodType = 'day' | 'week' | 'month' | 'year';
+	type PeriodType = StatsPeriod;
 
 	interface Props {
 		selectedPeriod: PeriodType;
@@ -85,93 +90,6 @@
 		} else {
 			const periodStart = getPeriodStart(nextDate, selectedPeriod);
 			return periodStart.compare(todayDate) <= 0;
-		}
-	}
-
-	function getPeriodStart(date: CalendarDate, period: PeriodType): CalendarDate {
-		switch (period) {
-			case 'day': {
-				return date;
-			}
-			case 'week': {
-				const jsDate = date.toDate(getLocalTimeZone());
-				const dayOfWeek = jsDate.getDay();
-				const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-				return date.subtract({ days: daysToSubtract });
-			}
-			case 'month': {
-				return new CalendarDate(date.year, date.month, 1);
-			}
-			case 'year': {
-				return new CalendarDate(date.year, 1, 1);
-			}
-		}
-	}
-
-	function getPeriodEnd(date: CalendarDate, period: PeriodType): CalendarDate {
-		switch (period) {
-			case 'day': {
-				return date;
-			}
-			case 'week': {
-				const jsDate = date.toDate(getLocalTimeZone());
-				const dayOfWeek = jsDate.getDay();
-				const daysToAdd = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
-				return date.add({ days: daysToAdd });
-			}
-			case 'month': {
-				const nextMonth = date.month === 12 ? 1 : date.month + 1;
-				const yearForNextMonth = date.month === 12 ? date.year + 1 : date.year;
-				return new CalendarDate(yearForNextMonth, nextMonth, 1).subtract({ days: 1 });
-			}
-			case 'year': {
-				return new CalendarDate(date.year, 12, 31);
-			}
-		}
-	}
-
-	function formatPeriodLabel(date: CalendarDate, period: PeriodType): string {
-		const jsDate = new Date(date.year, date.month - 1, date.day);
-		const todayDate = new Date();
-
-		switch (period) {
-			case 'day': {
-				if (jsDate.toDateString() === todayDate.toDateString()) {
-					return 'Today';
-				}
-				const yesterday = new SvelteDate();
-				yesterday.setDate(todayDate.getDate() - 1);
-				if (jsDate.toDateString() === yesterday.toDateString()) {
-					return 'Yesterday';
-				}
-				return jsDate.toLocaleDateString('en-US', {
-					weekday: 'long',
-					month: 'long',
-					day: 'numeric',
-					year: 'numeric'
-				});
-			}
-			case 'week': {
-				const weekStart = getPeriodStart(date, 'week');
-				const weekEnd = getPeriodEnd(date, 'week');
-				const startJS = new Date(weekStart.year, weekStart.month - 1, weekStart.day);
-				const endJS = new Date(weekEnd.year, weekEnd.month - 1, weekEnd.day);
-
-				if (weekStart.month === weekEnd.month) {
-					return `${startJS.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endJS.toLocaleDateString('en-US', { day: 'numeric', year: 'numeric' })}`;
-				} else {
-					return `${startJS.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endJS.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-				}
-			}
-			case 'month': {
-				return jsDate.toLocaleDateString('en-US', {
-					month: 'long',
-					year: 'numeric'
-				});
-			}
-			case 'year': {
-				return date.year.toString();
-			}
 		}
 	}
 

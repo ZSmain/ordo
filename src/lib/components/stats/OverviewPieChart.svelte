@@ -4,47 +4,43 @@
 	import { formatDuration } from '#lib/time/index.js';
 	import { PieChart, Text } from 'layerchart';
 
-	interface ActivityStat {
-		activityId: number;
-		activityName: string;
-		activityIcon: string;
+	interface CategoryStat {
 		categoryId: number;
 		categoryName: string;
 		categoryColor: string;
 		categoryIcon: string;
-		allCategories?: Array<{
-			categoryId: number;
-			categoryName: string;
-			categoryColor: string;
-			categoryIcon: string;
-		}>;
 		totalDuration: number;
 		sessionCount: number;
 	}
 
 	interface Props {
-		activities: ActivityStat[];
+		categories: CategoryStat[];
+		totalDuration: number;
+		totalSessions: number;
 		period: string;
 	}
 
-	let { activities, period }: Props = $props();
+	let { categories, totalDuration, totalSessions, period }: Props = $props();
 
-	let chartData = $derived.by(() => {
-		return activities.map((activity) => ({
-			category: activity.activityName,
-			duration: activity.totalDuration,
-			color: activity.categoryColor,
-			icon: activity.activityIcon
-		}));
-	});
+	// Category stats allocate multi-category session time evenly, so their durations
+	// add up to the tracked total. Key by id: display names are not guaranteed unique.
+	const chartData = $derived(
+		categories
+			.filter((category) => category.totalDuration > 0)
+			.map((category) => ({
+				categoryId: String(category.categoryId),
+				category: category.categoryName,
+				duration: category.totalDuration,
+				color: category.categoryColor
+			}))
+	);
 
-	let chartConfig = $derived.by(() => {
-		const data = chartData;
+	const chartConfig = $derived.by(() => {
 		return {
 			duration: { label: 'Duration' },
 			...Object.fromEntries(
-				data.map((item: any) => [
-					item.category.toLowerCase().replace(/\s+/g, ''),
+				chartData.map((item) => [
+					item.categoryId,
 					{
 						label: item.category,
 						color: item.color
@@ -53,19 +49,12 @@
 			)
 		} satisfies Chart.ChartConfig;
 	});
-
-	let totalDuration = $derived.by(() =>
-		chartData.reduce((acc: number, curr: any) => acc + curr.duration, 0)
-	);
-	let totalSessions = $derived.by(() =>
-		activities.reduce((sum: number, activity: any) => sum + activity.sessionCount, 0)
-	);
 </script>
 
 <Card.Root class="flex flex-col select-none">
 	<Card.Header class="items-center pb-2">
-		<Card.Title>Activity Distribution</Card.Title>
-		<Card.Description>Time spent on activities {period}</Card.Description>
+		<Card.Title>Time by Category</Card.Title>
+		<Card.Description>Time spent across categories · {period}</Card.Description>
 	</Card.Header>
 	<Card.Content class="flex-1 pb-2">
 		{#if chartData.length === 0}
@@ -76,11 +65,14 @@
 			<Chart.Container config={chartConfig} class="mx-auto aspect-square w-full max-w-62.5">
 				<PieChart
 					data={chartData}
-					key="category"
+					key="categoryId"
+					label="category"
 					value="duration"
 					c="color"
-					innerRadius={60}
-					padding={28}
+					innerRadius={-24}
+					padding={16}
+					padAngle={0.015}
+					cornerRadius={4}
 					props={{ pie: { motion: 'tween' } }}
 				>
 					{#snippet aboveMarks()}
@@ -117,7 +109,7 @@
 	</Card.Content>
 	<Card.Footer class="pt-2 text-sm">
 		<div class="flex w-full items-center justify-between leading-none text-muted-foreground">
-			<span class="text-xs">{activities.length} activities</span>
+			<span class="text-xs">{chartData.length} categories</span>
 			<span class="text-xs">{totalSessions} sessions</span>
 		</div>
 	</Card.Footer>

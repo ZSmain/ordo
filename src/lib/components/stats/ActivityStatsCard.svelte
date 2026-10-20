@@ -1,15 +1,16 @@
 <script lang="ts">
 	import { formatDuration } from '#lib/time/index.js';
-	import { SvelteMap } from 'svelte/reactivity';
 
 	interface ActivityStat {
 		activityId: number;
 		activityName: string;
 		activityIcon: string;
-		categoryId: number;
-		categoryName: string;
-		categoryColor: string;
-		categoryIcon: string;
+		categories: Array<{
+			categoryId: number;
+			categoryName: string;
+			categoryColor: string;
+			categoryIcon: string;
+		}>;
 		totalDuration: number;
 		sessionCount: number;
 	}
@@ -20,88 +21,52 @@
 	}
 
 	let { activities, onActivityClick }: Props = $props();
-
-	function groupActivitiesByCategory() {
-		const grouped = new SvelteMap<
-			number,
-			{
-				category: {
-					id: number;
-					name: string;
-					color: string;
-					icon: string;
-				};
-				activities: ActivityStat[];
-			}
-		>();
-
-		activities.forEach((activity) => {
-			if (!grouped.has(activity.categoryId)) {
-				grouped.set(activity.categoryId, {
-					category: {
-						id: activity.categoryId,
-						name: activity.categoryName,
-						color: activity.categoryColor,
-						icon: activity.categoryIcon
-					},
-					activities: []
-				});
-			}
-			grouped.get(activity.categoryId)!.activities.push(activity);
-		});
-
-		return Array.from(grouped.values());
-	}
-
-	let groupedActivities = $derived(groupActivitiesByCategory());
 </script>
 
 <div class="rounded-lg border bg-card p-6 select-none">
-	<h3 class="mb-4 text-lg font-semibold">Activity Details</h3>
+	<h3 class="mb-4 text-lg font-semibold">Activity Breakdown</h3>
 
 	{#if activities.length === 0}
 		<p class="text-center text-muted-foreground">No data available for this period.</p>
 	{:else}
-		<div class="space-y-6">
-			{#each groupedActivities as group, index (group.category.id + '-' + index)}
-				<div>
-					<div class="mb-2 flex items-center gap-2">
-						<div
-							class="flex h-6 w-6 items-center justify-center rounded-full text-xs text-white"
-							style="background-color: {group.category.color}"
-						>
-							{group.category.icon}
+		<div class="space-y-2">
+			{#each activities as activity (activity.activityId)}
+				<button
+					type="button"
+					class="flex w-full items-center justify-between gap-3 rounded-md bg-muted/50 p-2 text-left transition-colors hover:bg-muted"
+					onclick={() =>
+						onActivityClick?.({
+							id: activity.activityId,
+							name: activity.activityName,
+							icon: activity.activityIcon
+						})}
+				>
+					<div class="flex min-w-0 items-center gap-2">
+						<span class="text-base">{activity.activityIcon}</span>
+						<div class="min-w-0">
+							<p class="truncate text-sm font-medium">{activity.activityName}</p>
+							<div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+								{#each activity.categories as category (category.categoryId)}
+									<span class="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+										<span
+											class="size-1.5 rounded-full"
+											style="background-color: {category.categoryColor}"
+										></span>
+										{category.categoryName}
+									</span>
+								{:else}
+									<span class="text-[11px] text-muted-foreground">Uncategorized</span>
+								{/each}
+							</div>
 						</div>
-						<h4 class="font-medium text-muted-foreground">{group.category.name}</h4>
 					</div>
-					<div class="space-y-2">
-						{#each group.activities as activity, index (activity.activityId + '-' + index)}
-							<button
-								type="button"
-								class="flex w-full items-center justify-between rounded-md bg-muted/50 p-1.5 text-left transition-colors hover:bg-muted"
-								onclick={() =>
-									onActivityClick?.({
-										id: activity.activityId,
-										name: activity.activityName,
-										icon: activity.activityIcon
-									})}
-							>
-								<div class="flex items-center gap-1">
-									<span class="text-sm">{activity.activityIcon}</span>
-									<div>
-										<p class="text-sm font-medium">{activity.activityName}</p>
-										<p class="text-xs text-muted-foreground">
-											{activity.sessionCount} session{activity.sessionCount === 1 ? '' : 's'}
-										</p>
-									</div>
-								</div>
-								<div class="text-right">
-									<p class="text-sm font-medium">{formatDuration(activity.totalDuration)}</p>
-								</div>
-							</button>
-						{/each}
+					<div class="shrink-0 text-right">
+						<p class="text-sm font-medium">{formatDuration(activity.totalDuration)}</p>
+						<p class="text-xs text-muted-foreground">
+							{activity.sessionCount} session{activity.sessionCount === 1 ? '' : 's'}
+						</p>
 					</div>
-				</div>
+				</button>
 			{/each}
 		</div>
 	{/if}

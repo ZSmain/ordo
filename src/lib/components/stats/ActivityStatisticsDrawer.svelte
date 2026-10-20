@@ -95,14 +95,15 @@
 	const chartConfig = {
 		duration: { label: 'Time', color: 'var(--chart-1)' }
 	} satisfies Chart.ChartConfig;
-	const todayUtc = (() => {
-		const now = new Date();
-		return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-	})();
-	const currentCalendarYear = todayUtc.getUTCFullYear();
-	const calendarYearStart = new Date(Date.UTC(currentCalendarYear, 0, 1));
-	const calendarYearStartKey = formatDate(calendarYearStart);
-	const calendarYearTodayKey = formatDate(todayUtc);
+	let todayUtc = $derived.by(() => {
+		// Reading `open` intentionally refreshes the reference date each time the drawer opens.
+		void open;
+		return startOfUtcDay(new Date());
+	});
+	const currentCalendarYear = $derived(todayUtc.getUTCFullYear());
+	const calendarYearStart = $derived(new Date(Date.UTC(currentCalendarYear, 0, 1)));
+	const calendarYearStartKey = $derived(formatDate(calendarYearStart));
+	const calendarYearTodayKey = $derived(formatDate(todayUtc));
 	const calendarCellSize = 14;
 	const calendarCellGap = 3;
 	const calendarActiveColorRange = [
@@ -114,7 +115,11 @@
 	];
 	const calendarInactiveFill = 'color-mix(in oklab, var(--muted) 86%, var(--background))';
 	const calendarInactiveBorder = 'color-mix(in oklab, var(--border) 68%, transparent)';
-	const weekdayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+	const weekdayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+	function startOfUtcDay(date: Date): Date {
+		return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+	}
 
 	let effectiveGranularity = $derived.by(() => {
 		const availableGranularities = granularityOptions[selectedPeriod];
@@ -123,8 +128,7 @@
 	});
 
 	function getDateRange(period: PeriodType): { startDate?: string; endDate?: string } {
-		const now = new Date();
-		const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+		const today = todayUtc;
 
 		switch (period) {
 			case 'year': {
@@ -184,20 +188,13 @@
 	}
 
 	function startOfUtcWeek(date: Date): Date {
-		return addUtcDays(date, -date.getUTCDay());
+		const dayOfWeek = date.getUTCDay();
+		const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+		return addUtcDays(date, -daysSinceMonday);
 	}
 
 	function endOfUtcWeek(date: Date): Date {
 		return addUtcDays(startOfUtcWeek(date), 6);
-	}
-
-	function normalizeUtcDay(value: Date | string | null | undefined): Date | null {
-		if (!value) return null;
-
-		const date = typeof value === 'string' ? new Date(value) : value;
-		if (Number.isNaN(date.getTime())) return null;
-
-		return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 	}
 
 	function getMonthKey(date: Date): string {
@@ -260,15 +257,6 @@
 		});
 	});
 
-	let activityLifetimeQuery = $derived.by(() => {
-		if (!open || !activity) return null;
-
-		return getActivityStatistics({
-			activityId: activity.id,
-			granularity: 'monthly'
-		});
-	});
-
 	let calendarStatisticsQuery = $derived.by(() => {
 		if (!open || !activity) return null;
 
@@ -319,7 +307,7 @@
 	let calendarSummary = $derived(calendarStatisticsQuery?.current ?? null);
 	let calendarRecordCount = $derived(calendarSummary?.totalSessions ?? 0);
 	let calendarTrackedDuration = $derived(calendarSummary?.totalDuration ?? 0);
-	let calendarActiveDays = $derived(calendarChartData.length);
+	let calendarActiveDays = $derived(calendarChartData.filter((entry) => entry.duration > 0).length);
 
 	let calendarColorScale = $derived.by(() =>
 		calendarMaxDuration > 0 && calendarMaxDuration !== calendarMinPositiveDuration
@@ -382,24 +370,17 @@
 	}
 
 	let calendarVisibleStart = $derived.by(() => {
-		if (calendarChartData.length === 0) return null;
+		const hasGoalHits =
+			Object.keys(calendarStatisticsQuery?.current?.goalSummary?.dailyGoalHits ?? {}).length > 0;
+		if (calendarChartData.length === 0 && !hasGoalHits) return null;
 
-		const lifetimeFirstSession = normalizeUtcDay(activityLifetimeQuery?.current?.firstSession);
-		if (lifetimeFirstSession && lifetimeFirstSession.getUTCFullYear() === currentCalendarYear) {
-			return lifetimeFirstSession;
-		}
-
+		// Always render the full year so early-month activity and goal misses are visible
+		// instead of starting the grid at the first tracked session.
 		return calendarYearStart;
 	});
 
 	let calendarRangeLabel = $derived.by(() => {
 		if (!calendarVisibleStart) return '';
-
-		const lifetimeFirstSession = normalizeUtcDay(activityLifetimeQuery?.current?.firstSession);
-		if (lifetimeFirstSession && lifetimeFirstSession.getUTCFullYear() === currentCalendarYear) {
-			return `Since ${formatCalendarSummaryDate(lifetimeFirstSession)}`;
-		}
-
 		return `From ${formatCalendarSummaryDate(calendarVisibleStart)}`;
 	});
 
@@ -455,7 +436,7 @@
 				cells.push({
 					key,
 					column: getWeekOffset(gridStart, day) + 1,
-					row: day.getUTCDay() + 1,
+					row: ((day.getUTCDay() + 6) % 7) + 1,
 					date: day,
 					duration,
 					fill: getCalendarCellFill(duration),
@@ -556,7 +537,7 @@
 									calendarChartData.length > 0 || calendarMonthSections.length > 0}
 
 								<div class="rounded-lg border bg-card p-4">
-									{#if calendarStatisticsQuery?.loading || activityLifetimeQuery?.loading}
+									{#if calendarStatisticsQuery?.loading}
 										<div class="py-8 text-center">
 											<p class="text-sm text-muted-foreground">Loading yearly activity...</p>
 										</div>
