@@ -4,16 +4,18 @@ import {
 	hydrateActivitiesWithCategories
 } from '#lib/server/activity-catalog.js';
 import { activity, timeSession } from '#lib/server/db/schema.js';
+import { toManualSessionDto } from '#lib/server/mappers.js';
 import { getRemoteContext } from '#lib/server/remote-context.js';
 import {
 	createManualSession as persistManualSession,
 	rescheduleSession as persistRescheduledSession
 } from '#lib/server/sessions.js';
+import type { DailyActivityDto, DailySessionDto } from '#lib/tracker/dtos.js';
 import { command, query } from '$app/server';
 import { and, desc, eq, gte, isNotNull, lt } from 'drizzle-orm';
 import * as v from 'valibot';
 
-export const getActivitiesForUser = query(async () => {
+export const getActivitiesForUser = query(async (): Promise<DailyActivityDto[]> => {
 	const { db, user } = getRemoteContext();
 	const userId = user.id;
 
@@ -66,7 +68,7 @@ export const createManualSession = command(
 		const sessionDateStr = newSession.startedAt.toISOString().split('T')[0];
 		await getSessionsForDate({ date: sessionDateStr }).refresh();
 
-		return newSession;
+		return toManualSessionDto(newSession);
 	}
 );
 
@@ -74,7 +76,7 @@ export const getSessionsForDate = query(
 	v.object({
 		date: v.string()
 	}),
-	async ({ date }) => {
+	async ({ date }): Promise<DailySessionDto[]> => {
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 

@@ -5,7 +5,6 @@ export {
 	restoreTimerFromDatabase,
 	timerPersistedState,
 	timerStore,
-	type DatabaseSession,
 	type TimerState
 } from './timer';
 export { trackerSessionController } from './tracker-session';

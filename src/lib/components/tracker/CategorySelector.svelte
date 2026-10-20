@@ -9,13 +9,13 @@
 	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
 	import { Switch } from '#lib/components/ui/switch/index.js';
 	import { ToggleGroup, ToggleGroupItem } from '#lib/components/ui/toggle-group/index.js';
-	import type { Category } from '#lib/types.js';
+	import type { CategoryDto } from '#lib/tracker/dtos.js';
 	import { PencilLine, Trash2, X } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import EditCategory from './EditCategory.svelte';
 
 	interface Props {
-		categories: Category[];
+		categories: CategoryDto[];
 		selectedCategoryIds: string[];
 		filterMode?: 'AND' | 'OR';
 		onFilterModeChange?: (mode: 'AND' | 'OR') => void;
@@ -39,9 +39,9 @@
 	}: Props = $props();
 
 	let editCategoryOpen = $state(false);
-	let categoryToEdit = $state<Category | null>(null);
+	let categoryToEdit = $state<CategoryDto | null>(null);
 	let deleteDialogOpen = $state(false);
-	let categoryToDelete = $state<Category | null>(null);
+	let categoryToDelete = $state<CategoryDto | null>(null);
 	let isDeleting = $state(false);
 
 	function handleSelectedCategoryIdsChange(categoryIds: string[]) {
@@ -52,12 +52,12 @@
 		onClearSelection?.();
 	}
 
-	function handleModifyCategory(category: Category) {
+	function handleModifyCategory(category: CategoryDto) {
 		categoryToEdit = category;
 		editCategoryOpen = true;
 	}
 
-	function handleDeleteCategory(category: Category) {
+	function handleDeleteCategory(category: CategoryDto) {
 		categoryToDelete = category;
 		deleteDialogOpen = true;
 	}

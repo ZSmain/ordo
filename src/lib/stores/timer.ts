@@ -1,3 +1,4 @@
+import type { ActiveSessionDto } from '#lib/tracker/dtos.js';
 import { PersistedState } from 'runed';
 
 export interface TimerState {
@@ -7,21 +8,6 @@ export interface TimerState {
 	activityId: number | null;
 	sessionId: number | null;
 	startTime: number | null;
-}
-
-export interface DatabaseSession {
-	session: {
-		id: number;
-		startedAt: Date;
-		isActive: boolean;
-	};
-	activity: {
-		id: number;
-		name: string;
-	};
-	category: {
-		name: string;
-	};
 }
 
 const defaultTimerState: TimerState = {
@@ -95,7 +81,7 @@ export function calculateElapsedTime(state: TimerState): number {
 	return sessionElapsed;
 }
 
-export function restoreTimerFromDatabase(sessionData: DatabaseSession | null): TimerState {
+export function restoreTimerFromDatabase(sessionData: ActiveSessionDto | null): TimerState {
 	if (!sessionData || !sessionData.session || !sessionData.session.isActive) {
 		return defaultTimerState;
 	}

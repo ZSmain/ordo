@@ -1,38 +1,12 @@
-import type { SelectActivity, SelectCategory } from '#lib/server/db/schema.js';
 import type { SelectionState } from '#lib/stores/selection.js';
+import type { ActivityDto, CategoryDto, CategoryWithActivitiesDto } from './dtos.js';
 
-export type TrackerActivityCategory = Pick<SelectCategory, 'id' | 'name' | 'color' | 'icon'>;
-
-export type TrackerActivityGoals = {
-	dailyGoal: number | null;
-	weeklyGoal: number | null;
-	monthlyGoal: number | null;
-};
-
-export type TrackerActivityGoalState = {
-	/** Goals in effect today. Null when the activity has no active goals. */
-	current: TrackerActivityGoals | null;
-	/**
-	 * Scheduled change taking effect on `effectiveDate` (tomorrow).
-	 * Null when nothing is scheduled.
-	 */
-	pending: TrackerActivityGoals | null;
-	/** Tomorrow's date key when `pending` is set, otherwise null. */
-	effectiveDate: string | null;
-};
-
-export type TrackerActivity = Pick<
-	SelectActivity,
-	'id' | 'name' | 'icon' | 'favorite' | 'archived'
-> & {
-	/** Unified goal timeline: today-active plus any scheduled tomorrow change. */
-	goals: TrackerActivityGoalState;
-	categories: TrackerActivityCategory[];
-};
-
-export type TrackerCategory<TActivity extends TrackerActivity = TrackerActivity> = Pick<
-	SelectCategory,
-	'id' | 'name' | 'color'
+/** Back-compat aliases; prefer importing from `./dtos.js`. */
+export type TrackerActivityCategory = CategoryDto;
+export type TrackerActivity = ActivityDto;
+export type TrackerCategory<TActivity extends TrackerActivity = TrackerActivity> = Omit<
+	CategoryWithActivitiesDto,
+	'activities'
 > & {
 	activities: TActivity[];
 };

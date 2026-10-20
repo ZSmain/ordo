@@ -7,16 +7,10 @@ import {
 	getCategoriesForActivityId,
 	getCategoriesForActivityIds,
 	getRepresentativeCategory,
-	groupActivitiesByCategory,
-	hydrateActivitiesWithCategories,
-	type ActivityWithCategories,
-	type CategoryWithActivities
+	groupActivitiesByCategory
 } from '#lib/server/activity-catalog.js';
-import type {
-	InsertActivityCategory,
-	SelectActivity,
-	SelectCategory
-} from '#lib/server/db/schema.js';
+import type { GoalValues } from '#lib/goals/index.js';
+import type { InsertActivityCategory } from '#lib/server/db/schema.js';
 import {
 	activity,
 	activityCategory,
@@ -26,16 +20,20 @@ import {
 	insertCategorySchema,
 	timeSession
 } from '#lib/server/db/schema.js';
+import {
+	toActiveSessionDto,
+	toActivityDto,
+	toCategoryDto,
+	toStartedSessionDto,
+	toStoppedSessionDto
+} from '#lib/server/mappers.js';
 import { getDisplayGoals, scheduleGoalChange } from '#lib/server/goals.js';
 import { getRemoteContext } from '#lib/server/remote-context.js';
 import {
 	startActiveSession as persistStartedSession,
 	stopActiveSession as persistStoppedSession
 } from '#lib/server/sessions.js';
-import type {
-	TrackerActivityGoals,
-	TrackerActivityGoalState
-} from '#lib/tracker/activity-projection.js';
+import type { ActivityDto, CategoryWithActivitiesDto } from '#lib/tracker/dtos.js';
 import { command, query, requested } from '$app/server';
 import { error } from '@sveltejs/kit';
 import { and, eq } from 'drizzle-orm';
@@ -54,7 +52,7 @@ function sanitizeGoalFields(goals: {
 	dailyGoal?: number | null;
 	weeklyGoal?: number | null;
 	monthlyGoal?: number | null;
-}): TrackerActivityGoals {
+}): GoalValues {
 	return {
 		dailyGoal: sanitizeGoalMinutes(goals.dailyGoal),
 		weeklyGoal: sanitizeGoalMinutes(goals.weeklyGoal),
@@ -66,38 +64,43 @@ export const getCategoriesWithActivities = query(async () => {
 	const { db, user } = getRemoteContext();
 	const userId = user.id;
 
-	const categories: SelectCategory[] = await db
-		.select()
+	const categoryRows = await db
+		.select({
+			id: category.id,
+			name: category.name,
+			color: category.color,
+			icon: category.icon
+		})
 		.from(category)
 		.where(eq(category.userId, userId))
 		.all();
 
-	const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
-
-	type ActivityWithGoals = SelectActivity & {
-		goals: TrackerActivityGoalState;
-	};
-	type UserActivityWithCategories = ActivityWithCategories<ActivityWithGoals>;
-	type UserCategoryWithActivities = CategoryWithActivities<UserActivityWithCategories>;
+	const sortedCategories = [...categoryRows].sort((a, b) => a.name.localeCompare(b.name));
 
 	if (sortedCategories.length === 0) {
-		return [] as UserCategoryWithActivities[];
+		return [] as CategoryWithActivitiesDto[];
 	}
 
-	const userActivities: SelectActivity[] = await db
-		.select()
+	const activityRows = await db
+		.select({
+			id: activity.id,
+			name: activity.name,
+			icon: activity.icon,
+			favorite: activity.favorite,
+			archived: activity.archived
+		})
 		.from(activity)
 		.where(eq(activity.userId, userId))
 		.all();
 
-	if (userActivities.length === 0) {
+	if (activityRows.length === 0) {
 		return sortedCategories.map((cat) => ({
 			...cat,
-			activities: [] as UserActivityWithCategories[]
-		})) satisfies UserCategoryWithActivities[];
+			activities: [] as ActivityDto[]
+		})) satisfies CategoryWithActivitiesDto[];
 	}
 
-	const sortedUserActivities = [...userActivities].sort(
+	const sortedUserActivities = [...activityRows].sort(
 		(a, b) => Number(b.favorite) - Number(a.favorite) || a.name.localeCompare(b.name)
 	);
 
@@ -107,23 +110,19 @@ export const getCategoriesWithActivities = query(async () => {
 		getDisplayGoals(db, activityIds)
 	]);
 
-	const activitiesWithGoals: ActivityWithGoals[] = sortedUserActivities.map((item) => {
-		return {
-			...item,
-			goals: displayGoalsByActivityId.get(item.id) ?? {
+	const activities: ActivityDto[] = sortedUserActivities.map((item) =>
+		toActivityDto(
+			item,
+			displayGoalsByActivityId.get(item.id) ?? {
 				current: null,
 				pending: null,
 				effectiveDate: null
-			}
-		};
-	});
-
-	const activitiesWithCategories = hydrateActivitiesWithCategories(
-		activitiesWithGoals,
-		categoriesByActivityId
+			},
+			categoriesByActivityId.get(item.id) ?? []
+		)
 	);
 
-	return groupActivitiesByCategory(sortedCategories, activitiesWithCategories);
+	return groupActivitiesByCategory(sortedCategories, activities);
 });
 
 export const getActiveSession = query(async () => {
@@ -132,8 +131,13 @@ export const getActiveSession = query(async () => {
 
 	const activeSession = await db
 		.select({
-			timeSession: timeSession,
-			activity: activity
+			sessionId: timeSession.id,
+			sessionActivityId: timeSession.activityId,
+			sessionStartedAt: timeSession.startedAt,
+			sessionIsActive: timeSession.isActive,
+			activityId: activity.id,
+			activityName: activity.name,
+			activityIcon: activity.icon
 		})
 		.from(timeSession)
 		.innerJoin(activity, eq(timeSession.activityId, activity.id))
@@ -144,15 +148,22 @@ export const getActiveSession = query(async () => {
 		return null;
 	}
 
-	const activityCategories = await getCategoriesForActivityId(db, activeSession.activity.id);
+	const activityCategories = await getCategoriesForActivityId(db, activeSession.activityId);
 
-	return {
-		session: activeSession.timeSession,
-		activity: activeSession.activity,
-		category: {
-			name: getRepresentativeCategory(activityCategories).name
-		}
-	};
+	return toActiveSessionDto(
+		{
+			id: activeSession.sessionId,
+			activityId: activeSession.sessionActivityId,
+			startedAt: activeSession.sessionStartedAt,
+			isActive: activeSession.sessionIsActive
+		},
+		{
+			id: activeSession.activityId,
+			name: activeSession.activityName,
+			icon: activeSession.activityIcon
+		},
+		getRepresentativeCategory(activityCategories).name
+	);
 });
 
 export const startTimerSession = command(
@@ -167,7 +178,7 @@ export const startTimerSession = command(
 
 		await requested(getActiveSession, 1).refreshAll();
 
-		return newSession;
+		return toStartedSessionDto(newSession);
 	}
 );
 
@@ -183,7 +194,7 @@ export const stopTimerSession = command(
 
 		await requested(getActiveSession, 1).refreshAll();
 
-		return updatedSession;
+		return toStoppedSessionDto(updatedSession);
 	}
 );
 
@@ -201,7 +212,7 @@ export const createCategory = command(v.object(insertCategoryEntries), async (ca
 
 	await getCategoriesWithActivities().refresh();
 
-	return newCategory;
+	return toCategoryDto(newCategory);
 });
 
 export const updateCategory = command(
@@ -256,7 +267,7 @@ export const updateCategory = command(
 
 		await getCategoriesWithActivities().refresh();
 
-		return updatedCategory;
+		return toCategoryDto(updatedCategory);
 	}
 );
 
@@ -270,7 +281,6 @@ export const deleteCategory = command(
 
 		await requireOwnedCategory(db, userId, id);
 
-		// Delete the category (activities will be cascaded due to foreign key constraint)
 		const deletedCategory = await db
 			.delete(category)
 			.where(and(eq(category.id, id), eq(category.userId, userId)))
@@ -279,7 +289,7 @@ export const deleteCategory = command(
 
 		await getCategoriesWithActivities().refresh();
 
-		return deletedCategory;
+		return toCategoryDto(deletedCategory);
 	}
 );
 
@@ -328,7 +338,9 @@ export const createActivity = command(
 
 		await getCategoriesWithActivities().refresh();
 
-		return { ...newActivity, goals };
+		const categories = await getCategoriesForActivityId(db, newActivity.id);
+
+		return toActivityDto(newActivity, goals, categories);
 	}
 );
 
@@ -416,7 +428,9 @@ export const updateActivity = command(
 
 		await getCategoriesWithActivities().refresh();
 
-		return { ...activityUpdate, goals };
+		const categories = await getCategoriesForActivityId(db, id);
+
+		return toActivityDto(activityUpdate, goals, categories);
 	}
 );
 
@@ -445,7 +459,7 @@ export const setActivityFavorite = command(
 
 		await getCategoriesWithActivities().refresh();
 
-		return updatedActivity;
+		return { id: updatedActivity.id };
 	}
 );
 
@@ -474,7 +488,7 @@ export const archiveActivity = command(
 
 		await getCategoriesWithActivities().refresh();
 
-		return updatedActivity;
+		return { id: updatedActivity.id };
 	}
 );
 
@@ -488,7 +502,6 @@ export const deleteActivity = command(
 
 		await requireOwnedActivity(db, userId, id);
 
-		// Delete the activity (time sessions will be cascaded due to foreign key constraint)
 		const deletedActivity = await db
 			.delete(activity)
 			.where(and(eq(activity.id, id), eq(activity.userId, userId)))
@@ -497,6 +510,6 @@ export const deleteActivity = command(
 
 		await getCategoriesWithActivities().refresh();
 
-		return deletedActivity;
+		return { id: deletedActivity.id };
 	}
 );

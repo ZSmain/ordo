@@ -8,6 +8,7 @@ import {
 	type GoalValues
 } from '#lib/goals/index.js';
 import { goalHistory } from '#lib/server/db/schema.js';
+import type { ActivityGoalState } from '#lib/tracker/dtos.js';
 import { and, eq, inArray } from 'drizzle-orm';
 
 type AppDb = App.Locals['db'];
@@ -24,18 +25,7 @@ type GoalHistoryRow = {
 	startDate: string;
 };
 
-export type DisplayGoals = {
-	/** Goals in effect today. Null when the activity has no active goals. */
-	current: GoalValues | null;
-	/**
-	 * Scheduled change taking effect on `effectiveDate` (tomorrow).
-	 * Null when nothing is scheduled. A non-null value with all nulls
-	 * means a scheduled removal of goals.
-	 */
-	pending: GoalValues | null;
-	/** Tomorrow's date key when `pending` is set, otherwise null. */
-	effectiveDate: string | null;
-};
+export type DisplayGoals = ActivityGoalState;
 
 export type GoalChangeInput = {
 	dailyGoal?: number | null;
