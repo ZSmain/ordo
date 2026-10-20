@@ -174,21 +174,26 @@ export type PeriodGoalSummary = {
 /**
  * Evaluate a calendar-aligned period.
  * Period goal (weekly/monthly) uses the active goal on the period's first day.
+ * When `asOfDateKey` is provided, the period is treated as in progress: only
+ * elapsed days are evaluated, and a period goal is only marked as a miss once
+ * the period has actually ended.
  */
 export function evaluatePeriod(
 	history: readonly GoalHistoryEntry[],
 	sessions: readonly SessionForGoals[],
 	start: string,
 	end: string,
-	periodGoalMinutes: number | null
+	periodGoalMinutes: number | null,
+	asOfDateKey?: string
 ): PeriodGoalSummary {
 	const durations = durationByDate(sessions);
 	const activeGoal = createActiveGoalLookup(history);
+	const effectiveEnd = asOfDateKey && asOfDateKey < end ? asOfDateKey : end;
 	let durationSeconds = 0;
 	let dailyHits = 0;
 	let dailyGoalDays = 0;
 
-	for (const dateKey of eachDateKey(start, end)) {
+	for (const dateKey of eachDateKey(start, effectiveEnd)) {
 		const dayDuration = durations.get(dateKey) ?? 0;
 		durationSeconds += dayDuration;
 		const hit = isGoalHit(dayDuration, activeGoal(dateKey)?.dailyGoal);
@@ -197,12 +202,15 @@ export function evaluatePeriod(
 		if (hit) dailyHits += 1;
 	}
 
+	const periodHit = isGoalHit(durationSeconds, periodGoalMinutes);
+	const periodComplete = !asOfDateKey || asOfDateKey >= end;
+
 	return {
 		start,
 		end,
 		durationSeconds,
 		goalMinutes: periodGoalMinutes,
-		goalHit: isGoalHit(durationSeconds, periodGoalMinutes),
+		goalHit: periodComplete || periodHit === true ? periodHit : null,
 		dailyHits,
 		dailyGoalDays
 	};
@@ -211,32 +219,36 @@ export function evaluatePeriod(
 export function evaluateWeek(
 	history: readonly GoalHistoryEntry[],
 	sessions: readonly SessionForGoals[],
-	dateKey: string
+	dateKey: string,
+	asOfDateKey?: string
 ): PeriodGoalSummary {
 	const { start, end } = weekBounds(dateKey);
 	const active = getActiveGoal(history, start);
-	return evaluatePeriod(history, sessions, start, end, active?.weeklyGoal ?? null);
+	return evaluatePeriod(history, sessions, start, end, active?.weeklyGoal ?? null, asOfDateKey);
 }
 
 export function evaluateMonth(
 	history: readonly GoalHistoryEntry[],
 	sessions: readonly SessionForGoals[],
-	dateKey: string
+	dateKey: string,
+	asOfDateKey?: string
 ): PeriodGoalSummary {
 	const { start, end } = monthBounds(dateKey);
 	const active = getActiveGoal(history, start);
-	return evaluatePeriod(history, sessions, start, end, active?.monthlyGoal ?? null);
+	return evaluatePeriod(history, sessions, start, end, active?.monthlyGoal ?? null, asOfDateKey);
 }
 
 /**
  * Build per-day goal hit map for a range (for calendar overlay).
- * Days without a daily goal are omitted (no indicator).
+ * Days without a daily goal are omitted (no indicator). When `asOfDateKey` is
+ * provided, today is not marked as a miss until the day is over.
  */
 export function dailyGoalHitsForRange(
 	history: readonly GoalHistoryEntry[],
 	sessions: readonly SessionForGoals[],
 	start: string,
-	end: string
+	end: string,
+	asOfDateKey?: string
 ): Record<string, boolean> {
 	const durations = durationByDate(sessions);
 	const activeGoal = createActiveGoalLookup(history);
@@ -244,9 +256,9 @@ export function dailyGoalHitsForRange(
 
 	for (const dateKey of eachDateKey(start, end)) {
 		const hit = isGoalHit(durations.get(dateKey) ?? 0, activeGoal(dateKey)?.dailyGoal);
-		if (hit !== null) {
-			hits[dateKey] = hit;
-		}
+		if (hit === null) continue;
+		if (!hit && asOfDateKey && dateKey >= asOfDateKey) continue;
+		hits[dateKey] = hit;
 	}
 
 	return hits;

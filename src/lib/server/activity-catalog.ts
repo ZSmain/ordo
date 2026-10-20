@@ -1,14 +1,15 @@
-import { activityCategory, category, type SelectCategory } from '#lib/server/db/schema.js';
+import { activityCategory, category } from '#lib/server/db/schema.js';
+import type { CategoryDto } from '#lib/tracker/dtos.js';
 import { eq, inArray } from 'drizzle-orm';
 
-export type ActivityCategoryDetails = Pick<SelectCategory, 'id' | 'name' | 'color' | 'icon'>;
+export type ActivityCategoryDetails = CategoryDto;
 
 export type ActivityWithCategories<TActivity extends { id: number }> = TActivity & {
 	categories: ActivityCategoryDetails[];
 };
 
 export type CategoryWithActivities<TActivity extends { categories: ActivityCategoryDetails[] }> =
-	SelectCategory & {
+	CategoryDto & {
 		activities: TActivity[];
 	};
 
@@ -79,7 +80,7 @@ export function hydrateActivitiesWithCategories<TActivity extends { id: number }
 
 export function groupActivitiesByCategory<
 	TActivity extends { categories: ActivityCategoryDetails[] }
->(categories: SelectCategory[], activities: TActivity[]): Array<CategoryWithActivities<TActivity>> {
+>(categories: CategoryDto[], activities: TActivity[]): Array<CategoryWithActivities<TActivity>> {
 	return categories.map((item) => ({
 		...item,
 		activities: activities.filter((activity) =>

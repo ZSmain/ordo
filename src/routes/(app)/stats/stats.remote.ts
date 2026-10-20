@@ -1,32 +1,33 @@
-import { query } from '$app/server';
 import {
 	dailyGoalHitsForRange,
 	evaluateMonth,
 	evaluateWeek,
 	getActiveGoal,
+	monthBounds,
 	toDateKey,
 	todayDateKey,
-	type GoalHistoryEntry,
+	weekBounds,
 	type PeriodGoalSummary
 } from '#lib/goals/index.js';
+import { requireOwnedActivity } from '#lib/server/access.js';
 import {
 	getCategoriesForActivityId,
 	getCategoriesForActivityIds,
-	getRepresentativeCategory
+	UNCATEGORIZED_ACTIVITY_CATEGORY
 } from '#lib/server/activity-catalog.js';
 import { activity, activityCategory, category, timeSession } from '#lib/server/db/schema.js';
-import { loadGoalHistoryForActivity, type GoalHistoryRow } from '#lib/server/goals.js';
+import { getGoalHistoryEntries } from '#lib/server/goals.js';
 import { getRemoteContext } from '#lib/server/remote-context.js';
-import { and, eq, gte, isNotNull, lt, sql, sum } from 'drizzle-orm';
+import { query } from '$app/server';
+import { and, countDistinct, eq, gt, gte, isNotNull, lt, sql, sum } from 'drizzle-orm';
 import * as v from 'valibot';
 
-function toGoalHistoryEntries(rows: GoalHistoryRow[]): GoalHistoryEntry[] {
-	return rows.map((row) => ({
-		startDate: row.startDate,
-		dailyGoal: row.dailyGoal,
-		weeklyGoal: row.weeklyGoal,
-		monthlyGoal: row.monthlyGoal
-	}));
+/** Date keys describe UTC calendar days. The range is end-exclusive. */
+function getSessionRange(startDate: string, endDate: string) {
+	const start = new Date(`${startDate}T00:00:00.000Z`);
+	const end = new Date(`${endDate}T00:00:00.000Z`);
+	end.setUTCDate(end.getUTCDate() + 1);
+	return { start, end };
 }
 
 function periodSummaryPayload(summary: PeriodGoalSummary) {
@@ -49,21 +50,17 @@ export const getCategoryStats = query(
 	async ({ startDate, endDate }) => {
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
-
-		const start = new Date(startDate + 'T00:00:00.000Z');
-		const end = new Date(endDate + 'T23:59:59.999Z');
+		const { start, end } = getSessionRange(startDate, endDate);
 
 		const sessions: Array<{
 			sessionId: number;
 			duration: number | null;
 			activityId: number;
-			activityName: string;
 		}> = await db
 			.select({
 				sessionId: timeSession.id,
 				duration: timeSession.duration,
-				activityId: activity.id,
-				activityName: activity.name
+				activityId: activity.id
 			})
 			.from(timeSession)
 			.innerJoin(activity, eq(timeSession.activityId, activity.id))
@@ -72,7 +69,8 @@ export const getCategoryStats = query(
 					eq(timeSession.userId, userId),
 					gte(timeSession.startedAt, start),
 					lt(timeSession.startedAt, end),
-					isNotNull(timeSession.stoppedAt)
+					isNotNull(timeSession.stoppedAt),
+					gt(timeSession.duration, 0)
 				)
 			)
 			.all();
@@ -95,40 +93,35 @@ export const getCategoryStats = query(
 
 		sessions.forEach((session: (typeof sessions)[number]) => {
 			const categoriesForActivity = categoriesByActivityId.get(session.activityId) ?? [];
-			const categoryCount = categoriesForActivity.length;
+			const sessionCategories =
+				categoriesForActivity.length > 0
+					? categoriesForActivity
+					: [UNCATEGORIZED_ACTIVITY_CATEGORY];
+			// A session can belong to several categories. Split its duration evenly so the
+			// category totals still add up to the tracked time, but count the session once
+			// for every category it actually involved.
+			const durationPerCategory = (session.duration ?? 0) / sessionCategories.length;
 
-			if (categoryCount === 0) return;
-
-			const durationPerCategory = (session.duration || 0) / categoryCount;
-			const sessionCountPerCategory = 1 / categoryCount;
-
-			categoriesForActivity.forEach(({ id, name, color, icon }) => {
-				if (!categoryStatsMap.has(id)) {
-					categoryStatsMap.set(id, {
+			sessionCategories.forEach(({ id, name, color, icon }) => {
+				let stats = categoryStatsMap.get(id);
+				if (!stats) {
+					stats = {
 						categoryId: id,
 						categoryName: name,
 						categoryColor: color,
 						categoryIcon: icon,
 						totalDuration: 0,
 						sessionCount: 0
-					});
+					};
+					categoryStatsMap.set(id, stats);
 				}
 
-				const stats = categoryStatsMap.get(id)!;
 				stats.totalDuration += durationPerCategory;
-				stats.sessionCount += sessionCountPerCategory;
+				stats.sessionCount += 1;
 			});
 		});
 
-		const categoryStats = Array.from(categoryStatsMap.values())
-			.map((stat) => ({
-				...stat,
-				totalDuration: Math.round(stat.totalDuration),
-				sessionCount: Math.round(stat.sessionCount)
-			}))
-			.sort((a, b) => b.totalDuration - a.totalDuration);
-
-		return categoryStats;
+		return Array.from(categoryStatsMap.values()).sort((a, b) => b.totalDuration - a.totalDuration);
 	}
 );
 
@@ -140,9 +133,7 @@ export const getActivityStats = query(
 	async ({ startDate, endDate }) => {
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
-
-		const start = new Date(startDate + 'T00:00:00.000Z');
-		const end = new Date(endDate + 'T23:59:59.999Z');
+		const { start, end } = getSessionRange(startDate, endDate);
 
 		const activityStats: Array<{
 			activityId: number;
@@ -165,7 +156,8 @@ export const getActivityStats = query(
 					eq(timeSession.userId, userId),
 					gte(timeSession.startedAt, start),
 					lt(timeSession.startedAt, end),
-					isNotNull(timeSession.stoppedAt)
+					isNotNull(timeSession.stoppedAt),
+					gt(timeSession.duration, 0)
 				)
 			)
 			.groupBy(activity.id, activity.name, activity.icon)
@@ -179,15 +171,10 @@ export const getActivityStats = query(
 
 		return activityStats.map((stat: (typeof activityStats)[number]) => {
 			const categories = categoriesByActivityId.get(stat.activityId) ?? [];
-			const primaryCategory = getRepresentativeCategory(categories);
 
 			return {
 				...stat,
-				categoryId: primaryCategory.id,
-				categoryName: primaryCategory.name,
-				categoryColor: primaryCategory.color,
-				categoryIcon: primaryCategory.icon,
-				allCategories: categories.map((cat) => ({
+				categories: categories.map((cat) => ({
 					categoryId: cat.id,
 					categoryName: cat.name,
 					categoryColor: cat.color,
@@ -208,36 +195,53 @@ export const getOverviewStats = query(
 	async ({ startDate, endDate }) => {
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
+		const { start, end } = getSessionRange(startDate, endDate);
 
-		const start = new Date(startDate + 'T00:00:00.000Z');
-		const end = new Date(endDate + 'T23:59:59.999Z');
-
-		const overviewResult = await db
+		const sessionResult = await db
 			.select({
 				totalDuration: sum(timeSession.duration).as('totalDuration'),
 				totalSessions: sql<number>`count(${timeSession.id})`.as('totalSessions'),
-				categoriesWorkedOn: sql<number>`count(distinct ${category.id})`.as('categoriesWorkedOn'),
-				activitiesWorkedOn: sql<number>`count(distinct ${activity.id})`.as('activitiesWorkedOn')
+				activitiesWorkedOn: countDistinct(timeSession.activityId).as('activitiesWorkedOn')
 			})
 			.from(timeSession)
-			.innerJoin(activity, eq(timeSession.activityId, activity.id))
-			.innerJoin(activityCategory, eq(activity.id, activityCategory.activityId))
-			.innerJoin(category, eq(activityCategory.categoryId, category.id))
 			.where(
 				and(
 					eq(timeSession.userId, userId),
 					gte(timeSession.startedAt, start),
 					lt(timeSession.startedAt, end),
-					isNotNull(timeSession.stoppedAt)
+					isNotNull(timeSession.stoppedAt),
+					gt(timeSession.duration, 0)
+				)
+			)
+			.get();
+
+		const categoryResult = await db
+			.select({
+				// Uncategorized activities count as one bucket so the overview agrees with
+				// the category breakdown.
+				categoriesWorkedOn: sql<number>`count(distinct coalesce(${category.id}, 0))`.as(
+					'categoriesWorkedOn'
+				)
+			})
+			.from(timeSession)
+			.leftJoin(activityCategory, eq(timeSession.activityId, activityCategory.activityId))
+			.leftJoin(category, eq(activityCategory.categoryId, category.id))
+			.where(
+				and(
+					eq(timeSession.userId, userId),
+					gte(timeSession.startedAt, start),
+					lt(timeSession.startedAt, end),
+					isNotNull(timeSession.stoppedAt),
+					gt(timeSession.duration, 0)
 				)
 			)
 			.get();
 
 		return {
-			totalDuration: Number(overviewResult?.totalDuration || 0),
-			totalSessions: Number(overviewResult?.totalSessions || 0),
-			categoriesWorkedOn: Number(overviewResult?.categoriesWorkedOn || 0),
-			activitiesWorkedOn: Number(overviewResult?.activitiesWorkedOn || 0)
+			totalDuration: Number(sessionResult?.totalDuration || 0),
+			totalSessions: Number(sessionResult?.totalSessions || 0),
+			categoriesWorkedOn: Number(categoryResult?.categoriesWorkedOn || 0),
+			activitiesWorkedOn: Number(sessionResult?.activitiesWorkedOn || 0)
 		};
 	}
 );
@@ -252,8 +256,9 @@ export const getSessionsForActivity = query(
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
-		const start = new Date(startDate + 'T00:00:00.000Z');
-		const end = new Date(endDate + 'T23:59:59.999Z');
+		await requireOwnedActivity(db, userId, activityId);
+
+		const { start, end } = getSessionRange(startDate, endDate);
 
 		const sessions = await db
 			.select({
@@ -309,17 +314,26 @@ export const getActivityStatistics = query(
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
+		await requireOwnedActivity(db, userId, activityId);
+
 		const dateFilters = [];
 		if (startDate) {
 			const start = new Date(startDate + 'T00:00:00.000Z');
 			dateFilters.push(gte(timeSession.startedAt, start));
 		}
 		if (endDate) {
-			const end = new Date(endDate + 'T23:59:59.999Z');
+			const end = new Date(endDate + 'T00:00:00.000Z');
+			end.setUTCDate(end.getUTCDate() + 1);
 			dateFilters.push(lt(timeSession.startedAt, end));
 		}
 
-		const [sessions, goalHistoryRows] = await Promise.all([
+		const today = todayDateKey();
+		const weekStart = weekBounds(today).start;
+		const monthStart = monthBounds(today).start;
+		const goalSummaryStart = weekStart < monthStart ? weekStart : monthStart;
+		const goalSummaryRange = getSessionRange(goalSummaryStart, today);
+
+		const [sessions, goalHistory, goalSessionsForSummary] = await Promise.all([
 			db
 				.select({
 					id: timeSession.id,
@@ -333,36 +347,62 @@ export const getActivityStatistics = query(
 						eq(timeSession.userId, userId),
 						eq(timeSession.activityId, activityId),
 						isNotNull(timeSession.stoppedAt),
+						gt(timeSession.duration, 0),
 						...dateFilters
 					)
 				)
 				.orderBy(sql`${timeSession.startedAt} ASC`)
 				.all(),
-			loadGoalHistoryForActivity(db, activityId)
+			getGoalHistoryEntries(db, activityId),
+			db
+				.select({
+					startedAt: timeSession.startedAt,
+					duration: timeSession.duration
+				})
+				.from(timeSession)
+				.where(
+					and(
+						eq(timeSession.userId, userId),
+						eq(timeSession.activityId, activityId),
+						isNotNull(timeSession.stoppedAt),
+						gt(timeSession.duration, 0),
+						gte(timeSession.startedAt, goalSummaryRange.start),
+						lt(timeSession.startedAt, goalSummaryRange.end)
+					)
+				)
+				.all()
 		]);
 
-		const goalHistory = toGoalHistoryEntries(goalHistoryRows);
 		const sessionsForGoals = sessions.map((session: (typeof sessions)[number]) => ({
 			startedAt: session.startedAt,
 			duration: session.duration,
 			isActive: false as const
 		}));
 
-		const today = todayDateKey();
+		const goalSessions = goalSessionsForSummary.map(
+			(session: (typeof goalSessionsForSummary)[number]) => ({
+				startedAt: session.startedAt,
+				duration: session.duration,
+				isActive: false as const
+			})
+		);
+
 		const goalHitsStart =
 			startDate ?? (sessions[0] ? toDateKey(new Date(sessions[0].startedAt)) : today);
 		const goalHitsEnd = endDate ?? today;
+		const includeYearInLabels = goalHitsStart.slice(0, 4) !== goalHitsEnd.slice(0, 4);
 
 		const goalSummary = {
 			activeGoal: getActiveGoal(goalHistory, today),
-			week: periodSummaryPayload(evaluateWeek(goalHistory, sessionsForGoals, today)),
-			month: periodSummaryPayload(evaluateMonth(goalHistory, sessionsForGoals, today)),
+			week: periodSummaryPayload(evaluateWeek(goalHistory, goalSessions, today, today)),
+			month: periodSummaryPayload(evaluateMonth(goalHistory, goalSessions, today, today)),
 			/** dateKey → hit (true) / miss (false). Days without a daily goal are omitted. */
 			dailyGoalHits: dailyGoalHitsForRange(
 				goalHistory,
 				sessionsForGoals,
 				goalHitsStart,
-				goalHitsEnd
+				goalHitsEnd,
+				today
 			)
 		};
 
@@ -401,6 +441,7 @@ export const getActivityStatistics = query(
 					label = date.toLocaleDateString('en-US', {
 						month: 'short',
 						day: 'numeric',
+						...(includeYearInLabels ? { year: '2-digit' as const } : {}),
 						timeZone: 'UTC'
 					});
 					break;
@@ -418,7 +459,7 @@ export const getActivityStatistics = query(
 					const year = tempDate.getUTCFullYear();
 					key = `${year}-W${String(weekNum).padStart(2, '0')}`;
 					sortKey = key;
-					label = `W${weekNum}`;
+					label = includeYearInLabels ? `W${weekNum} '${String(year).slice(-2)}` : `W${weekNum}`;
 					break;
 				}
 				case 'monthly': {

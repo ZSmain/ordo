@@ -1,9 +1,8 @@
 import { getActiveSession, startTimerSession, stopTimerSession } from '#lib/api/data.remote.js';
-import { restoreTimerFromDatabase, timerStore, type TimerState } from './timer';
 import { toast } from 'svelte-sonner';
+import { restoreTimerFromDatabase, timerStore, type TimerState } from './timer';
 
 type TrackerSessionInput = {
-	userId: string;
 	activityId: number;
 	activityName: string;
 	categoryName: string;
@@ -41,7 +40,6 @@ function queueMutation<T>(task: () => Promise<T>): Promise<T> {
 }
 
 function createOptimisticActiveSession({
-	userId,
 	activityId,
 	activityName,
 	categoryName
@@ -52,20 +50,13 @@ function createOptimisticActiveSession({
 		session: {
 			id: -1,
 			activityId,
-			userId,
 			startedAt: now,
-			stoppedAt: null,
-			duration: null,
-			notes: null,
-			isActive: true,
-			createdAt: now,
-			updatedAt: now
+			isActive: true
 		},
 		activity: {
 			id: activityId,
 			name: activityName,
-			icon: '⏱️',
-			userId
+			icon: '⏱️'
 		},
 		category: {
 			name: categoryName

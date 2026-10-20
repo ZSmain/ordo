@@ -1,15 +1,21 @@
-import { command, query } from '$app/server';
-import { error } from '@sveltejs/kit';
+import { requireOwnedSession } from '#lib/server/access.js';
 import {
 	getCategoriesForActivityIds,
 	hydrateActivitiesWithCategories
 } from '#lib/server/activity-catalog.js';
-import { getRemoteContext } from '#lib/server/remote-context.js';
 import { activity, timeSession } from '#lib/server/db/schema.js';
+import { toManualSessionDto } from '#lib/server/mappers.js';
+import { getRemoteContext } from '#lib/server/remote-context.js';
+import {
+	createManualSession as persistManualSession,
+	rescheduleSession as persistRescheduledSession
+} from '#lib/server/sessions.js';
+import type { DailyActivityDto, DailySessionDto } from '#lib/tracker/dtos.js';
+import { command, query } from '$app/server';
 import { and, desc, eq, gte, isNotNull, lt } from 'drizzle-orm';
 import * as v from 'valibot';
 
-export const getActivitiesForUser = query(async () => {
+export const getActivitiesForUser = query(async (): Promise<DailyActivityDto[]> => {
 	const { db, user } = getRemoteContext();
 	const userId = user.id;
 
@@ -52,47 +58,17 @@ export const createManualSession = command(
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
-		const startDate = new Date(startedAt);
-		const endDate = new Date(stoppedAt);
+		const newSession = await persistManualSession(db, userId, {
+			activityId,
+			start: new Date(startedAt),
+			end: new Date(stoppedAt),
+			notes: notes || null
+		});
 
-		if (endDate <= startDate) {
-			throw new Error('End time must be after start time');
-		}
-
-		if (startDate > new Date()) {
-			throw new Error('Start time cannot be in the future');
-		}
-
-		const duration = Math.floor((endDate.getTime() - startDate.getTime()) / 1000);
-
-		const existingActivity = await db
-			.select({ id: activity.id })
-			.from(activity)
-			.where(and(eq(activity.id, activityId), eq(activity.userId, userId)))
-			.get();
-
-		if (!existingActivity) {
-			error(404, 'Activity not found');
-		}
-
-		const newSession = await db
-			.insert(timeSession)
-			.values({
-				activityId,
-				userId,
-				startedAt: startDate,
-				stoppedAt: endDate,
-				duration,
-				isActive: false,
-				notes: notes || null
-			})
-			.returning()
-			.get();
-
-		const sessionDateStr = startDate.toISOString().split('T')[0];
+		const sessionDateStr = newSession.startedAt.toISOString().split('T')[0];
 		await getSessionsForDate({ date: sessionDateStr }).refresh();
 
-		return newSession;
+		return toManualSessionDto(newSession);
 	}
 );
 
@@ -100,7 +76,7 @@ export const getSessionsForDate = query(
 	v.object({
 		date: v.string()
 	}),
-	async ({ date }) => {
+	async ({ date }): Promise<DailySessionDto[]> => {
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
@@ -173,31 +149,11 @@ export const updateSession = command(
 		const startDate = new Date(startedAt);
 		const endDate = new Date(stoppedAt);
 
-		if (endDate <= startDate) {
-			throw new Error('End time must be after start time');
-		}
-
-		const duration = Math.floor((endDate.getTime() - startDate.getTime()) / 1000);
-
-		const existingSession = await db
-			.select({ id: timeSession.id })
-			.from(timeSession)
-			.where(and(eq(timeSession.id, sessionId), eq(timeSession.userId, userId)))
-			.get();
-
-		if (!existingSession) {
-			error(404, 'Session not found');
-		}
-
-		await db
-			.update(timeSession)
-			.set({
-				startedAt: startDate,
-				stoppedAt: endDate,
-				duration,
-				updatedAt: new Date()
-			})
-			.where(eq(timeSession.id, sessionId));
+		await persistRescheduledSession(db, userId, {
+			sessionId,
+			start: startDate,
+			end: endDate
+		});
 
 		const startDateStr = startDate.toISOString().split('T')[0];
 		const endDateStr = endDate.toISOString().split('T')[0];
@@ -220,18 +176,7 @@ export const deleteSession = command(
 		const { db, user } = getRemoteContext();
 		const userId = user.id;
 
-		const existingSession = await db
-			.select({
-				id: timeSession.id,
-				startedAt: timeSession.startedAt
-			})
-			.from(timeSession)
-			.where(and(eq(timeSession.id, sessionId), eq(timeSession.userId, userId)))
-			.get();
-
-		if (!existingSession) {
-			error(404, 'Session not found');
-		}
+		const existingSession = await requireOwnedSession(db, userId, sessionId);
 
 		const sessionDate = existingSession.startedAt.toISOString().split('T')[0];
 

@@ -85,7 +85,6 @@
 		if (!user?.id) return;
 
 		void trackerSessionController.toggle({
-			userId: user.id,
 			activityId,
 			categoryName,
 			activityName

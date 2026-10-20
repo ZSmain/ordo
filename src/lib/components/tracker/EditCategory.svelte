@@ -13,12 +13,12 @@
 	} from '#lib/components/ui/drawer/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
-	import type { Category } from '#lib/types.js';
+	import type { CategoryDto } from '#lib/tracker/dtos.js';
 	import { toast } from 'svelte-sonner';
 
 	interface Props {
 		open: boolean;
-		category: Category | null;
+		category: CategoryDto | null;
 		onOpenChange?: (open: boolean) => void;
 		onCategoryUpdated?: () => void;
 	}

@@ -14,7 +14,6 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import { DEFAULT_CATEGORY_EMOJI } from '#lib/constants/emojis.js';
-	import type { InsertCategory } from '#lib/server/db/schema.js';
 	import { toast } from 'svelte-sonner';
 
 	interface Props {
@@ -52,7 +51,7 @@
 
 		isPending = true;
 		try {
-			const categoryData: InsertCategory = {
+			const categoryData = {
 				name: categoryForm.name.trim(),
 				color: categoryForm.color,
 				icon: categoryForm.icon,
